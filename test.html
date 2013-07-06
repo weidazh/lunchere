@@ -20,29 +20,45 @@ function lunchere_api_init() {
     gapi.client.load('oauth', 'dev', callback, ROOT);
 }
 
+function require_login(resp) {
+    if (typeof(resp.error) !== "undefined" && resp.code == resp.error.code) {
+	console.log("ERROR");
+	console.log(resp);
+	if (resp.code == 401) {
+	    // ?? How to manually logout?
+	    gapi.client.oauth.createLoginURL({ "url": "/" }).execute(function(resp) {
+		document.location = resp.url;
+	    });
+	}
+	return false;
+    }
+    else {
+	console.log("OK");
+	console.log(resp);
+	gapi.client.oauth.createLogoutURL({"url": "/" }).execute(function(resp) {
+	    var logout_url = resp.url;
+	    document.getElementById("logout").addEventListener("click", function() {
+		document.location = logout_url;
+	    });
+	});
+	return true;
+    }
+}
+
 function first_call() {
     gapi.client.lunchere.test().execute(function(resp) {
-	if (typeof(resp.error) !== "undefined" && resp.code == resp.error.code) {
-	    console.log("ERROR");
-	    console.log(resp);
-	    if (resp.code == 401) {
-		// ?? How to manually logout?
-		gapi.client.oauth.createLoginURL({ "url": "/" }).execute(function(resp) {
-		    document.location = resp.url;
-		});
-	    }
-	}
-	else {
-	    gapi.client.oauth.createLogoutURL({"url": "/" }).execute(function(resp) {
-		var logout_url = resp.url;
-		document.getElementById("logout").addEventListener("click", function() {
-		    document.location = logout_url;
-		});
-	    });
-	    console.log("OK");
-	    console.log(resp);
-	}
-    })
+	if (! require_login(resp))
+	    return;
+	second_call();
+    });
+}
+
+function second_call() {
+    gapi.client.lunchere.today().execute(function(resp) {
+	if (! require_login(resp))
+	    return;
+	document.getElementById("today").innerHTML = resp.name;
+    });
 }
 
 
@@ -53,6 +69,6 @@ function first_call() {
 <body>
 
 <button id="logout">Log out</button>
-test, please view your console
+<p>Today we go to: <span id="today">loading ...</span></p>
 </body>
 </html>

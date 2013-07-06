@@ -10,6 +10,12 @@ class TestRequestResponseMsg(messages.Message):
     user = messages.StringField(2, required=False)
     code = messages.IntegerField(3, required=False)
 
+class NoneRequestMsg(messages.Message):
+    pass
+
+class TodayRecommendation(messages.Message):
+    name = messages.StringField(1, required=True)
+
 CLIENT_ID = 'TEST_HTML_CLIENT_ID'
 
 ALLOWED_CLIENT_IDS = [CLIENT_ID, endpoints.API_EXPLORER_CLIENT_ID]
@@ -32,16 +38,35 @@ class OAuthAPI(remote.Service):
             request.url = "/"
         return OAuthURLMsg(url=users.create_logout_url(request.url))
 
+def require_login(func):
+    def wrapper(*args, **kargs):
+        user = users.get_current_user
+        if user == None:
+            raise endpoints.UnauthorizedException(users.create_login_url("/"))
+        return func(*args, **kargs)
+    return wrapper
+
+class Recommendation:
+    def __init__(self, name):
+        self.name = name
+
+def get_recommendation():
+    user = users.get_current_user()
+    import random
+    return Recommendation(random.choice(["Cafe de Coral", "Fairwood", "Maxim"]))
+
 @endpoints.api(name="lunchere", version="dev", description="Where to lunch", allowed_client_ids=ALLOWED_CLIENT_IDS)
 class LuncHereAPI(remote.Service):
     @endpoints.method(TestRequestResponseMsg, TestRequestResponseMsg, name="test", http_method="GET")
+    @require_login
     def test(self, request):
-        user = users.get_current_user()
-        if user == None:
-            # The URL could be (Python):  users.create_login_url(self.request.uri)
-            # or (Javascript): ?? I use remote API instead.
-            raise endpoints.UnauthorizedException(users.create_login_url("/"))
         return TestRequestResponseMsg(text="Test", user=repr(dir(endpoints)), code=400)
+
+    @endpoints.method(NoneRequestMsg, TodayRecommendation, name="today", http_method="GET")
+    @require_login
+    def today(self, request):
+        recommendation = get_recommendation()
+        return TodayRecommendation(name=recommendation.name)
 
 # ==============
 endpoints_application = endpoints.api_server([OAuthAPI, LuncHereAPI], restricted=False)
