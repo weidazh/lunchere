@@ -5,5 +5,10 @@ api_version: 1
 threadsafe: false
 
 handlers:
+# the admin is /_ah/spi, while the api is automatially set to /_ah/api/*
+- url: /_ah/spi/.*
+  script: services.endpoints_application
+
 - url: /.*
-  script: lunchere.application
+  script: lunchere.test # Please use the class name
+
