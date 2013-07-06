@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Python Endpoints: https://developers.google.com/appengine/docs/python/endpoints/ --> 
+<!-- API Explorer: https://developers.google.com/apis-explorer/ -->
+<script>
+
+function lunchere_api_init() {
+    var apisToLoad;
+    var callback = function(msg) {
+        console.log(msg + " loaded");
+        if (--apisToLoad == 0) {
+            first_call();
+        }
+    }
+    console.log("INIT");
+    var ROOT = 'http://localhost:8080/_ah/api';
+    apisToLoad = 2;
+    gapi.client.load('lunchere', 'dev', callback, ROOT);
+    gapi.client.load('oauth', 'dev', callback, ROOT);
+}
+
+function first_call() {
+    gapi.client.lunchere.test().execute(function(resp) {
+	if (typeof(resp.error) !== "undefined" && resp.code == resp.error.code) {
+	    console.log("ERROR");
+	    console.log(resp);
+	    if (resp.code == 401) {
+		// ?? How to manually logout?
+		gapi.client.oauth.createLoginURL({ "url": "/" }).execute(function(resp) {
+		    document.location = resp.url;
+		});
+	    }
+	}
+	else {
+	    gapi.client.oauth.createLogoutURL({"url": "/" }).execute(function(resp) {
+		var logout_url = resp.url;
+		document.getElementById("logout").addEventListener("click", function() {
+		    document.location = logout_url;
+		});
+	    });
+	    console.log("OK");
+	    console.log(resp);
+	}
+    })
+}
+
+
+</script>
+<script src="https://apis.google.com/js/client.js?onload=lunchere_api_init">
+</script>
+</head>
+<body>
+
+<button id="logout">Log out</button>
+test, please view your console
+</body>
+</html>
