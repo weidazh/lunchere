@@ -10,15 +10,19 @@ function lunchere_api_init() {
     var callback = function(msg) {
         console.log(msg + " loaded");
         if (--apisToLoad == 0) {
-            first_call();
+            signin(true, user_authed_no_retry);
         }
     }
     console.log("INIT");
-    var ROOT = 'http://localhost:8080/_ah/api';
+    var ROOT = '/_ah/api';
     apisToLoad = 2;
     gapi.client.load('lunchere', 'dev', callback, ROOT);
     gapi.client.load('oauth', 'dev', callback, ROOT);
 }
+
+document.getElementById("logout").addEventListener("click", function() {
+    gapi.auth.setToken(null);
+});
 
 function require_login(resp) {
     if (typeof(resp.error) !== "undefined" && resp.code == resp.error.code) {
@@ -26,9 +30,7 @@ function require_login(resp) {
 	console.log(resp);
 	if (resp.code == 401) {
 	    // ?? How to manually logout?
-	    gapi.client.oauth.createLoginURL({ "url": "/" }).execute(function(resp) {
-		document.location = resp.url;
-	    });
+	    signin(false, user_authed_no_retry);
 	}
 	return false;
     }
@@ -37,24 +39,62 @@ function require_login(resp) {
 	console.log(resp);
 	gapi.client.oauth.createLogoutURL({"url": "/" }).execute(function(resp) {
 	    var logout_url = resp.url;
-	    document.getElementById("logout").addEventListener("click", function() {
-		document.location = logout_url;
-	    });
 	});
 	return true;
     }
 }
 
-function first_call() {
+function signin(mode, callback) {
+    var CLIENT_ID = "@@CLIENT_ID@@";
+    var SCOPES = "https://www.googleapis.com/auth/userinfo.email";
+    gapi.auth.authorize({client_id: CLIENT_ID,
+	    scope: SCOPES, immediate: mode,
+	    response_type: 'token id_token'},
+	    callback);
+}
+
+function user_authed_retry(token) {
+    if (! user_authed_no_retry(token)) {
+	signin(false, user_authed_no_retry);
+    }
+}
+
+function user_authed_no_retry(token) {
+    // Example of token
+    //    access_token: "ya29.AHEi.................lrspejV4"
+    //    client_id: "41839733.................usercontent.com"
+    //    id_token: "eyJhbGci..........................2oFopTpT-nhtWLD8"
+    if (token) {
+	// This overwriting is well documented by 
+	//         https://developers.google.com/appengine/docs/python/endpoints/consume_js#adding-oath-authentication
+	token.access_token = token.id_token;
+	gapi.auth.setToken(token);
+	first_call(true);
+	return true;
+    }
+    else {
+	console.log("ERROR Cannot auth");
+	first_call(false);
+	return false;
+    }
+    // first_call();
+}
+
+function first_call(authed) {
     gapi.client.lunchere.test().execute(function(resp) {
 	if (! require_login(resp))
 	    return;
-	second_call();
+	second_call(authed);
     });
 }
 
-function second_call() {
-    gapi.client.lunchere.today().execute(function(resp) {
+function second_call(authed) {
+    var func;
+    if (authed)
+	func  = gapi.client.lunchere.today();
+    else
+	func  = gapi.client.lunchere.todayUnauth();
+    func.execute(function(resp) {
 	if (! require_login(resp))
 	    return;
 	document.getElementById("today").innerHTML = resp.name;
