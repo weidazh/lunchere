@@ -2,21 +2,18 @@ from google.appengine.ext import endpoints
 from protorpc import remote
 from protorpc import messages
 
-class RequestMsg(messages.Message):
-    pass
 
-class ResponseMsg(messages.Message):
-    pass
+# protorpc:  https://developers.google.com/appengine/docs/python/tools/protorpc/
+class TestRequestResponseMsg(messages.Message):
+    text = messages.StringField(1, required=False)
 
 CLIENT_ID = 'TEST_HTML_CLIENT_ID'
 
 @endpoints.api(name="lunchere", version="dev", description="Where to lunch", allowed_client_ids=[CLIENT_ID, endpoints.API_EXPLORER_CLIENT_ID])
 class LuncHereAPI(remote.Service):
-    @endpoints.method(RequestMsg, ResponseMsg, name="test", http_method="GET")
+    @endpoints.method(TestRequestResponseMsg, TestRequestResponseMsg, name="test", http_method="GET")
     def test(self, request):
-        return ResponseMsg()
-
-
+        return TestRequestResponseMsg(text="Test")
 
 # ================
 import webapp2

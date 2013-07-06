@@ -16,6 +16,12 @@ Core
       on what they really had.
 
 
+Web Service
+===========
+1. Use gapi
+2. Recognize user
+
+
 
 Frontend
 ========
