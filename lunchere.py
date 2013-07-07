@@ -225,18 +225,51 @@ endpoints_application = endpoints.api_server([OAuthAPI, LuncHereAPI], restricted
 # ================
 import webapp2
 class MainPage(webapp2.RequestHandler):
-    def get(self):
-        self.response.headers['Content-Type'] = 'text/html'
-        import logging
+    def get_client_id(self):
         if self.request.url.startswith("http://localhost:8080"):
-            client_id = CLIENT_ID_localhost
+            return CLIENT_ID_localhost
         elif self.request.url.startswith("http://lunchere.appspot.com"):
-            client_id = CLIENT_ID_http
+            return CLIENT_ID_http
         elif self.request.url.startswith("https://1-dot-lunchere.appspot.com"):
-            client_id = CLIENT_ID_https
+            return CLIENT_ID_https
         else:
-            self.response.write("Sorry, check your client URL")
-        self.response.write(open("test.html").read().replace("@@CLIENT_ID@@", client_id))
+            return "Unknown"
+
+    def get_history_id(self, useCookie=True):
+        if self.request.path.startswith("/user"):
+            user = my_get_current_user(false)
+            if user != None:
+                return repr(History.from_user(user).historyId)
+        elif self.request.path.startswith("/history/"):
+            import re
+            return repr(re.compile("^/history/").sub("history:", self.request.path))
+        elif useCookie:
+            return "getCookie(\"historyId\", \"Unknown\")"
+        else:
+            return None
+
+    def get(self):
+        useCookie = True
+        historyId = self.get_history_id(useCookie=False)
+        if historyId:
+            import logging
+            self.response.headers['Content-Type'] = 'text/html'
+            self.response.headers['Cache-Control'] = 'no-cache'
+            logging.info(self.request.path)
+
+            self.response.write(open("test.html").read().replace("@@CLIENT_ID@@", self.get_client_id())
+                                                        .replace("@@HISTORY_ID@@", self.get_history_id())
+                                                        .replace("@@USE_COOKIE@@", "1" if useCookie else "0"))
+        else:
+            if useCookie and self.request.path != "/logout":
+                import urllib
+                historyId = urllib.unquote(self.request.cookies.get("historyId", None))
+            if historyId == None:
+                historyId = History.gen_new_history_id()
+                if useCookie:
+                    import urllib
+                    self.response.set_cookie("historyId", urllib.quote(historyId), max_age=7)
+            self.redirect(str(historyId).replace("history:", "/history/"))
 
 test = webapp2.WSGIApplication([('/.*', MainPage)], debug=True)
 
