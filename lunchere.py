@@ -79,7 +79,7 @@ class HistoryEvent(db.Model):
     historyId = db.StringProperty(required=True)
     timeslot = db.StringProperty(required=True)
     event_date = db.DateTimeProperty(required=True)
-    # 3 cases: confirmed, cancelled, confirmed and cancelled
+    # 4 cases: initilized, confirmed, cancelled, confirmed and cancelled
     confirmed = db.BooleanProperty()
     cancelled = db.BooleanProperty()
     canteenId = db.StringProperty(required=True)
@@ -93,12 +93,12 @@ class History:
         pass
 
     def datastore_get_confirmed(self):
-        confirmed_list = db.GqlQuery("SELECT * FROM HistoryEvent WHERE historyId = :1 AND timeslot = :2 AND confirmed = True AND cancelled = False", self.historyId, self.timeslot)
+        confirmed_list = db.GqlQuery("SELECT * FROM HistoryEvent WHERE historyId = :1 AND timeslot = :2 AND cancelled = False", self.historyId, self.timeslot)
         he = confirmed_list.get()
         if he:
-            return he.canteenId
+            return (he.canteenId, he.confirmed)
         else:
-            return None
+            return (None, False)
 
     def datastore_pop_confirmed(self):
         pass
@@ -159,28 +159,30 @@ class History:
             historyId = History.gen_new_history_id()
         self.historyId = historyId
         self.timeslot = History.get_timeslot()
-        self.confirmed = self.datastore_get_confirmed()
+        self.next_recommend, self.confirmed = self.datastore_get_confirmed()
 
     def cancel(self, name):
         once_confirmed = False
-        if self.confirmed == name:
-            self.confirmed = None
+        if self.next_recommend == name:
+            once_confirmed = self.confirmed
+            self.confirmed = False
+            self.next_recommend = None
             self.datastore_pop_confirmed()
-            once_confirmed = True
-        pass
         self.datastore_append(name, once_confirmed, True)
         # Then append a cancel log to the datastore
 
     def confirm(self, name):
-        self.confirmed = name
+        self.confirmed = True
+        self.next_recommend = name
         self.datastore_append(name, True, False)
 
     def recommend(self):
-        import random
-        if self.confirmed:
-            return Recommendation(self.confirmed, historyId=self.historyId, confirmed=True)
-        else:
-            return Recommendation(random.choice(History.CHOICES), historyId=self.historyId, confirmed=False)
+        if self.next_recommend is None:
+            import random
+            self.confirmed = False
+            self.next_recommend = random.choice(History.CHOICES)
+            self.datastore_append(self.next_recommend, False, False)
+        return Recommendation(self.next_recommend, historyId=self.historyId, confirmed=self.confirmed)
 
 
 def get_recommendation_from_history(historyId, cancel=None, confirm=None):
