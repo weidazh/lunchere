@@ -118,6 +118,10 @@ function today_recommendation_received(resp) {
     }
     document.getElementById("today").innerHTML = resp.name;
     document.getElementById("historyId").innerHTML = historyId;
+    if (resp.confirmed)
+	document.getElementById("confirmed").innerHTML = "(confirmed)";
+    else
+	document.getElementById("confirmed").innerHTML = "";
     today_recommendation = resp;
 }
 
@@ -139,6 +143,7 @@ function confirm_today() {
     if (today_recommendation) {
 	gapi.client.lunchere.yesUnauth({ "historyId": today_recommendation.historyId, "name": today_recommendation.name }).execute(function(resp) {
 	    console.log("confirmed");
+	    console.log(resp);
 	    today_recommendation_received(resp);
 	});
     }
@@ -149,6 +154,7 @@ function cancel_today() {
     if (today_recommendation) {
 	gapi.client.lunchere.noUnauth({ "historyId": today_recommendation.historyId, "name": today_recommendation.name }).execute(function(resp) {
 	    console.log("cancelled");
+	    console.log(resp);
 	    today_recommendation_received(resp);
 	});
     }
@@ -176,7 +182,7 @@ window.addEventListener("load", function load() {
 
 <button id="logout">Log out</button>
 <p>History ID: <span id="historyId">undefined</span></p>
-<p>Today we go to: <span id="today">loading ...</span></p>
+<p>Today we go to: <span id="today">loading ...</span><span id="confirmed"></span></p>
 <button id="yes">Yes</button>
 <button id="no">No</button>
 </body>

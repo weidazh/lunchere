@@ -21,6 +21,7 @@ class HistoryIdMsg(messages.Message):
 class TodayRecommendation(messages.Message):
     name = messages.StringField(1, required=True)
     historyId = messages.StringField(2, required=True)
+    confirmed = messages.BooleanField(3, required=False)
 
 CLIENT_ID_http      = '418397336121.apps.googleusercontent.com'
 CLIENT_ID_https     = '418397336121-7u3gsnvbj6d5gan0102e83rb9gd4vd67.apps.googleusercontent.com'
@@ -64,54 +65,131 @@ def require_login(func):
     return wrapper
 
 class Recommendation:
-    def __init__(self, name, historyId):
+    def __init__(self, name, historyId, confirmed):
         self.name = name
         self.historyId = historyId
+        self.confirmed = confirmed
 
-def get_recommendation(user=None):
-    if user == None:
-        historyId = gen_new_history_id()
-    else:
-        historyId = "user:" + user.user_id()
-    import random
-    return Recommendation(random.choice(["Cafe de Coral", "Fairwood", "Maxim"]), historyId=historyId)
+    def toTodayRecommendation(self):
+        return TodayRecommendation(name=self.name, historyId=self.historyId, confirmed=self.confirmed)
 
-def gen_new_history_id():
-    from Crypto.Hash import MD5
-    import random
-    return "history:" + MD5.new(repr(random.randint(0, 100000))).hexdigest() # FIXME: user more robust algorithm
+import datetime
+from google.appengine.ext import db
+class HistoryEvent(db.Model):
+    historyId = db.StringProperty(required=True)
+    timeslot = db.StringProperty(required=True)
+    event_date = db.DateTimeProperty(required=True)
+    # 3 cases: confirmed, cancelled, confirmed and cancelled
+    confirmed = db.BooleanProperty()
+    cancelled = db.BooleanProperty()
+    canteenId = db.StringProperty(required=True)
 
-def valid_history_id(historyId):
-    if historyId is None:
-        return False
-    elif historyId.startswith("history:"):
-        return True
-    elif historyId.startswith("user:"):
-        return True
-    else:
-        return False
 
-hashtable = {}
-CHOICES = ["Cafe de Coral", "Fairwood", "Maxim", "Hua ren", "McDonald", "KFC", "Bang Bang Chicken", "Fairwood (Westwood)", "Yoshinoya", "Bijas", "Canada Restaurant"]
-def get_timeslot():
-    import time
-    return "<" + str(time.time() / (24 * 3600)) + ">"
+class History:
+    CHOICES = ["Cafe de Coral", "Fairwood", "Maxim", "Hua ren", "McDonald", "KFC", "Bang Bang Chicken", "Fairwood (Westwood)", "Yoshinoya", "Bijas", "Canada Restaurant"]
+    # confirm_table = {}
+    def datastore_set_confirmed(self):
+        # History.confirm_table[timeslot + historyId] = confirm
+        pass
+
+    def datastore_get_confirmed(self):
+        confirmed_list = db.GqlQuery("SELECT * FROM HistoryEvent WHERE historyId = :1 AND timeslot = :2 AND confirmed = True AND cancelled = False", self.historyId, self.timeslot)
+        he = confirmed_list.get()
+        if he:
+            return he.canteenId
+        else:
+            return None
+
+    def datastore_pop_confirmed(self):
+        pass
+
+    def datastore_append(self, name, confirmed, cancelled):
+        this_canteen_q = db.GqlQuery("SELECT * FROM HistoryEvent WHERE historyId = :1 AND timeslot = :2 AND canteenId = :3", self.historyId, self.timeslot, name)
+        this_canteen = this_canteen_q.get()
+        if this_canteen:
+            he = this_canteen
+            he.event_date = datetime.datetime.now()
+            if cancelled:
+                he.cancelled = cancelled
+                # leave confirmed unchanged
+            else:
+                he.confirmed = confirmed
+                he.cancelled = cancelled
+            he.put()
+        else:
+            if confirmed and cancelled:
+                import logging
+                logging.warn("The event is confirmed and cancelled but cannot be found in datastore")
+            he = HistoryEvent(historyId=self.historyId, timeslot=self.timeslot,
+                        event_date=datetime.datetime.now(), confirmed=confirmed, cancelled=cancelled,
+                        canteenId=name)
+            he.put()
+
+    @classmethod
+    def gen_new_history_id(cls):
+        from Crypto.Hash import MD5
+        import random
+        return "history:" + MD5.new(repr(random.randint(0, 100000))).hexdigest() # FIXME: user more robust algorithm
+
+    @classmethod
+    def valid_history_id(cls, historyId):
+        if historyId is None:
+            return False
+        elif historyId.startswith("history:"):
+            return True
+        elif historyId.startswith("user:"):
+            return True
+        else:
+            return False
+
+    @classmethod
+    def from_user(cls, user):
+        if user == None:
+            return History()
+        else:
+            return History("user:" + user.user_id())
+
+    @classmethod
+    def get_timeslot(cls):
+        import time
+        return "<" + str(int(time.time() / (24 * 3600)) * 24 * 3600) + ">"
+
+    def __init__(self, historyId=None):
+        if not History.valid_history_id(historyId):
+            historyId = History.gen_new_history_id()
+        self.historyId = historyId
+        self.timeslot = History.get_timeslot()
+        self.confirmed = self.datastore_get_confirmed()
+
+    def cancel(self, name):
+        once_confirmed = False
+        if self.confirmed == name:
+            self.confirmed = None
+            self.datastore_pop_confirmed()
+            once_confirmed = True
+        pass
+        self.datastore_append(name, once_confirmed, True)
+        # Then append a cancel log to the datastore
+
+    def confirm(self, name):
+        self.confirmed = name
+        self.datastore_append(name, True, False)
+
+    def recommend(self):
+        import random
+        if self.confirmed:
+            return Recommendation(self.confirmed, historyId=self.historyId, confirmed=True)
+        else:
+            return Recommendation(random.choice(History.CHOICES), historyId=self.historyId, confirmed=False)
+
+
 def get_recommendation_from_history(historyId, cancel=None, confirm=None):
-    timeslot = get_timeslot()
+    history = History(historyId)
     if cancel:
-        if hashtable.has_key(timeslot + historyId):
-            hashtable.pop(timeslot + historyId)
-        pass # mark down the cancelling
+        history.cancel(cancel)
     if confirm:
-        hashtable[timeslot + historyId] = confirm
-    if not valid_history_id(historyId):
-        import random
-        return Recommendation(random.choice(CHOICES), historyId=gen_new_history_id())
-    elif hashtable.has_key(timeslot + historyId):
-        return Recommendation(confirm, historyId=historyId)
-    else:
-        import random
-        return Recommendation(random.choice(CHOICES), historyId=historyId)
+        history.confirm(confirm)
+    return history.recommend()
 
 @endpoints.api(name="lunchere", version="dev", description="Where to lunch", allowed_client_ids=ALLOWED_CLIENT_IDS)
 class LuncHereAPI(remote.Service):
@@ -122,23 +200,23 @@ class LuncHereAPI(remote.Service):
     @endpoints.method(NoneRequestMsg, TodayRecommendation, name="today", http_method="GET")
     @require_login
     def today(self, request):
-        recommendation = get_recommendation(user=my_get_current_user())
-        return TodayRecommendation(name=recommendation.name, historyId=recommendation.historyId)
+        recommendation = History.from_user(user=my_get_current_user()).recommend()
+        return recommendation.toTodayRecommendation()
 
     @endpoints.method(HistoryIdMsg, TodayRecommendation, name="todayUnauth", http_method="GET")
     def today_unauth(self, request):
         recommendation = get_recommendation_from_history(request.historyId)
-        return TodayRecommendation(name=recommendation.name, historyId=recommendation.historyId)
+        return recommendation.toTodayRecommendation()
 
     @endpoints.method(TodayRecommendation, TodayRecommendation, name="noUnauth", http_method="GET")
     def no_unauth(self, request):
         recommendation = get_recommendation_from_history(request.historyId, cancel=request.name)
-        return TodayRecommendation(name=recommendation.name, historyId=recommendation.historyId)
+        return recommendation.toTodayRecommendation()
 
     @endpoints.method(TodayRecommendation, TodayRecommendation, name="yesUnauth", http_method="GET")
     def yes_unauth(self, request):
         recommendation = get_recommendation_from_history(request.historyId, confirm=request.name)
-        return TodayRecommendation(name=recommendation.name, historyId=recommendation.historyId)
+        return recommendation.toTodayRecommendation()
 
 
 # ==============
@@ -152,10 +230,12 @@ class MainPage(webapp2.RequestHandler):
         import logging
         if self.request.url.startswith("http://localhost:8080"):
             client_id = CLIENT_ID_localhost
-        elif self.request.url.startswith("http://1.lunchere.appspot.com"):
+        elif self.request.url.startswith("http://lunchere.appspot.com"):
             client_id = CLIENT_ID_http
         elif self.request.url.startswith("https://1-dot-lunchere.appspot.com"):
             client_id = CLIENT_ID_https
+        else:
+            self.response.write("Sorry, check your client URL")
         self.response.write(open("test.html").read().replace("@@CLIENT_ID@@", client_id))
 
 test = webapp2.WSGIApplication([('/.*', MainPage)], debug=True)
