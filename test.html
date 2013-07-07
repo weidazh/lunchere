@@ -165,6 +165,12 @@ window.addEventListener("load", function load() {
     window.removeEventListener("load", load, false);
     document.getElementById("logout").addEventListener("click", function() {
 	gapi.auth.setToken(null);
+	historyId = undefined;
+	today_recommendation = undefined;
+	document.getElementById("historyId").innerHTML = "undefined";
+	document.getElementById("today").innerHTML = "reloading ...";
+	document.getElementById("confirmed").innerHTML = "";
+	signin(true, user_authed_no_retry);
     });
     document.getElementById("yes").addEventListener("click", function() {
 	confirm_today();
