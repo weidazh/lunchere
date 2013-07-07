@@ -71,22 +71,79 @@ class Recommendation:
         self.confirmed = confirmed
 
     def toTodayRecommendation(self):
-        return TodayRecommendation(name=self.name, historyId=self.historyId, confirmed=self.confirmed)
+        if self.name is None:
+            return TodayRecommendation(name="", historyId=self.historyId, confirmed=self.confirmed)
+        else:
+            return TodayRecommendation(name=self.name, historyId=self.historyId, confirmed=self.confirmed)
 
 import datetime
 from google.appengine.ext import db
 class HistoryEvent(db.Model):
     historyId = db.StringProperty(required=True)
-    timeslot = db.StringProperty(required=True)
+    timeslot = db.IntegerProperty(required=True)
     event_date = db.DateTimeProperty(required=True)
     # 4 cases: initilized, confirmed, cancelled, confirmed and cancelled
     confirmed = db.BooleanProperty()
     cancelled = db.BooleanProperty()
     canteenId = db.StringProperty(required=True)
 
+class Choice(db.Model):
+    historyId = db.StringProperty(required=True)
+    canteenId = db.StringProperty(required=True)
+    frequency = db.FloatProperty(required=True) # Initially each one has sum(frequency) / (n - 1)
+    based_on = db.DateTimeProperty(required=True) # If None then 1970/1/1
+    max_timeslot = db.IntegerProperty(required=True) # If None then 0
 
 class History:
-    CHOICES = ["Cafe de Coral", "Fairwood", "Maxim", "Hua ren", "McDonald", "KFC", "Bang Bang Chicken", "Fairwood (Westwood)", "Yoshinoya", "Bijas", "Canada Restaurant"]
+    def choose_from(self, choices):
+        _sum = sum([freq for name, freq in choices])
+        import random
+        r = random.random() * _sum
+        import logging
+        logging.info("r = %f" % r)
+        for name, freq in choices:
+            if freq >= r:
+                return name
+            r -= freq
+    def datastore_get_choices(self, exclude=None):
+        canteenIds = {}
+        if exclude is not None and len(exclude):
+            for e in exclude:
+                canteenIds[e] = True
+        choice_list = db.GqlQuery("SELECT * FROM Choice WHERE historyId = :1", self.historyId)
+        choices = []
+        max_timeslot = 0
+        for choice in choice_list.run():
+            if canteenIds.has_key(choice.canteenId):
+                # already in choices, or excluded
+                continue
+            choices.append((choice.canteenId, choice.frequency))
+            canteenIds[choice.canteenId] = True
+            if choice.max_timeslot > max_timeslot:
+                max_timeslot = choice.max_timeslot
+        if len(choices):
+            avg = sum([freq for name, freq in choices]) / len(choices)
+        else:
+            avg = 1.0
+        import logging
+        logging.info("SELECT * FROM HistoryEvent WHERE historyId = :1 AND timeslot >= :2")
+        logging.info(self.historyId)
+        logging.info(max_timeslot)
+        new_choices = db.GqlQuery("SELECT * FROM HistoryEvent WHERE historyId = :1 AND timeslot >= :2", self.historyId, max_timeslot)
+        for he in new_choices.run():
+            logging.info(he)
+            logging.info(repr(he.canteenId))
+            logging.info(repr(he.timeslot))
+            if canteenIds.has_key(he.canteenId):
+                # already in choices
+                continue
+            canteenIds[he.canteenId] = True
+            choices.append((he.canteenId, avg))
+        logging.info(choices)
+        logging.info(canteenIds)
+        return choices
+
+    # CHOICES = ["Cafe de Coral", "Fairwood", "Maxim", "Hua ren", "McDonald", "KFC", "Bang Bang Chicken", "Fairwood (Westwood)", "Yoshinoya", "Bijas", "Canada Restaurant"]
     # confirm_table = {}
     def datastore_set_confirmed(self):
         # History.confirm_table[timeslot + historyId] = confirm
@@ -103,10 +160,27 @@ class History:
     def datastore_pop_confirmed(self):
         pass
 
+    def clear_confirmed(self, name):
+        # clear any other confirmed.
+        confirm_q = db.GqlQuery("SELECT * FROM HistoryEvent WHERE historyId = :1 AND timeslot = :2", self.historyId, self.timeslot)
+        ret = None
+        for e in confirm_q:
+            if e.canteenId != name:
+                if e.confirmed and not e.cancelled:
+                    e.cancelled = True
+                    e.put()
+            else:
+                ret = e
+        return ret
+
     def datastore_append(self, name, confirmed, cancelled):
-        this_canteen_q = db.GqlQuery("SELECT * FROM HistoryEvent WHERE historyId = :1 AND timeslot = :2 AND canteenId = :3", self.historyId, self.timeslot, name)
-        this_canteen = this_canteen_q.get()
+        if confirmed and not cancelled:
+            this_canteen = self.clear_confirmed(name)
+        else:
+            this_canteen_q = db.GqlQuery("SELECT * FROM HistoryEvent WHERE historyId = :1 AND timeslot = :2 AND canteenId = :3", self.historyId, self.timeslot, name)
+            this_canteen = this_canteen_q.get()
         if this_canteen:
+            # found it
             he = this_canteen
             he.event_date = datetime.datetime.now()
             if cancelled:
@@ -117,6 +191,7 @@ class History:
                 he.cancelled = cancelled
             he.put()
         else:
+            # not found, create a new HistoryEvent
             if confirmed and cancelled:
                 import logging
                 logging.warn("The event is confirmed and cancelled but cannot be found in datastore")
@@ -152,7 +227,7 @@ class History:
     @classmethod
     def get_timeslot(cls):
         import time
-        return "<" + str(int(time.time() / (24 * 3600)) * 24 * 3600) + ">"
+        return int(time.time() / (24 * 3600)) * 24 * 3600
 
     def __init__(self, historyId=None):
         if not History.valid_history_id(historyId):
@@ -176,12 +251,19 @@ class History:
         self.next_recommend = name
         self.datastore_append(name, True, False)
 
-    def recommend(self):
+    def recommend(self, exclude=None):
         if self.next_recommend is None:
-            import random
-            self.confirmed = False
-            self.next_recommend = random.choice(History.CHOICES)
-            self.datastore_append(self.next_recommend, False, False)
+            choices = self.datastore_get_choices(exclude=exclude)
+            import logging
+            logging.info(choices)
+            if len(choices):
+                import random
+                self.confirmed = False
+                self.next_recommend = self.choose_from(choices) # FIXME: backend...
+                self.datastore_append(self.next_recommend, False, False)
+            else:
+                self.confirmed = False
+                self.next_recommend = None
         return Recommendation(self.next_recommend, historyId=self.historyId, confirmed=self.confirmed)
 
 
@@ -191,7 +273,10 @@ def get_recommendation_from_history(historyId, cancel=None, confirm=None):
         history.cancel(cancel)
     if confirm:
         history.confirm(confirm)
-    return history.recommend()
+    if cancel:
+        return history.recommend(exclude=[cancel])
+    else:
+        return history.recommend(exclude=None)
 
 @endpoints.api(name="lunchere", version="dev", description="Where to lunch", allowed_client_ids=ALLOWED_CLIENT_IDS)
 class LuncHereAPI(remote.Service):
@@ -265,7 +350,9 @@ class MainPage(webapp2.RequestHandler):
         else:
             if useCookie and self.request.path != "/logout":
                 import urllib
-                historyId = urllib.unquote(self.request.cookies.get("historyId", None))
+                historyId = self.request.cookies.get("historyId", None)
+                if historyId is not None:
+                    historyId = urllib.unquote(historyId)
             if historyId == None:
                 historyId = History.gen_new_history_id()
                 if useCookie:

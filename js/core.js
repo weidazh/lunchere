@@ -136,13 +136,22 @@ function today_recommendation_received(resp) {
 	historyId = resp.historyId;
 	setCookie("historyId", historyId, 7);
     }
-    document.getElementById("today").innerHTML = resp.name;
+    if (! resp.name) {
+	document.getElementById("today").innerHTML = "No recommendation";
+    }
+    else {
+	document.getElementById("today").innerHTML = resp.name;
+    }
     document.getElementById("historyId").innerHTML = historyId;
     if (resp.confirmed)
 	document.getElementById("confirmed").innerHTML = "(confirmed)";
     else
 	document.getElementById("confirmed").innerHTML = "";
     today_recommendation = resp;
+}
+
+function get_today_recommendation_name() {
+    return today_recommendation.name;
 }
 
 function second_call(authed) {
@@ -158,10 +167,10 @@ function second_call(authed) {
     });
 }
 
-function confirm_today() {
+function confirm_today(name) {
     console.log("confirm_today");
     if (today_recommendation) {
-	gapi.client.lunchere.yesUnauth({ "historyId": today_recommendation.historyId, "name": today_recommendation.name }).execute(function(resp) {
+	gapi.client.lunchere.yesUnauth({ "historyId": today_recommendation.historyId, "name": name }).execute(function(resp) {
 	    console.log("confirmed");
 	    console.log(resp);
 	    today_recommendation_received(resp);
@@ -172,7 +181,7 @@ function confirm_today() {
 function cancel_today() {
     console.log("cancel_today");
     if (today_recommendation) {
-	gapi.client.lunchere.noUnauth({ "historyId": today_recommendation.historyId, "name": today_recommendation.name }).execute(function(resp) {
+	gapi.client.lunchere.noUnauth({ "historyId": today_recommendation.historyId, "name": get_today_recommendation_name() }).execute(function(resp) {
 	    console.log("cancelled");
 	    console.log(resp);
 	    today_recommendation_received(resp);
@@ -195,10 +204,13 @@ window.addEventListener("load", function load() {
 	document.location = "/logout";
     });
     document.getElementById("yes").addEventListener("click", function() {
-	confirm_today();
+	confirm_today(get_today_recommendation_name());
     });
     document.getElementById("no").addEventListener("click", function() {
 	cancel_today();
+    });
+    document.getElementById("go").addEventListener("click", function() {
+	confirm_today(document.getElementById("newplace").value);
     });
 }, false);
 
