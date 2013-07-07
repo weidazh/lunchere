@@ -20,10 +20,6 @@ function lunchere_api_init() {
     gapi.client.load('oauth', 'dev', callback, ROOT);
 }
 
-document.getElementById("logout").addEventListener("click", function() {
-    gapi.auth.setToken(null);
-});
-
 function require_login(resp) {
     if (typeof(resp.error) !== "undefined" && resp.code == resp.error.code) {
 	console.log("ERROR");
@@ -37,9 +33,6 @@ function require_login(resp) {
     else {
 	console.log("OK");
 	console.log(resp);
-	gapi.client.oauth.createLogoutURL({"url": "/" }).execute(function(resp) {
-	    var logout_url = resp.url;
-	});
 	return true;
     }
 }
@@ -80,6 +73,33 @@ function user_authed_no_retry(token) {
     // first_call();
 }
 
+function setCookie(c_name, value, exdays) {
+    var exdate = new Date();
+    exdate.setDate(exdate.getDate() + exdays);
+    var c_value = escape(value) + ((exdays==null) ? "" : "; expires="+exdate.toUTCString());
+    document.cookie = c_name + "=" + c_value;
+}
+
+function getCookie(c_name, _default) {
+    var c_value = document.cookie;
+    var c_start = c_value.indexOf(" " + c_name + "=");
+    if (c_start == -1) {
+	c_start = c_value.indexOf(c_name + "=");
+    }
+    if (c_start == -1) {
+	c_value = _default;
+    }
+    else {
+	c_start = c_value.indexOf("=", c_start) + 1;
+	var c_end = c_value.indexOf(";", c_start);
+	if (c_end == -1) {
+	    c_end = c_value.length;
+	}
+	c_value = unescape(c_value.substring(c_start,c_end));
+    }
+    return c_value;
+}
+
 function first_call(authed) {
     gapi.client.lunchere.test().execute(function(resp) {
 	if (! require_login(resp))
@@ -88,19 +108,65 @@ function first_call(authed) {
     });
 }
 
+var historyId = getCookie("historyId", "Unknown");
+var today_recommendation;
+
+function today_recommendation_received(resp) {
+    if (resp.historyId && resp.historyId != historyId) {
+	historyId = resp.historyId;
+	setCookie("historyId", historyId, 7);
+    }
+    document.getElementById("today").innerHTML = resp.name;
+    document.getElementById("historyId").innerHTML = historyId;
+    today_recommendation = resp;
+}
+
 function second_call(authed) {
     var func;
     if (authed)
 	func  = gapi.client.lunchere.today();
     else
-	func  = gapi.client.lunchere.todayUnauth();
+	func  = gapi.client.lunchere.todayUnauth({ "historyId": historyId} );
     func.execute(function(resp) {
 	if (! require_login(resp))
 	    return;
-	document.getElementById("today").innerHTML = resp.name;
+	today_recommendation_received(resp);
     });
 }
 
+function confirm_today() {
+    console.log("confirm_today");
+    if (today_recommendation) {
+	gapi.client.lunchere.yesUnauth({ "historyId": today_recommendation.historyId, "name": today_recommendation.name }).execute(function(resp) {
+	    console.log("confirmed");
+	    today_recommendation_received(resp);
+	});
+    }
+}
+
+function cancel_today() {
+    console.log("cancel_today");
+    if (today_recommendation) {
+	gapi.client.lunchere.noUnauth({ "historyId": today_recommendation.historyId, "name": today_recommendation.name }).execute(function(resp) {
+	    console.log("cancelled");
+	    today_recommendation_received(resp);
+	});
+    }
+}
+
+window.addEventListener("load", function load() {
+    console.log("window.load");
+    window.removeEventListener("load", load, false);
+    document.getElementById("logout").addEventListener("click", function() {
+	gapi.auth.setToken(null);
+    });
+    document.getElementById("yes").addEventListener("click", function() {
+	confirm_today();
+    });
+    document.getElementById("no").addEventListener("click", function() {
+	cancel_today();
+    });
+}, false);
 
 </script>
 <script src="https://apis.google.com/js/client.js?onload=lunchere_api_init">
@@ -109,6 +175,9 @@ function second_call(authed) {
 <body>
 
 <button id="logout">Log out</button>
+<p>History ID: <span id="historyId">undefined</span></p>
 <p>Today we go to: <span id="today">loading ...</span></p>
+<button id="yes">Yes</button>
+<button id="no">No</button>
 </body>
 </html>

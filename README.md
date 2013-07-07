@@ -19,7 +19,8 @@ Core
 Web Service
 ===========
 1. Use gapi
-2. Recognize user
+2. Recognize user (delete! no user, use URL!)
+3. 
 
 
 

@@ -15,8 +15,12 @@ class TestRequestResponseMsg(messages.Message):
 class NoneRequestMsg(messages.Message):
     pass
 
+class HistoryIdMsg(messages.Message):
+    historyId = messages.StringField(1, required=False)
+
 class TodayRecommendation(messages.Message):
     name = messages.StringField(1, required=True)
+    historyId = messages.StringField(2, required=True)
 
 CLIENT_ID_http      = '418397336121.apps.googleusercontent.com'
 CLIENT_ID_https     = '418397336121-7u3gsnvbj6d5gan0102e83rb9gd4vd67.apps.googleusercontent.com'
@@ -60,12 +64,54 @@ def require_login(func):
     return wrapper
 
 class Recommendation:
-    def __init__(self, name):
+    def __init__(self, name, historyId):
         self.name = name
+        self.historyId = historyId
 
 def get_recommendation(user=None):
+    if user == None:
+        historyId = gen_new_history_id()
+    else:
+        historyId = "user:" + user.user_id()
     import random
-    return Recommendation(random.choice(["Cafe de Coral", "Fairwood", "Maxim"]))
+    return Recommendation(random.choice(["Cafe de Coral", "Fairwood", "Maxim"]), historyId=historyId)
+
+def gen_new_history_id():
+    from Crypto.Hash import MD5
+    import random
+    return "history:" + MD5.new(repr(random.randint(0, 100000))).hexdigest() # FIXME: user more robust algorithm
+
+def valid_history_id(historyId):
+    if historyId is None:
+        return False
+    elif historyId.startswith("history:"):
+        return True
+    elif historyId.startswith("user:"):
+        return True
+    else:
+        return False
+
+hashtable = {}
+CHOICES = ["Cafe de Coral", "Fairwood", "Maxim", "Hua ren", "McDonald", "KFC", "Bang Bang Chicken", "Fairwood (Westwood)", "Yoshinoya", "Bijas", "Canada Restaurant"]
+def get_timeslot():
+    import time
+    return "<" + str(time.time() / (24 * 3600)) + ">"
+def get_recommendation_from_history(historyId, cancel=None, confirm=None):
+    timeslot = get_timeslot()
+    if cancel:
+        if hashtable.has_key(timeslot + historyId):
+            hashtable.pop(timeslot + historyId)
+        pass # mark down the cancelling
+    if confirm:
+        hashtable[timeslot + historyId] = confirm
+    if not valid_history_id(historyId):
+        import random
+        return Recommendation(random.choice(CHOICES), historyId=gen_new_history_id())
+    elif hashtable.has_key(timeslot + historyId):
+        return Recommendation(confirm, historyId=historyId)
+    else:
+        import random
+        return Recommendation(random.choice(CHOICES), historyId=historyId)
 
 @endpoints.api(name="lunchere", version="dev", description="Where to lunch", allowed_client_ids=ALLOWED_CLIENT_IDS)
 class LuncHereAPI(remote.Service):
@@ -77,12 +123,22 @@ class LuncHereAPI(remote.Service):
     @require_login
     def today(self, request):
         recommendation = get_recommendation(user=my_get_current_user())
-        return TodayRecommendation(name=recommendation.name)
+        return TodayRecommendation(name=recommendation.name, historyId=recommendation.historyId)
 
-    @endpoints.method(NoneRequestMsg, TodayRecommendation, name="todayUnauth", http_method="GET")
+    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="todayUnauth", http_method="GET")
     def today_unauth(self, request):
-        recommendation = get_recommendation()
-        return TodayRecommendation(name=recommendation.name)
+        recommendation = get_recommendation_from_history(request.historyId)
+        return TodayRecommendation(name=recommendation.name, historyId=recommendation.historyId)
+
+    @endpoints.method(TodayRecommendation, TodayRecommendation, name="noUnauth", http_method="GET")
+    def no_unauth(self, request):
+        recommendation = get_recommendation_from_history(request.historyId, cancel=request.name)
+        return TodayRecommendation(name=recommendation.name, historyId=recommendation.historyId)
+
+    @endpoints.method(TodayRecommendation, TodayRecommendation, name="yesUnauth", http_method="GET")
+    def yes_unauth(self, request):
+        recommendation = get_recommendation_from_history(request.historyId, confirm=request.name)
+        return TodayRecommendation(name=recommendation.name, historyId=recommendation.historyId)
 
 
 # ==============
