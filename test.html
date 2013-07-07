@@ -5,6 +5,8 @@
 <!-- API Explorer: https://developers.google.com/apis-explorer/ -->
 <script>
 
+var zenzen_noauth = 1;
+
 function lunchere_api_init() {
     var apisToLoad;
     var callback = function(msg) {
@@ -16,8 +18,13 @@ function lunchere_api_init() {
     console.log("INIT");
     var ROOT = '/_ah/api';
     apisToLoad = 2;
+    if (zenzen_noauth) {
+	apisToLoad -= 1;
+    }
+    else {
+	gapi.client.load('oauth', 'dev', callback, ROOT);
+    }
     gapi.client.load('lunchere', 'dev', callback, ROOT);
-    gapi.client.load('oauth', 'dev', callback, ROOT);
 }
 
 function require_login(resp) {
@@ -40,10 +47,20 @@ function require_login(resp) {
 function signin(mode, callback) {
     var CLIENT_ID = "@@CLIENT_ID@@";
     var SCOPES = "https://www.googleapis.com/auth/userinfo.email";
-    gapi.auth.authorize({client_id: CLIENT_ID,
-	    scope: SCOPES, immediate: mode,
-	    response_type: 'token id_token'},
-	    callback);
+    if (zenzen_noauth) {
+	if (mode) {
+	    callback(null);
+	}
+	else {
+	    console.log("ERROR: singin not immediately but zenzen_noauth");
+	}
+    }
+    else {
+	gapi.auth.authorize({client_id: CLIENT_ID,
+		scope: SCOPES, immediate: mode,
+		response_type: 'token id_token'},
+		callback);
+    }
 }
 
 function user_authed_retry(token) {
@@ -101,6 +118,10 @@ function getCookie(c_name, _default) {
 }
 
 function first_call(authed) {
+    if (1 /* NO TEST */) {
+	second_call(authed);
+	return;
+    }
     gapi.client.lunchere.test().execute(function(resp) {
 	if (! require_login(resp))
 	    return;
@@ -181,7 +202,7 @@ window.addEventListener("load", function load() {
 }, false);
 
 </script>
-<script src="https://apis.google.com/js/client.js?onload=lunchere_api_init">
+<script src="js/client.js?onload=lunchere_api_init">
 </script>
 </head>
 <body>
