@@ -29,7 +29,12 @@ function lunchere_api_init() {
     var callback = function(msg) {
         console.log(msg + " loaded");
         if (--apisToLoad == 0) {
-            signin(true, user_authed_no_retry);
+	    if (gapi.client.lunchere) {
+		signin(true, user_authed_no_retry);
+	    }
+	    else {
+		console.log("cannot load lunchere")
+	    }
         }
     }
     console.log("INIT");
@@ -143,6 +148,7 @@ function today_recommendation_received(resp) {
 	document.getElementById("today").innerHTML = resp.name;
     }
     document.getElementById("historyId").innerHTML = historyId;
+    document.getElementById("timeslot").innerHTML = resp.timeslotFriendly;
     if (resp.confirmed)
 	document.getElementById("confirmed").innerHTML = "(confirmed)";
     else
@@ -167,10 +173,38 @@ function second_call(authed) {
     });
 }
 
+function prevmeal() {
+    console.log("prevmeal");
+    var timeslot;
+    if (today_recommendation) {
+	timeslot = today_recommendation.timeslot;
+    }
+
+    gapi.client.lunchere.prevmealUnauth({ "historyId": today_recommendation.historyId, "timeslot": timeslot }).execute(function(resp) {
+	console.log("next meal received");
+	console.log(resp);
+	today_recommendation_received(resp);
+    });
+}
+
+function nextmeal() {
+    console.log("nextmeal");
+    var timeslot;
+    if (today_recommendation) {
+	timeslot = today_recommendation.timeslot;
+    }
+
+    gapi.client.lunchere.nextmealUnauth({ "historyId": today_recommendation.historyId, "timeslot": timeslot }).execute(function(resp) {
+	console.log("next meal received");
+	console.log(resp);
+	today_recommendation_received(resp);
+    });
+}
+
 function confirm_today(name) {
     console.log("confirm_today");
     if (today_recommendation) {
-	gapi.client.lunchere.yesUnauth({ "historyId": today_recommendation.historyId, "name": name }).execute(function(resp) {
+	gapi.client.lunchere.yesUnauth({ "historyId": today_recommendation.historyId, "timeslot": today_recommendation.timeslot, "name": name }).execute(function(resp) {
 	    console.log("confirmed");
 	    console.log(resp);
 	    today_recommendation_received(resp);
@@ -181,7 +215,7 @@ function confirm_today(name) {
 function cancel_today() {
     console.log("cancel_today");
     if (today_recommendation) {
-	gapi.client.lunchere.noUnauth({ "historyId": today_recommendation.historyId, "name": get_today_recommendation_name() }).execute(function(resp) {
+	gapi.client.lunchere.noUnauth({ "historyId": today_recommendation.historyId, "timeslot": today_recommendation.timeslot, "name": get_today_recommendation_name() }).execute(function(resp) {
 	    console.log("cancelled");
 	    console.log(resp);
 	    today_recommendation_received(resp);
@@ -202,6 +236,12 @@ window.addEventListener("load", function load() {
 	document.getElementById("confirmed").innerHTML = "";
 	// signin(true, user_authed_no_retry);
 	document.location = "/logout";
+    });
+    document.getElementById("prevmeal").addEventListener("click", function() {
+	prevmeal();
+    });
+    document.getElementById("nextmeal").addEventListener("click", function() {
+	nextmeal();
     });
     document.getElementById("yes").addEventListener("click", function() {
 	confirm_today(get_today_recommendation_name());
