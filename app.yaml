@@ -19,9 +19,9 @@ handlers:
 #  static_files: test.html
 #  upload: test\.html
 - url: /_ah/spi/.*
-  script: lunchere.endpoints_application
+  script: lunchere.ENDPOINTS_APPLICATION
 - url: /.*
-  script: lunchere.test # Please use the class name
+  script: lunchere.APPLICATION # Please use the class name
 
 libraries:
 - name: pycrypto
