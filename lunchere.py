@@ -307,6 +307,8 @@ class History:
 
     def _clear_confirmed(self, canteen_id):
         hist_ev = HistoryEvent.get_confirmed(self.history_id, self.timeslot)
+        if hist_ev is None:
+            return None
         hist_ev.cancelled = True
         if hist_ev.canteenId == canteen_id:
             return hist_ev
