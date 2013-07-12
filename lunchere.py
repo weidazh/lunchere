@@ -124,6 +124,14 @@ class HistoryEvent(db.Model):
         return hist_ev
 
     @classmethod
+    def foreach_no_cancelled(cls, history_id, timeslot):
+        """Yield each HistoryEvent which is not cancelled"""
+        for hist_ev in db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+                        "historyId = :1 AND timeslot = :2 AND cancelled = False", history_id, timeslot).run():
+            yield hist_ev
+
+
+    @classmethod
     def get_confirmed(cls, history_id, timeslot):
         """There should be at most one HistoryEvent that is confirmed and not cancelled"""
         hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
@@ -306,20 +314,14 @@ class History:
             return (None, False)
 
     def _clear_confirmed(self, canteen_id):
-        hist_ev = HistoryEvent.get_confirmed(self.history_id, self.timeslot)
-        if hist_ev is None:
-            return None
-        hist_ev.cancelled = True
-        if hist_ev.canteenId == canteen_id:
-            return hist_ev
-        else:
+        for hist_ev in HistoryEvent.foreach_no_cancelled(self.history_id, self.timeslot):
+            hist_ev.cancelled = True
             hist_ev.put()
 
     def _datastore_append(self, canteen_id, confirmed, cancelled):
         if confirmed and not cancelled:
-            hist_ev = self._clear_confirmed(canteen_id)
-        else:
-            hist_ev = HistoryEvent.get_canteen(self.history_id, self.timeslot, canteen_id)
+            self._clear_confirmed(canteen_id)
+        hist_ev = HistoryEvent.get_canteen(self.history_id, self.timeslot, canteen_id)
         if hist_ev:
             # found it
             hist_ev.event_date = datetime.datetime.utcnow()
