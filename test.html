@@ -7,8 +7,8 @@
 function initClientIdHistoryId() {
     return {
         "CLIENT_ID": "@@CLIENT_ID@@",
-        "historyId": @@HISTORY_ID@@,
-	"USE_COOKIE": @@USE_COOKIE@@
+        "historyId": "@@HISTORY_ID@@",
+	"API_VERSION": "@@API_VERSION@@"
     };
 }
 </script>
@@ -20,10 +20,10 @@ function initClientIdHistoryId() {
 
 <button id="logout">Log out</button>
 <p>History ID: <span id="historyId">undefined</span></p>
-<p>Timeslot: <button id="prevmeal">Prev meal</button> <span id="timeslot">undefined</span> <button id="nextmeal">Next meal</button></p>
-<p>Today we go to: <span id="today">loading ...</span><span id="confirmed"></span></p>
-<button id="yes">Yes</button>
-<button id="no">No</button>
+<p>Timeslot: <button id="deletemeal">Del meal</button><button id="prevmeal">Prev</button> <span id="timeslot">undefined</span> <button id="nextmeal">Next</button><button id="createmeal">Create meal</button></p>
+<p>Today we go to: <span id="today">loading ...</span><span id="confirmed"></span>
+<button id="yes">OK</button>
+<button id="no">Em... maybe another one</button></p>
 <p>Tell the system where you go: <input id="newplace"></input><button id="go">Go</button></p>
 </body>
 </html>

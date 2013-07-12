@@ -11,7 +11,12 @@ from google.appengine.ext import db
 from protorpc import remote
 from protorpc import messages
 import datetime
+import logging
+import random
+import urllib
 
+
+LUNCHERE_API_VERSION = "dev"
 
 # endpoints: https://developers.google.com/appengine/docs/python/endpoints/
 # protorpc:  https://developers.google.com/appengine/docs/python/tools/protorpc/
@@ -28,6 +33,12 @@ class TodayRecommendation(messages.Message):
     timeslot = messages.IntegerField(3, required=False)
     confirmed = messages.BooleanField(4, required=False)
     timeslotFriendly = messages.StringField(5, required=False)
+    could_delete = messages.BooleanField(6, required=False)
+    has_prevmeal = messages.BooleanField(7, required=False)
+    has_nextmeal = messages.BooleanField(8, required=False)
+    has_createmeal = messages.BooleanField(9, required=False)
+    has_other_recommend = messages.BooleanField(10, required=False)
+    api_version = messages.StringField(11, required=False)
 
 
 CLIENT_ID_ALL_JS      = '418397336121-13ej5mm6b5hef5n6qt87e2rj3u155f2l.apps.googleusercontent.com'
@@ -58,8 +69,9 @@ def require_login(func):
 
 class Recommendation:
     "Intermediate class, actually I think it could be replaced with a tuple or so"
-    def __init__(self, canteen_id, history_id, timeslot, confirmed):
+    def __init__(self, canteen_id, has_other_recommend, history_id, timeslot, confirmed):
         self.canteen_id = canteen_id
+        self.has_other_recommend = has_other_recommend
         self.history_id = history_id
         self.timeslot = timeslot
         self.confirmed = confirmed
@@ -77,9 +89,22 @@ class Recommendation:
             timeslot_friendly = Timeslot.user_friendly(self.timeslot)
         else:
             timeslot_friendly = None
+        logging.info("COULD_DELETE:")
+        could_delete = Timeslot.delete_and_prevmeal(self.history_id, self.timeslot, dry_run=True, fallback=False, create=False)
+        logging.info("COULD_DELETE: " + repr(could_delete))
+        could_delete = not not could_delete
+        has_prevmeal = not not Timeslot.prevmeal(self.history_id, self.timeslot, fallback=False, create=False)
+        has_nextmeal = not not Timeslot.nextmeal(self.history_id, self.timeslot, fallback=False, create=False)
+        logging.info("HAS_CREATEMEAL:")
+        has_createmeal = Timeslot.nextmeal(self.history_id, self.timeslot, fallback=False, create=True, create_only=True)
+        logging.info("HAS_CREATEMEAL: " + repr(has_createmeal))
+        has_createmeal = not not has_createmeal
         return TodayRecommendation(name=canteen_id, historyId=self.history_id,
                                 timeslot=self.timeslot, timeslotFriendly=timeslot_friendly,
-                                confirmed=self.confirmed)
+                                confirmed=self.confirmed,
+                                could_delete=could_delete, has_nextmeal=has_nextmeal, has_prevmeal=has_prevmeal, has_createmeal=has_createmeal,
+                                has_other_recommend=self.has_other_recommend,
+                                api_version=LUNCHERE_API_VERSION)
 
 class HistoryEvent(db.Model):
     """A HistoryEvent is an record in History,
@@ -93,12 +118,15 @@ class HistoryEvent(db.Model):
     canteenId = db.StringProperty(required=True)
 
     @classmethod
-    def get_max_timeslot(cls, history_id):
+    def get_max_timeslot_or_none(cls, history_id):
         """max timeslot of the specified history_id
-           FIXME: it should return TODAY01 for the History.__init__ caller"""
+           FIXME: it should return TODAY01 for the History.__init__ caller
+
+           Could return None! If you do not want None, use Timeslot.most_recent instead"""
         hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 ORDER BY timeslot DESC", history_id).get()
-        return getattr(hist_ev, "timeslot", 2)
+        timeslot = getattr(hist_ev, "timeslot", None)
+        return timeslot
 
     @classmethod
     def get_prev_timeslot(cls, history_id, timeslot0):
@@ -130,6 +158,12 @@ class HistoryEvent(db.Model):
                         "historyId = :1 AND timeslot = :2 AND cancelled = False", history_id, timeslot).run():
             yield hist_ev
 
+    @classmethod
+    def foreach_hist_ev(cls, history_id, timeslot):
+        """Yield each HistoryEvent, no condition"""
+        for hist_ev in db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+                       "historyId = :1 AND timeslot = :2", history_id, timeslot).run():
+            yield hist_ev
 
     @classmethod
     def get_confirmed(cls, history_id, timeslot):
@@ -194,7 +228,6 @@ class Choice(db.Model):
     @classmethod
     def choose_from(cls, choices):
         _sum = sum([freq for canteen_id, freq in choices])
-        import random
         r = random.random() * _sum
         for canteen_id, freq in choices:
             if freq >= r:
@@ -250,11 +283,15 @@ class TZInfo(datetime.tzinfo):
 
 class Timeslot:
     @classmethod
-    def guess_local_timeslot(cls, history_id):
+    def guess_local_timeslot_base(cls, history_id):
         tzinfo = TZInfo(Hints.get_hint(history_id, "timezone", "HKT"))
         utcnow = datetime.datetime.utcnow()
         localnow = tzinfo.fromutc(utcnow.replace(tzinfo=tzinfo))
-        return localnow.year * 10000 + localnow.month * 100 + localnow.day
+        return (localnow.year * 10000 + localnow.month * 100 + localnow.day) * 100
+
+    @classmethod
+    def _base(cls, timeslot):
+        return timeslot - (timeslot % 100)
 
     @classmethod
     def ordinal(cls, num):
@@ -274,35 +311,136 @@ class Timeslot:
         return "%d-%d-%d %d%s meal" % (timeslot / 1000000, timeslot / 10000 % 100, timeslot / 100 % 100, timeslot % 100, Timeslot.ordinal(timeslot % 100))
 
     @classmethod
-    def prevmeal(cls, history_id, timeslot0):
-        "find the previous timeslot < timeslot0"
+    def delete_and_prevmeal(cls, history_id, timeslot0, dry_run=False, fallback=True, create=True):
+        """delete the meal timeslot = timeslot0 if no confirmed,
+           if successful then jump to prevmeal
+
+           timeslot0 should not be None
+        """
+        if fallback and not create:
+            raise Exception("ERROR: program bug, fallback must create in most_recent")
         if timeslot0 is None:
-            timeslot0 = HistoryEvent.get_max_timeslot(history_id)
+            logging.warn("deleting a None timeslot0")
+            "FIXME: report error"
+            if fallback: # i.e. also create
+                timeslot0 = Timeslot.most_recent(history_id, fallback=False, create=False)
+                if timeslot0 is None:
+                    logging.debug("timeslot0 is None, fallback, most_recent returns None if no create. So return most_recent with create. nothing deleted")
+                    return Timeslot.most_recent(history_id, fallback=True, create=True)
+                else:
+                    logging.debug("timeslot0 is None, fallback, return most_recent, nothing deleted.")
+                    # although fallback, I do not delete anything I guess
+                    return timeslot0
+            else:
+                logging.debug("timeslot0 is None, no fallback")
+                return None
+
+        # FIXME: BUG, when cancel an option, the datastore seems slow and the thing is not reflected
+        #        to the datastore, so that it could be confirmed, so the delete button is not available.
+        #        refresh the page and this is OK.
+        hist_ev = HistoryEvent.get_confirmed(history_id, timeslot0)
+        if hist_ev is not None:
+            logging.warn("Cannot delete a confirmed meal")
+            "FIXME: report error"
+            if fallback: # assume deleted and move back to current timeslot0
+                logging.debug("timeslot0 is confirmed, fallback, nothing deleted")
+                return timeslot0
+            else:
+                logging.debug("timeslot0 is confirmed, no fallback, nothing deleted")
+                return None
+        if not dry_run:
+            logging.warn("deleting")
+            for hist_ev in HistoryEvent.foreach_hist_ev(history_id, timeslot0):
+                if not dry_run:
+                    hist_ev.delete()
+
+        # Move to prev (or next meal)
+        new_timeslot = Timeslot.prevmeal(history_id, timeslot0, fallback=False, create=False)
+        logging.info("prev_timeslot = " + repr(new_timeslot))
+        if new_timeslot is None:
+            timeslot0 = Timeslot._base(timeslot0)
+            new_timeslot = Timeslot.nextmeal(history_id, timeslot0, fallback=fallback, create=create)
+            logging.warn("next_timeslot = " + repr(new_timeslot))
+            logging.debug("timeslot0 is deleted, move to next or no fallback")
+        else:
+            logging.debug("timeslot0 is deleted, move to previous")
+        return new_timeslot
+
+    @classmethod
+    def prevmeal(cls, history_id, timeslot0, fallback=True, create=False):
+        """find the previous timeslot < timeslot0, if timeslot0 is None this is meaningless, return None directly;
+           could be None!!!"""
+        if timeslot0 is None:
+            if not fallback:
+                return None
+            return Timeslot.most_recent(history_id, fallback=fallback, create=create)
         prev_timeslot = HistoryEvent.get_prev_timeslot(history_id, timeslot0)
-        if prev_timeslot is None:
+        if prev_timeslot is None and fallback:
             return timeslot0
         else:
             return prev_timeslot
 
     @classmethod
-    def nextmeal(cls, history_id, timeslot0):
+    def most_recent(cls, history_id, fallback=True, create=True):
+        """find the most recent meal"""
+        if fallback and not create:
+            raise Exception("ERROR: program bug, fallback must create in most_recent")
+        timeslot = HistoryEvent.get_max_timeslot_or_none(history_id)
+        if timeslot is None and create:
+            return Timeslot.guess_local_timeslot_base(history_id) + 1
+        return timeslot
+
+    @classmethod
+    def nextmeal(cls, history_id, timeslot0, fallback=True, create=True, create_only=False):
         """find the next timeslot > timeslot0.
            create new timeslot only when current timeslot is confirmed, or,
-           the day is changed"""
+           the day is changed.
+
+           If input None, return Timeslot.most_recent()"""
         if timeslot0 is None:
-            timeslot0 = HistoryEvent.get_max_timeslot(history_id)
-        else:
-            exists_next_timeslot = HistoryEvent.get_next_timeslot(history_id, timeslot0)
-            if exists_next_timeslot:
+            if not fallback:
+                logging.info("timeslot0 is None and not fallback")
+                return None
+            if create_only:
+                logging.info("timeslot0 is None and create_only")
+                return None
+            return Timeslot.most_recent(history_id, fallback=fallback, create=create)
+
+        exists_next_timeslot = HistoryEvent.get_next_timeslot(history_id, timeslot0)
+        if exists_next_timeslot:
+            if create_only:
+                logging.info("found next timeslot and create_only")
+                return None
+            else:
+                logging.info("found next timeslot and not create_only")
                 return exists_next_timeslot # pivot to next timeslot
 
-        base = Timeslot.guess_local_timeslot(history_id) * 100
+        base = Timeslot.guess_local_timeslot_base(history_id)
+        new_timeslot = None
         if timeslot0 >= base and HistoryEvent.get_confirmed(history_id, timeslot0):
-            return timeslot0 + 1         # most recent timeslot, old date
-        elif timeslot0 >= base:
-            return timeslot0             # most recent timeslot but not confirmed
+            "INFO: Today new meal"
+            new_timeslot = timeslot0 + 1 # most recent timeslot, old date
+        elif timeslot0 <= base:
+            "INFO: New date"
+            new_timeslot = base + 1
         else:
-            return base + 1              # most recent timeslot and new date
+            "INFO: Today old meal because not confirmed yet"
+            "FIXME: Warn error, no moving to next meal"
+            pass                         # most recent timeslot but not confirmed
+
+        # create new timeslot
+        if create and new_timeslot is not None:
+            logging.info("new_timeslot is not None and create")
+            return new_timeslot
+        elif create_only:
+            logging.info("new_timeslot is None and create_only")
+            return None
+        elif fallback:
+            logging.info("new_timeslot is None and fallback to timeslot0")
+            return timeslot0
+        else:
+            logging.info("new_timeslot is None and not fallback")
+            return None
 
 class History:
     "A history is a sequence of guessings, recommendations, confirms and rejects/cancels"
@@ -335,7 +473,6 @@ class History:
         else:
             # not found, create a new HistoryEvent
             if confirmed and cancelled:
-                import logging
                 logging.warn("The event is confirmed and cancelled but cannot be found in datastore")
             hist_ev = HistoryEvent(historyId=self.history_id, timeslot=self.timeslot,
                         event_date=datetime.datetime.utcnow(), confirmed=confirmed, cancelled=cancelled,
@@ -350,7 +487,6 @@ class History:
            FIXME: a more robust random algorithm (and detection) should be used to avoid hash conflicts.
         """
         from Crypto.Hash import MD5
-        import random
         return "history:" + MD5.new(repr(random.randint(0, 100000))).hexdigest()
         # FIXME: use more robust algorithm
 
@@ -374,13 +510,15 @@ class History:
             return History("user:" + user.user_id())
 
     def __init__(self, history_id=None, timeslot=None):
+        "History.__init__"
         if not History._valid_history_id(history_id):
+            "FIXME: report error"
             history_id = History.gen_new_history_id()
         self.history_id = history_id
         if timeslot is not None:
             self.timeslot = timeslot
         else:
-            self.timeslot = HistoryEvent.get_max_timeslot(self.history_id)
+            self.timeslot = Timeslot.most_recent(self.history_id)
         self.next_recommend, self.confirmed = self._datastore_get_no_cancelled()
 
     def cancel(self, canteen_id):
@@ -405,21 +543,28 @@ class History:
         """called to get next recommend
 
            FIXME: call the backend to learn the fact for recommendation"""
+        if not isinstance(exclude, tuple):
+            raise Exception("Programming error: input exclude is not tuple")
+        logging.info("EXCLUDE = " + repr(exclude))
+        has_other_recommend = True
         if self.next_recommend is None:
             choices = Choice.get_choices(history_id=self.history_id, exclude=exclude)
+            logging.info("CHOICES = " + repr(choices))
             if len(choices):
-                import random
                 self.confirmed = False
                 self.next_recommend = Choice.choose_from(choices) # FIXME: backend...
                 self._datastore_append(self.next_recommend, False, False)
             else:
                 self.confirmed = False
                 self.next_recommend = None
-        return Recommendation(self.next_recommend, history_id=self.history_id, timeslot=self.timeslot, confirmed=self.confirmed)
+                has_other_recommend = not not (len(choices) + len(exclude))
+        return Recommendation(self.next_recommend, has_other_recommend, history_id=self.history_id, timeslot=self.timeslot, confirmed=self.confirmed)
 
     @classmethod
-    def recommend_from(cls, history_id, timeslot, prevmeal=None, nextmeal=None, cancel=None, confirm=None):
+    def recommend_from(cls, history_id, timeslot, prevmeal=None, nextmeal=None, deletemeal=None, cancel=None, confirm=None):
         "this is what the user should call directly"
+        if deletemeal:
+            timeslot = Timeslot.delete_and_prevmeal(history_id, timeslot)
         if prevmeal:
             timeslot = Timeslot.prevmeal(history_id, timeslot)
         if nextmeal:
@@ -430,11 +575,11 @@ class History:
         if confirm:
             history.confirm(confirm)
         if cancel:
-            return history.recommend(exclude=(cancel))
+            return history.recommend(exclude=(cancel,))
         else:
             return history.recommend()
 
-@endpoints.api(name="lunchere", version="dev", description="Where to lunch", allowed_client_ids=ALLOWED_CLIENT_IDS)
+@endpoints.api(name="lunchere", version=LUNCHERE_API_VERSION, description="Where to lunch", allowed_client_ids=ALLOWED_CLIENT_IDS)
 class LuncHereAPI(remote.Service):
     def __init__(self):
         self.counter = 0
@@ -456,6 +601,13 @@ class LuncHereAPI(remote.Service):
         "next meal"
         self.counter += 1
         recommendation =  History.recommend_from(request.historyId, request.timeslot, nextmeal=True)
+        return recommendation.to_rpc()
+
+    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="deletemealUnauth", http_method="GET")
+    def deletemeal_unauth(self, request):
+        "delete meal, only when all the meals are not confirmed"
+        self.counter += 1
+        recommendation = History.recommend_from(request.historyId, request.timeslot, deletemeal=True)
         return recommendation.to_rpc()
 
     @endpoints.method(HistoryIdMsg, TodayRecommendation, name="todayUnauth", http_method="GET")
@@ -501,49 +653,61 @@ class MainPage(webapp2.RequestHandler):
        others redirect to /
     """
 
-    def _get_history_id(self, use_cookie=True):
+    def _path_to_history_id(self, path):
         "generate History ID (XX:YY) from URL (/XX/YY)"
-        request = self.request # to avoid pylint abusing request
-        if request.path.startswith("/user"):
+        if path.startswith("/user"):
             user = my_get_current_user(False)
             if user != None:
-                # FIXME: should report error to the user rather
-                return repr(History.from_user(user).history_id)
-        elif request.path.startswith("/history/"):
+                return History.from_user(user).history_id
+        elif path.startswith("/history/"):
             import re
-            return repr(re.compile("^/history/").sub("history:", request.path))
-        elif use_cookie:
-            return "getCookie(\"historyId\", \"Unknown\")"
+            return re.compile("^/history/").sub("history:", path)
         else:
             return None
+
+    def _cookie_to_history_id(self, request):
+        logging.debug("_cookie_to_history_id");
+        history_id = request.cookies.get("historyId", None)
+        logging.debug("history_id = " + repr(history_id) + " (from cookies)")
+        if history_id is not None:
+            history_id = urllib.unquote(history_id)
+            logging.debug("history_id = " + repr(history_id) + " (unquoted)")
+        return history_id
+
+    def set_root_cookie(self, history_id, days=7):
+        seconds = days * 24 * 60 * 60
+        expires = datetime.datetime.utcnow() + datetime.timedelta(days=days)
+        self.response.set_cookie("historyId", urllib.quote(history_id), path="/", max_age=seconds, expires=expires, domain=None, secure=False, overwrite=True)
+        pass
 
     def get(self):
         "default behavior"
 
         request, response = self.request, self.response
         use_cookie = True
+        refresh_cookie = True # refresh the cookie each time it is logged in
         # but in the following call, do not use_cookie, so that
         # the history_id is got from the user sent cookie directly rather
         # than in the client side.
-        history_id = self._get_history_id(use_cookie=False)
-        if history_id:
+        history_id = self._path_to_history_id(request.path)
+        history_id_in_cookie = self._cookie_to_history_id(request)
+        logging.debug("history_id from URL %s; history_id from cookie %s" % (repr(history_id), repr(history_id_in_cookie)))
+        if history_id is not None:
             response.headers['Content-Type'] = 'text/html'
             response.headers['Cache-Control'] = 'no-cache'
 
+            if use_cookie and (history_id != history_id_in_cookie or refresh_cookie):
+                self.set_root_cookie(history_id)
             response.write(open("test.html").read().replace("@@CLIENT_ID@@", CLIENT_ID_ALL_JS)
-                                                        .replace("@@HISTORY_ID@@", self._get_history_id())
-                                                        .replace("@@USE_COOKIE@@", "1" if use_cookie else "0"))
+                                                   .replace("@@HISTORY_ID@@", history_id)
+                                                   .replace("@@API_VERSION@@", LUNCHERE_API_VERSION))
         else:
-            import urllib
             if use_cookie and request.path != "/logout":
-                # maybe redirect to "/", and clear the cookie directly?
-                history_id = request.cookies.get("historyId", None)
-                if history_id is not None:
-                    history_id = urllib.unquote(history_id)
+                history_id = history_id_in_cookie
             if history_id == None:
                 history_id = History.gen_new_history_id()
                 if use_cookie:
-                    response.set_cookie("historyId", urllib.quote(history_id), max_age=7)
+                    self.set_root_cookie(history_id)
             self.redirect(str(history_id).replace("history:", "/history/"))
 
 APPLICATION = webapp2.WSGIApplication([('/.*', MainPage)], debug=True)
