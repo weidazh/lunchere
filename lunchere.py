@@ -27,6 +27,10 @@ class HistoryIdMsg(messages.Message):
     historyId = messages.StringField(1, required=False)
     timeslot = messages.IntegerField(2, required=False)
 
+class HintsMessage(messages.Message):
+    ll = messages.StringField(1, required=False)
+    near = messages.StringField(2, required=False)
+
 class TodayRecommendation(messages.Message):
     "Return to client or confirm/cancel from client"
     name = messages.StringField(1, required=True)
@@ -40,6 +44,7 @@ class TodayRecommendation(messages.Message):
     has_createmeal = messages.BooleanField(9, required=False)
     has_other_recommend = messages.BooleanField(10, required=False)
     api_version = messages.StringField(11, required=False)
+    hints = messages.MessageField(HintsMessage, 12, required=False)
 
 class OneChoice(messages.Message):
     canteenId = messages.StringField(1, required=True)
@@ -94,12 +99,13 @@ class RecommendationChoices:
 
 class Recommendation:
     "Intermediate class, actually I think it could be replaced with a tuple or so"
-    def __init__(self, canteen_id, has_other_recommend, history_id, timeslot, confirmed):
+    def __init__(self, canteen_id, has_other_recommend, history_id, timeslot, confirmed, hints):
         self.canteen_id = canteen_id
         self.has_other_recommend = has_other_recommend
         self.history_id = history_id
         self.timeslot = timeslot
         self.confirmed = confirmed
+        self.hints = hints
 
     def to_rpc(self):
         """canteen_id if None, would be turn to \"\" because it is <required>
@@ -124,12 +130,17 @@ class Recommendation:
         has_createmeal = Timeslot.nextmeal(self.history_id, self.timeslot, fallback=False, create=True, create_only=True)
         logging.info("HAS_CREATEMEAL: " + repr(has_createmeal))
         has_createmeal = not not has_createmeal
+        hints = HintsMessage()
+        logging.debug(self.hints)
+        for key in self.hints:
+            logging.debug("setattr %s %s %s" % (repr(hints), repr(key), repr(self.hints[key])))
+            setattr(hints, key, self.hints[key])
         return TodayRecommendation(name=canteen_id, historyId=self.history_id,
                                 timeslot=self.timeslot, timeslotFriendly=timeslot_friendly,
                                 confirmed=self.confirmed,
                                 could_delete=could_delete, has_nextmeal=has_nextmeal, has_prevmeal=has_prevmeal, has_createmeal=has_createmeal,
                                 has_other_recommend=self.has_other_recommend,
-                                api_version=LUNCHERE_API_VERSION)
+                                api_version=LUNCHERE_API_VERSION, hints=hints)
 
 class HistoryEvent(db.Model):
     """A HistoryEvent is an record in History,
@@ -227,17 +238,17 @@ class Choice(db.Model):
             yield canteen_id, freq, choice
             canteenIds[canteen_id] = True
     @classmethod
-    def get_choices(cls, history_id, exclude=()):
+    def get_choices(cls, history_id, timeslot0, exclude=()):
         canteenIds = dict([(e, True) for e in exclude])
         choice_list = db.GqlQuery("SELECT * FROM Choice WHERE " +
                         "historyId = :1", history_id)
-        choices = []
+        choices = {}
         max_timeslot = 0
 
         for (canteen_id, freq, choice) in Choice._yield_choices(choice_list, canteenIds):
             if choice.max_timeslot > max_timeslot:
                 max_timeslot = choice.max_timeslot
-            choices.append((canteen_id, freq))
+            choices[canteen_id] = freq
 
         if len(choices):
             avg = sum([freq for canteen_id, freq in choices]) / len(choices)
@@ -247,8 +258,14 @@ class Choice(db.Model):
         choice_list = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot >= :2", history_id, max_timeslot)
         for (canteen_id, freq, hist_ev) in Choice._yield_choices(choice_list, canteenIds, deffreq=avg):
-            choices.append((canteen_id, freq))
-        return choices
+            choices[canteen_id] = freq
+
+        choice_list = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+                        "historyId = :1 AND timeslot = :2", history_id, timeslot0)
+        for (canteen_id, freq, hist_ev) in Choice._yield_choices(choice_list, {}, deffreq=avg):
+            if canteenIds.has_key(canteen_id) and choices.has_key(canteen_id):
+                choices.pop(canteen_id)
+        return choices.items()
 
     @classmethod
     def choose_from(cls, choices):
@@ -268,7 +285,7 @@ class Hints(db.Model):
     @classmethod
     def get_hint(cls, history_id, key, def_value):
         hint = db.GqlQuery("SELECT * FROM Hints WHERE " +
-                        "historyId = :1 AND key = :2", history_id, key)
+                        "historyId = :1 AND hint_key = :2", history_id, key)
         value = hint.get()
         if value is None:
             return def_value
@@ -278,7 +295,7 @@ class Hints(db.Model):
     @classmethod
     def set_hint(cls, history_id, key, value):
         hint = db.GqlQuery("SELECT * FROM Hints WHERE " +
-                        "historyId = :1 AND key = :2", history_id, key)
+                        "historyId = :1 AND hint_key = :2", history_id, key)
         hint = hint.get()
         if hint is None:
             hint = Hints(historyId=history_id, hint_key=key, hint_value=value)
@@ -505,6 +522,12 @@ class History:
             hist_ev.put()
 
     @classmethod
+    def gen_new_history_id_from_hints(cls, hints):
+        # from Crypto.Hash import MD5
+        # return "history:" + MD5.new(repr(hints.get("ll", "")) + repr(hints.get("near", ""))).hexdigest()
+        return cls.gen_new_history_id()
+
+    @classmethod
     def gen_new_history_id(cls):
         """Generate new History ID, usually called by __init__;
            however caller can call this directly to avoid creating new object
@@ -570,7 +593,7 @@ class History:
         logging.debug("EXCLUDE = " + repr(exclude))
         # if self.next_recommend is not None:
         #     exclude = exclude + (self.next_recommend,)
-        choices = Choice.get_choices(history_id=self.history_id, exclude=exclude)
+        choices = Choice.get_choices(history_id=self.history_id, timeslot0=self.timeslot, exclude=exclude)
         return RecommendationChoices(self.history_id, self.timeslot, choices)
 
 
@@ -582,8 +605,12 @@ class History:
             raise Exception("Programming error: input exclude is not tuple")
         logging.info("EXCLUDE = " + repr(exclude))
         has_other_recommend = True
+        hints = {
+            "ll": Hints.get_hint(self.history_id, "ll", None),
+            "near": Hints.get_hint(self.history_id, "near", None)
+        }
         if self.next_recommend is None:
-            choices = Choice.get_choices(history_id=self.history_id, exclude=exclude)
+            choices = Choice.get_choices(history_id=self.history_id, timeslot0=self.timeslot, exclude=exclude)
             logging.info("CHOICES = " + repr(choices))
             if len(choices):
                 self.confirmed = False
@@ -593,7 +620,7 @@ class History:
                 self.confirmed = False
                 self.next_recommend = None
                 has_other_recommend = not not (len(choices) + len(exclude))
-        return Recommendation(self.next_recommend, has_other_recommend, history_id=self.history_id, timeslot=self.timeslot, confirmed=self.confirmed)
+        return Recommendation(self.next_recommend, has_other_recommend, history_id=self.history_id, timeslot=self.timeslot, confirmed=self.confirmed, hints=hints)
 
 
     @classmethod
@@ -753,14 +780,37 @@ class MainPage(webapp2.RequestHandler):
                 'API_VERSION': LUNCHERE_API_VERSION
             }
             response.write(template.render(path, params))
+        elif request.path == "/new":
+            hints = {}
+            if request.params.has_key("ll"):
+                hints["ll"] = request.params["ll"]
+            if request.params.has_key("near"):
+                hints["near"] = request.params["near"]
+            if len(hints) < 1:
+                self.response.write("Hints = " + repr(hints))
+            else:
+                history_id = History.gen_new_history_id_from_hints(hints);
+                if use_cookie:
+                    self.set_root_cookie(history_id)
+                if hints.get("ll", None):
+                    Hints.set_hint(history_id, "ll", hints["ll"])
+                if hints.get("near", None):
+                    Hints.set_hint(history_id, "near", hints["near"])
+                self.redirect(str(history_id).replace("history:", "/history/"))
         else:
             if use_cookie and request.path != "/logout":
                 history_id = history_id_in_cookie
-            if history_id == None:
-                history_id = History.gen_new_history_id()
-                if use_cookie:
-                    self.set_root_cookie(history_id)
-            self.redirect(str(history_id).replace("history:", "/history/"))
+            if history_id is None:
+                self.redirect("/create")
+            else:
+                self.redirect(str(history_id).replace("history:", "/history/"))
 
-APPLICATION = webapp2.WSGIApplication([('/.*', MainPage)], debug=True)
+
+class LandingPage(webapp2.RequestHandler):
+    def get(self):
+        "Landing page"
+        params = {}
+        path = os.path.join(os.path.dirname(__file__), "templates/landing.html")
+        self.response.write(template.render(path, params))
+APPLICATION = webapp2.WSGIApplication([('/create', LandingPage), ('/.*', MainPage)], debug=True)
 

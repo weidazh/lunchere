@@ -111,11 +111,21 @@ function today_recommendation_received(resp) {
 	historyId = resp.historyId;
     }
     if (! resp.name) {
-	document.getElementById("today").innerHTML = "(Sorry, no recommendation)";
+	document.getElementById("today").innerHTML = "(loading from foursquare)";
 	document.getElementById("confirmed").innerHTML = "";
 	document.getElementById("yes").disabled = true;
 	document.getElementById("no").disabled = ! resp.has_other_recommend;
 	document.getElementById("go").disabled = false;
+	if (resp.hints && (resp.hints.ll || resp.hints.near)) {
+	    get_recommendation_from_foursquare(resp.hints.ll, resp.hints.near, function(name) {
+		console.log("name = " + name);
+		document.getElementById("today").innerHTML = name;
+		resp.name = name; // today_recommendation would be the same object.
+		resp.has_other_recommend = true;
+		document.getElementById("no").disabled = false;
+		document.getElementById("yes").disabled = false;
+	    });
+	}
     }
     else {
 	document.getElementById("today").innerHTML = resp.name;
@@ -222,44 +232,3 @@ function cancel_today() {
 	console.log("ERROR: today_recommendation is None but cancel is clicked");
     }
 }
-
-window.addEventListener("load", function load() {
-    disable_all();
-
-    console.log("window.load");
-    window.removeEventListener("load", load, false);
-    document.getElementById("logout").addEventListener("click", function() {
-	gapi.auth.setToken(null);
-	historyId = undefined;
-	today_recommendation = undefined;
-	document.getElementById("historyId").innerHTML = "undefined";
-	document.getElementById("today").innerHTML = "reloading ...";
-	document.getElementById("confirmed").innerHTML = "";
-	// signin(true, user_authed_no_retry);
-	document.location = "/logout";
-    });
-    document.getElementById("deletemeal").addEventListener("click", function() {
-	deletemeal();
-    });
-    document.getElementById("prevmeal").addEventListener("click", function() {
-	prevmeal();
-    });
-    document.getElementById("nextmeal").addEventListener("click", function() {
-	nextmeal();
-    });
-    document.getElementById("createmeal").addEventListener("click", function() {
-        // currently if createmeal, it must be nextmeal
-	nextmeal();
-    });
-    document.getElementById("yes").addEventListener("click", function() {
-	confirm_today(get_today_recommendation_name());
-    });
-    document.getElementById("no").addEventListener("click", function() {
-	cancel_today();
-    });
-    document.getElementById("go").addEventListener("click", function() {
-	confirm_today(document.getElementById("newplace").value);
-    });
-}, false);
-
-
