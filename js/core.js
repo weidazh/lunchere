@@ -3,6 +3,7 @@ var initObj = initClientIdHistoryId();
 var historyId = initObj["historyId"];
 var CLIENT_ID = initObj["CLIENT_ID"];
 var API_VERSION = initObj["API_VERSION"];
+var autocomplete_should_reload = false;
 
 function lunchere_api_init() {
     var apisToLoad;
@@ -138,6 +139,7 @@ function today_recommendation_received(resp) {
     document.getElementById("nextmeal").disabled = ! resp.has_nextmeal;
     document.getElementById("createmeal").disabled = ! resp.has_createmeal;
     today_recommendation = resp;
+    autocomplete_should_reload = true;
 }
 
 function disable_all() {

@@ -41,6 +41,16 @@ class TodayRecommendation(messages.Message):
     has_other_recommend = messages.BooleanField(10, required=False)
     api_version = messages.StringField(11, required=False)
 
+class OneChoice(messages.Message):
+    canteenId = messages.StringField(1, required=True)
+    freq = messages.FloatField(2, required=True)
+
+class TodayChoices(messages.Message):
+    "Return to client for recommendation"
+    historyId = messages.StringField(1, required=True)
+    timeslot = messages.IntegerField(2, required=False)
+    choices = messages.MessageField(OneChoice, 3, repeated=True)
+
 
 CLIENT_ID_ALL_JS      = '418397336121-13ej5mm6b5hef5n6qt87e2rj3u155f2l.apps.googleusercontent.com'
 
@@ -67,6 +77,20 @@ def require_login(func):
         my_get_current_user()
         return func(*args, **kargs)
     return wrapper
+
+class RecommendationChoices:
+    def __init__(self, history_id, timeslot, choices=()):
+        self.history_id = history_id
+        self.timeslot = timeslot
+        self.choices = list(choices)
+
+    def append(self, canteen_id, freq):
+        self.choices.append((canteen_id, freq))
+
+    def to_rpc(self):
+        choices = [OneChoice(canteenId=c, freq=f) for c, f in self.choices]
+        logging.debug("choices.len = %d " % len(choices))
+        return TodayChoices(historyId=self.history_id, timeslot=self.timeslot, choices=choices)
 
 class Recommendation:
     "Intermediate class, actually I think it could be replaced with a tuple or so"
@@ -540,6 +564,16 @@ class History:
         self.next_recommend = canteen_id
         self._datastore_append(canteen_id, True, False)
 
+    def get_choices(self, exclude=()):
+        if not isinstance(exclude, tuple):
+            raise Exception("Programming error: input exclude is not tuple")
+        logging.debug("EXCLUDE = " + repr(exclude))
+        # if self.next_recommend is not None:
+        #     exclude = exclude + (self.next_recommend,)
+        choices = Choice.get_choices(history_id=self.history_id, exclude=exclude)
+        return RecommendationChoices(self.history_id, self.timeslot, choices)
+
+
     def recommend(self, exclude=()):
         """called to get next recommend
 
@@ -561,9 +595,16 @@ class History:
                 has_other_recommend = not not (len(choices) + len(exclude))
         return Recommendation(self.next_recommend, has_other_recommend, history_id=self.history_id, timeslot=self.timeslot, confirmed=self.confirmed)
 
+
+    @classmethod
+    def choices_from(cls, history_id, timeslot):
+        history = History(history_id, timeslot)
+        return history.get_choices()
+
     @classmethod
     def recommend_from(cls, history_id, timeslot, prevmeal=None, nextmeal=None, deletemeal=None, cancel=None, confirm=None):
         "this is what the user should call directly"
+        exclude= ()
         if deletemeal:
             timeslot = Timeslot.delete_and_prevmeal(history_id, timeslot)
         if prevmeal:
@@ -573,22 +614,26 @@ class History:
         history = History(history_id, timeslot)
         if cancel:
             history.cancel(cancel)
+            exclude += (cancel,)
         if confirm:
             history.confirm(confirm)
-        if cancel:
-            return history.recommend(exclude=(cancel,))
-        else:
-            return history.recommend()
+        return history.recommend(exclude=exclude)
 
 @endpoints.api(name="lunchere", version=LUNCHERE_API_VERSION, description="Where to lunch", allowed_client_ids=ALLOWED_CLIENT_IDS)
 class LuncHereAPI(remote.Service):
     def __init__(self):
         self.counter = 0
+
     @endpoints.method(HistoryIdMsg, TodayRecommendation, name="today", http_method="GET")
     @require_login
     def today(self, request):
         recommendation = History.from_user(user=my_get_current_user()).recommend()
         return recommendation.to_rpc()
+
+    @endpoints.method(HistoryIdMsg, TodayChoices, name="choices", http_method="GET")
+    def choices_unauth(self, request):
+        choices = History.choices_from(request.historyId, request.timeslot)
+        return choices.to_rpc()
 
     @endpoints.method(HistoryIdMsg, TodayRecommendation, name="prevmealUnauth", http_method="GET")
     def prevmeal_unauth(self, request):
