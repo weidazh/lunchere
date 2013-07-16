@@ -14,6 +14,7 @@ import datetime
 import logging
 import random
 import urllib
+import os
 
 
 LUNCHERE_API_VERSION = "dev"
@@ -637,6 +638,7 @@ ENDPOINTS_APPLICATION = endpoints.api_server([LuncHereAPI], restricted=False)
 
 # ================
 import webapp2
+from google.appengine.ext.webapp import template
 class MainPage(webapp2.RequestHandler):
     """/ redirect to /history/RANDOM_STRING;
        /history/.* and /user/.* generate a page with some variable set according to current history/user;
@@ -694,13 +696,18 @@ class MainPage(webapp2.RequestHandler):
         logging.debug("history_id from URL %s; history_id from cookie %s" % (repr(history_id), repr(history_id_in_cookie)))
         if history_id is not None:
             response.headers['Content-Type'] = 'text/html'
-            response.headers['Cache-Control'] = 'no-cache'
+            # response.headers['Cache-Control'] = 'no-cache'
 
             if use_cookie and (history_id != history_id_in_cookie or refresh_cookie):
                 self.set_root_cookie(history_id)
-            response.write(open("test.html").read().replace("@@CLIENT_ID@@", CLIENT_ID_ALL_JS)
-                                                   .replace("@@HISTORY_ID@@", history_id)
-                                                   .replace("@@API_VERSION@@", LUNCHERE_API_VERSION))
+            path = os.path.join(os.path.dirname(__file__),
+                                          'templates/main.html')
+            params = {
+                'CLIENT_ID': CLIENT_ID_ALL_JS,
+                'HISTORY_ID': history_id,
+                'API_VERSION': LUNCHERE_API_VERSION
+            }
+            response.write(template.render(path, params))
         else:
             if use_cookie and request.path != "/logout":
                 history_id = history_id_in_cookie
