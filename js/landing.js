@@ -88,7 +88,7 @@ window.addEventListener("load", function load() {
         });
         return a_foursquare;
     }
-    function dynamic_source(request, response) {
+    function dynamic_source_foursquare(request, response) {
         var q0 = request.term;
         var q = encodeURI(q0);
         if (q0.length >= 1) {
@@ -127,9 +127,62 @@ window.addEventListener("load", function load() {
             response([]);
         }
     }
+    function dynamic_source_gmaps(request, response) {
+        var q0 = request.term;
+        var q = encodeURI(q0);
+        if (q0.length >= 1) {
+	    $.ajax({
+		url: "https://maps.googleapis.com/maps/api/geocode/json?address=" + q + "&sensor=false"
+	    }).done(function(data) {
+		var a = []
+		$(data.results).each(function(i, obj) {
+		    a.push({
+			"label": obj.formatted_address,
+			"value": obj.formatted_address,
+			"type": "gmaps",
+			"obj": obj,
+		    });
+		});
+		response(a);
+	    }).fail(function() {
+		console.log("GOOGLE ERROR");
+		response([]);
+	    });
+	}
+    }
+    function dynamic_source(request, response) {
+	var af = [];
+	var ag = [];
+	var has_foursquare = false;
+	function do_response() {
+	    response(ag.concat({
+		'label': '------',
+		'value': '------',
+		'type': 'separator',
+	    }).concat(af));
+	}
+	if (has_foursquare) {
+	    dynamic_source_foursquare(request, function (a) {
+		af = a;
+		do_response();
+	    });
+	}
+	dynamic_source_gmaps(request, function (a) {
+	    ag = a;
+	    if (has_foursquare)
+		do_response();
+	    else
+		response(a);
+	});
+    }
     function dynamic_source_select(_event, ui) {
         if (ui.item.type == "foursquare") {
             $("#location").val(ui.item.obj.name);
+            // $("#addr").val(ui.item.obj.location.address);
+            _event.preventDefault();
+        }
+        else if (ui.item.type == "gmaps") {
+            $("#location").val(ui.item.obj.formatted_address);
             // $("#addr").val(ui.item.obj.location.address);
             _event.preventDefault();
         }

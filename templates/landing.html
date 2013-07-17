@@ -11,14 +11,16 @@
 <script src="/js/landing.js"></script>
 </head>
 <body>
-<div class="absolute-center width-800 height-50 big-font">
-Tell us where you are:<br/>
-<a id="arrow" class="icon-location-arrow left-border" href="#"></a><input id="location" class="input-box"/>
-<div id="status">
-    <i id="error-warning" class="icon-warning-sign"></i>
-    <span id="spinner"><i class="icon-spinner"></i></span>
-</div>
-<button id="find" class="find-button">find lunch</button>
+<div id="page-container">
+    Tell us where you are:<br/>
+    <div id="location-container">
+	<input id="location"/><div id="arrow-overlay">
+	    <a id="arrow" class="icon-location-arrow" href="#"></a>
+	</div><div id="status-overlay">
+	    <i id="error-warning" class="icon-warning-sign"></i>
+	    <span id="spinner"><i class="icon-spinner"></i></span>
+	</div><button id="find" class="find-button">find lunch</button>
+    </div>
 </div>
 </body>
 </html>
