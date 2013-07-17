@@ -8,6 +8,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 <script src="/js/private.js"></script>
 <script src="/js/foursquare.js"></script>
+<script src="/js/modules/spin.min.js"></script>
 <script src="/js/landing.js"></script>
 </head>
 <body>
@@ -16,10 +17,13 @@
     <div id="location-container">
 	<input id="location"/><div id="arrow-overlay">
 	    <a id="arrow" class="icon-location-arrow" href="#"></a>
-	</div><div id="status-overlay">
-	    <i id="error-warning" class="icon-warning-sign"></i>
-	    <span id="spinner"><i class="icon-spinner"></i></span>
-	</div><button id="find" class="find-button">find lunch</button>
+	</div><div id="status-overlay"><!--
+	 --><i id="error-warning" class="icon-warning-sign"></i><!--
+	 --><div id="spinner"></div><!--
+	 --><span id="spinner-alternative"><i class="icon-spinner"></i></span>
+	</div><button id="find" class="disabled" disabled>find lunch</button>
+    </div>
+    <div id="debug-layer">
     </div>
 </div>
 </body>

@@ -20,7 +20,7 @@
 @location_arrow_margin_right: @input_box_size - @location_arrow_size;
 
 @status_size: @status_width + @status_padding;
-@status_width: 24px;
+@status_width: 28px;
 @status_padding: 8px;
 @status_margin_left: -@status_size;
 @status_margin_right: 0px;
@@ -28,28 +28,11 @@
 @find_button_size: 120px;
 @find_margin: 2px;
 @button_gray: #999999;
+@button_green: #99ff99;
 
 /* COMMON FUNCTIONS */
 .big-font {
     font-size: 1.5em;
-}
-
-#page-container {
-    top: 50%;
-    left: 50%;
-    position: fixed;
-    width: @page_width;
-    margin-left: (-@page_width / 2);
-    height: @page_height;
-    margin-top: (-@page_height / 2);
-    .big-font;
-}
-
-#find {
-    background: @button_gray; 
-    border: 2px solid @button_gray;
-    margin: 0px;
-    font-size: 100%;
 }
 
 
@@ -58,7 +41,14 @@
 }
 
 #spinner {
-    display: inline-block;
+    display: block;
+    width: 24px;
+    height: 24px; /* font size */
+    margin-bottom: -0.2em; /* baseline */
+}
+
+#spinner-alternative {
+    display: none;
 }
 
 .input-box {
@@ -67,11 +57,40 @@
 }
 
 /* STYLING */
+#page-container {
+    .big-font;
+}
+
 #location {
     .input-box;
 }
 
+#find {
+    margin: 0px;
+    font-size: 100%;
+}
+
+#find.disabled {
+    background: @button_gray;
+    border: 2px solid @button_gray;
+}
+
+#find.enabled {
+    background: @button_green;
+    border: 2px solid @button_green;
+}
+
 /* POSITIONING */
+#page-container {
+    top: 50%;
+    left: 50%;
+    position: fixed;
+    width: @page_width;
+    margin-left: (-@page_width / 2);
+    height: @page_height;
+    margin-top: (-@page_height / 2);
+}
+
 #location {
     padding-left: @input_box_padding_left;
     padding-right: @input_box_padding_right;
