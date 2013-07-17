@@ -798,9 +798,9 @@ class MainPage(webapp2.RequestHandler):
                     Hints.set_hint(history_id, "near", hints["near"])
                 self.redirect(str(history_id).replace("history:", "/history/"))
         else:
-            if use_cookie and request.path != "/logout":
-                history_id = history_id_in_cookie
-            if request.path == "/":
+            if request.path == "/" or request.path == "/logout":
+                if use_cookie:
+                    self.set_root_cookie("")
                 self.redirect("/create")
             else:
                 # self.redirect(str(history_id).replace("history:", "/history/"))
