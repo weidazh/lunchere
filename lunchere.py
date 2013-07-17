@@ -758,6 +758,9 @@ class MainPage(webapp2.RequestHandler):
         "default behavior"
 
         request, response = self.request, self.response
+        # FIXME: maybe the http sometimes HTTP?
+        if request.url.startswith("http://") and not request.url.startswith("http://localhost") :
+            self.redirect(request.url.replace("http://", "https://")) # FIXME: this is wrong when the url itself contains http://
         use_cookie = True
         refresh_cookie = True # refresh the cookie each time it is logged in
         # but in the following call, do not use_cookie, so that
@@ -811,8 +814,11 @@ class MainPage(webapp2.RequestHandler):
 class LandingPage(webapp2.RequestHandler):
     def get(self):
         "Landing page"
+        request, response = self.request, self.response
+        if request.url.startswith("http://") and not request.url.startswith("http://localhost") :
+            self.redirect(request.url.replace("http://", "https://")) # FIXME: this is wrong when the url itself contains http://
         params = {}
         path = os.path.join(os.path.dirname(__file__), "templates/landing.html")
-        self.response.write(template.render(path, params))
+        response.write(template.render(path, params))
 APPLICATION = webapp2.WSGIApplication([('/create', LandingPage), ('/.*', MainPage)], debug=True)
 
