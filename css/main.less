@@ -176,6 +176,26 @@
     display: inline-block;
 }
 
+#loading-container {
+    display: none;
+    position: fixed;
+    top: 0%;
+    left: 0%;
+    width: 100%;
+    height: 100%;
+    z-index: 2000000;
+}
+
+#loading-spinner {
+    width: 200px;
+    height: 200px;
+    top: 50%;
+    left: 50%;
+    margin-top: 0px;
+    margin-left: 0px;
+    position: fixed;
+}
+
 #footer-container {
     margin-top: 20px;
     float: clear;
@@ -292,4 +312,8 @@
 .old #root-container,
 .old #footer-container {
     display: none;
+}
+
+.loading #loading-container {
+    display: block;
 }

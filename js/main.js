@@ -224,27 +224,61 @@ function MainUI() {
 	});
 
 	$("#options-yes").click(function() {
-	    toggled_confirmed();
+	    // toggled_confirmed();
+	    confirm_today(get_today_recommendation_name());
+	});
+
+	$("#options-no").click(function() {
+	    cancel_today();
 	});
 
 	$("#cancel-button").click(function() {
-	    toggled_confirmed();
+	    cancel_today();
 	});
 
 	$(window).on("hashchange", function() {
 	    goto_hash();
 	});
     }
+    var spinner;
     function goto_hash() {
+	console.log("goto_hash " + document.location.hash);
 	if (document.location.hash == "#confirmed") {
-	    console.log("confirmed");
-	    $("body").addClass("yes-confirmed").removeClass("no-confirmed").removeClass("old");
+	    $("body").addClass("yes-confirmed").removeClass("no-confirmed").removeClass("old").removeClass("loading").removeClass("failed");
+	}
+	else if (document.location.hash == "#loading") {
+	    var opts = {
+		lines: 20, // The number of lines to draw
+		length: 100, // The length of each line
+		width: 20, // The line thickness
+		radius: 100, // The radius of the inner circle
+		corners: 0.8, // Corner roundness (0..1)
+		rotate: 0, // The rotation offset
+		direction: 1, // 1: clockwise, -1: counterclockwise
+		color: '#000', // #rgb or #rrggbb
+		speed: 1, // Rounds per second
+		trail: 60, // Afterglow percentage
+		shadow: false, // Whether to render a shadow
+		hwaccel: false, // Whether to use hardware acceleration
+		className: 'spinner', // The CSS class to assign to the spinner
+		zIndex: 1, // The z-index (defaults to 2000000000)
+		top: 'auto', // Top position relative to parent in px
+		left: 'auto' // Left position relative to parent in px
+	    };
+	    if (! spinner)
+		spinner = new Spinner(opts);
+	    if (spinner)
+		spinner.spin($("#loading-spinner")[0]);
+	    $("body").removeClass("yes-confirmed").addClass("no-confirmed").removeClass("old").addClass("loading").removeClass("failed");
+	}
+	else if (document.location.hash == "#failed") {
+	    $("body").removeClass("yes-confirmed").addClass("no-confirmed").removeClass("old").removeClass("loading").addClass("failed");
 	}
 	else if (document.location.hash != "#new") {
-	    $("body").removeClass("yes-confirmed").removeClass("no-confirmed").addClass("old");
+	    $("body").removeClass("yes-confirmed").removeClass("no-confirmed").addClass("old").removeClass("loading").removeClass("failed");
 	}
 	else {
-	    $("body").removeClass("yes-confirmed").addClass("no-confirmed").removeClass("old");
+	    $("body").removeClass("yes-confirmed").addClass("no-confirmed").removeClass("old").removeClass("loading").removeClass("failed");
 	}
     }
     this.init = init;
@@ -252,7 +286,70 @@ function MainUI() {
     return this;
 }
 
-var mainUI = MainUI();
+function Backend() {
+    // var historyId;
+    // var today_recommendation;
+    // var autocomplete_should_reload;
+    function today_recommendation_received_new_ui(resp) {
+	console.log("new UI");
+	console.log(resp);
+
+	if (resp.historyId && resp.historyId != historyId) {
+	    historyId = resp.historyId;
+	}
+	if (! resp.name) {
+	    document.location.hash = "#loading";
+	    console.log("resp.hints.ll = " + resp.hints.ll);
+	    if (resp.hints && (resp.hints.ll || resp.hints.near)) {
+		get_recommendation_from_foursquare(resp.hints.ll, resp.hints.near, function(name) {
+		    console.log("name = " + name);
+		    $("#title-text").text(name);
+		    resp.name = name; // today_recommendation would be the same object.
+		    resp.has_other_recommend = true;
+		    document.location.hash = "#new";
+		});
+	    }
+	    else {
+		document.location.hash = "#loading";
+		if (navigator && navigator.geolocation) {
+		    navigator.geolocation.getCurrentPosition(function(position) {
+			resp.hints = {}
+			resp.hints.ll = position.coords.latitude + "," + position.coords.longitude;
+			today_recommendation_received(resp);
+			return;
+		    },
+		    function () {
+			document.location.hash = "#failed";
+		    });
+		}
+	    }
+	}
+	else {
+	    $("#title-text").text(resp.name);
+	    if (resp.confirmed) {
+		document.location.hash = "#confirmed";
+	    }
+	    else {
+		document.location.hash = "#new";
+	    }
+	}
+	// document.getElementById("historyId").innerHTML = historyId;
+	// document.getElementById("timeslot").innerHTML = resp.timeslotFriendly;
+	// document.getElementById("deletemeal").disabled = ! resp.could_delete;
+	// document.getElementById("prevmeal").disabled = ! resp.has_prevmeal;
+	// document.getElementById("nextmeal").disabled = ! resp.has_nextmeal;
+	// document.getElementById("createmeal").disabled = ! resp.has_createmeal;
+	today_recommendation = resp;
+	autocomplete_should_reload = true;
+    }
+
+    this.today_recommendation_received_new_ui = today_recommendation_received_new_ui;
+    return this;
+}
+
+var mainUI = new MainUI();
+var backend = new Backend();
+var today_recommendation_received_new_ui = backend.today_recommendation_received_new_ui;
 
 $(document).ready(function() {
     mainUI.init();

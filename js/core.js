@@ -10,6 +10,12 @@ function lunchere_api_init() {
     var callback = function(msg) {
         console.log(msg + " loaded");
         if (--apisToLoad == 0) {
+	    if (document.location.hash == "#confirmed" ||
+		    document.location.hash == "#failed" ||
+		    document.location.hash == "#loading") {
+		    console.log("because document.location.hash == " + document.location.hash + ", we cancel fetching");
+		    return;
+	    }
 	    if (gapi.client.lunchere) {
 		signin(true, user_authed_no_retry);
 	    }
@@ -107,6 +113,7 @@ function first_call(authed) {
 var today_recommendation;
 
 function today_recommendation_received(resp) {
+    return today_recommendation_received_new_ui(resp);
     if (resp.historyId && resp.historyId != historyId) {
 	historyId = resp.historyId;
     }
