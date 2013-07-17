@@ -2,7 +2,7 @@
 <html>
 <head>
 <title>Lunch from Here</title>
-<!-- Python Endpoints: https://developers.google.com/appengine/docs/python/endpoints/ --> 
+<!-- Python Endpoints: https://developers.google.com/appengine/docs/python/endpoints/ -->
 <!-- API Explorer: https://developers.google.com/apis-explorer/ -->
 <script>
 function initClientIdHistoryId() {
@@ -13,9 +13,11 @@ function initClientIdHistoryId() {
     };
 }
 </script>
+<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
 <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+<link rel="stylesheet" href="/css/main.css" />
 <script src="/js/core.js"></script>
 <script src="/js/private.js"></script>
 <script src="/js/foursquare.js"></script>
@@ -23,14 +25,146 @@ function initClientIdHistoryId() {
 <script src="https://apis.google.com/js/client.js?onload=lunchere_api_init"></script>
 <!-- script src="/js/client.js?onload=lunchere_api_init"></script -->
 </head>
-<body>
+<body class="no-confirmed">
 
-<button id="logout">Log out</button>
-<p>History ID: <span id="historyId">undefined</span></p>
-<p>Timeslot: <button id="deletemeal">Del meal</button><button id="prevmeal">Prev</button> <span id="timeslot">undefined</span> <button id="nextmeal">Next</button><button id="createmeal">Create meal</button></p>
-<p>Today we go to: <span id="today">loading ...</span><span id="confirmed"></span>
-<button id="yes">OK</button>
-<button id="no">Em... maybe another one</button></p>
-<p>Tell the system where you go: <input id="newplace"></input><input id="addr" disabled></input><button id="go">Go</button></p>
+<div id="old-container">
+    <button id="logout">Log out</button>
+    <p>History ID: <span id="historyId">undefined</span></p>
+    <p>Timeslot: <button id="deletemeal">Del meal</button><button id="prevmeal">Prev</button> <span id="timeslot">undefined</span> <button id="nextmeal">Next</button><button id="createmeal">Create meal</button></p>
+    <p>Today we go to: <span id="today">loading ...</span><span id="confirmed"></span>
+    <button id="yes">OK</button>
+    <button id="no">Em... maybe another one</button></p>
+    <p>Tell the system where you go: <input id="newplace"></input><input id="addr" disabled></input><button id="go">Go</button></p>
+</div>
+
+
+<div id="root-container">
+<div id="main-container">
+    <div id="main-icon">
+        <i class="icon-flat-alt"></i>
+        <i class="icon-star"></i>
+    </div><!-- what icon to show ? -->
+    <div id="title">
+	<div id="title-text">Title</div>
+	<button id="toggle-info-map"><i class="icon-caret-down"></i></button>
+    </div>
+
+    <div id="info-map">
+	<div id="info">
+	    <div id="ratings">
+	        <div id="heart-1"><i class="icon-star"></i></div>
+	        <div id="heart-2"><i class="icon-star"></i></div>
+	        <div id="heart-3"><i class="icon-star"></i></div>
+	        <div id="heart-4"><i class="icon-star"></i></div>
+	        <div id="heart-5"><i class="icon-star"></i></div>
+	    </div>
+	    <div id="external-link"><i class="icon-external-link"></i></div>
+	    <div id="title-addr">Chiu Chow restaurant in Sai Wan</div>
+	    <div id="costs"><i class="icon-money"></i>$100-200</div>
+	    <div id="distance"><i class="icon-location-arrow"></i>15 min walk</div>
+	</div><!-- showed only when the small toggle button clicked -->
+	<div id="map">
+
+	    <svg class="stencil stencil-dom-optimizer" name="tmplsvg-map" editable="false" version="1.1" width="159" height="128" min-width="30" min-height="16" id="abe26beb8-10ef2415" measured-width="159" measured-height="128" x="490" y="208" total-width="318" total-height="256">         <g width="100%" height="100%" min-width="30" min-height="16" dirty="true" x="0" y="0" measured-width="159" measured-height="128" transform="matrix(0.279848 0 0 0.349725 0.372478 0.508509)">          <rect x="-0.166" y="0.047" fill="#E6E6E6" width="567" height="363"></rect>          <path fill="#FFFFFF" stroke="#666666" stroke-width="2" d="M465.623-0.047l43.168,87.308c1.396,2.819,4.23,4.453,7.181,4.453           c1.191,0,2.403-0.268,3.544-0.832c3.962-1.958,5.585-6.756,3.624-10.715L483.483-0.05L465.623-0.047z M-0.33,259.155l56.589-27.683           l55.226,111.508l-50.901,20.113l105.974,0.13l265.07-112.366l22.05,41.723l-139.844,70.597l28.618,0.047l118.704-56.356           l29.789,56.68h44.038l-25.03-49.992l-13.55-25.546l68.931-34.769v-17.848l-76.407,38.396l-20.438-38.596l96.846-41.518v-43.432           l-16.561,7.542c-0.732-2.37-148.195-53.317-149.244-53.235l-41.558-78.879l51.862-26.125h-36l-23.32,11.77l-5.289-11.77h-45.131           l55.779,107.762l-127.759,63.269l35.523,72.541c1.39,2.836,4.234,4.509,7.195,4.509c1.182,0,2.382-0.251,3.514-0.806           c3.97-1.939,5.613-6.725,3.669-10.692l-28.514-58.181l113.845-56.287l49.522,93.707L126.25,336.729L63.536,210.102l-63.867,31.246            M409.994,124.276l121.288,40.953l-81.425,34.478L409.994,124.276z"></path>          <polygon stroke="#000000" stroke-width="1" fill="#B3B3B3" points="0.168,199.939 75.126,164.934 135.759,282.954 207.053,254.736 165.742,146.931 301.168,82.253           263.688,-0.046 0,-0.426  "></polygon>          <path fill="#B3B3B3" stroke="#000000" stroke-width="2" d="M358.501,220.682c0-15.867-12.761-28.729-28.501-28.729           c-15.739,0-28.499,12.862-28.499,28.729c0,10.961,6.874,18.166,12.271,23.586c8.775,8.819,15.896,34.685,15.896,34.685           s7.343-25.442,14.913-34.218C350.093,238.35,358.501,232.021,358.501,220.682z"></path>          <circle stroke="#000000" stroke-width="2" cx="329.583" cy="220.965" r="12"></circle>  </g>  <rect explicit-width="100%" explicit-height="100%" fill="none" stroke="#231F20" stroke-width="1" min-width="1" min-height="1" dirty="true" measured-width="159" measured-height="128" width="158" height="127" x="0.5" y="0.5"></rect>  </svg>
+
+
+	</div><!-- showed only when the small toggle button clicked -->
+    </div>
+
+    <div id="footnote">
+    you liked this place | last meal here: about 1 months ago
+    </div><!-- showed only in non-confirmed mode -->
+</div>
+<div id="extra-container">
+    <div id="options">
+	<div id="options-captions">
+	    <i>Lunch here today?</i><br/>
+	    or <u editable>type here</u><br/>
+	       <u>ask friends</u>
+	</div>
+	<div id="options-yes"><i class="icon-ok"></i></div>
+	<div id="options-no"><i class="icon-remove"></i></div>
+    </div><!-- showed only in non-confirmed mode -->
+
+    <div id="details">
+        <div id="details-addr">
+	    G/F, No 3 Belcher's Street, Kennedy Town,
+	    Western District
+	</div>
+	<div id="details-external-addr">
+	    <i class="icon-globe"></i>
+	</div>
+	<div id="details-hours">
+	    open until 15:00
+	</div>
+	<div id="details-phonenumber">
+	    2819 5568
+	</div>
+	<div id="details-external-phone">
+	    <i class="icon-phone"></i>
+	</div>
+    </div><!-- showed only in confirmed mode -->
+    <div id="confirmed-footnote">selected 3 minutes ago <button id="cancel-button"><i class="icon-ok"></i></button></div><!-- showed only in confirmed mode -->
+</div>
+
+    <div id="review">
+        <div id="review-info">
+	    <i>Today's lunch</i><br/>
+	    <span class="review-info-date">17 Jul 2013</span>
+	</div>
+	<div id="review-edit">
+	    <i class="icon-edit"></i> rename <br/>
+	    <i class="icon-trash"></i> delete
+	</div>
+	<div id="review-fav">
+	    <i class="icon-thumbs-up"></i>
+	    <i class="icon-thumbs-down"></i>
+	</div>
+	&nbsp;
+    </div><!-- showed only in confirmed mode -->
+</div>
+
+<div id="footer-container">
+    <div id="timeline-border">
+	<div id="timeline">
+	    <div id="timeline-ul">
+		<div id="timeline-div0">
+		    <div class="timeline-div current"><i class="icon-flag"></i></div>
+		    <div class="timeline-div after"><i class="icon-circle"></i></div>
+		    <div class="timeline-div plus"><i class="icon-plus"></i></div>
+		</div>
+		<div class="timeline-div before"><i class="icon-circle"></i></div>
+		<div class="timeline-div before"><i class="icon-circle"></i></div>
+		<div class="timeline-div before"><i class="icon-circle"></i></div>
+		<div class="timeline-div before"><i class="icon-circle"></i></div>
+	    </div>
+	</div>
+	<div id="timeline-border0">
+	    <div id="timeline-border-left"></div>
+	    <div id="timeline-border-right"></div>
+	</div>
+    </div><!-- showed only in confirmed mode -->
+
+    <div id="about">
+        <div id="about-timeline">
+	    Thursday Wireless's Timeline<br/>
+	    11 meals since Jun 2013
+	</div>
+	<div id="about-sharing">
+	    share link <i class="icon-link"></i><br/>
+	    change settings <i class="icon-gear"></i>
+	</div>
+	<div id="about-lunchere-container">
+	    <div id="about-lunchere">
+		Lunchere<br/>
+		about | FAQ | contact
+	    </div>
+	</div>
+    </div>
+
+    <div id="power">
+        powered by Google Maps &amp; Foursquare
+    </div>
+</div>
 </body>
 </html>

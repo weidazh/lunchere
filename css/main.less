@@ -1,0 +1,295 @@
+@main_width: 2 * @info_map_size + 20px;
+@icon_size: 48px;
+@info_map_size: 160px;
+@toggle_button_size: 40px;
+@options_yes_no_size: 40px;
+@lightgray: #cccccc;
+
+@timeline_icon_width: 32px;
+@timeline_div0_width: @skip_current + @skip_other + @timeline_icon_width;
+@skip_current: 160px;
+@skip_other: 110px; /* skip means the distance of the left borders */
+
+.debug {
+    outline: 1px solid red;
+}
+
+#old-container {
+    display: none;
+}
+
+
+/* STYLING */
+#main-icon {
+    border: 2px black solid;
+    background: gray;
+    color: white;
+}
+
+#main-container {
+    border: 2px black solid;
+}
+
+#title {
+    font-size: @icon_size;
+}
+
+#info-map {
+    border-top: 1px dashed gray;
+}
+
+.no-confirmed #info-map {
+    border-bottom: 1px dashed gray;
+}
+
+#options-captions {
+}
+
+#details {
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    background: @lightgray;
+    padding: 8px;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+#confirmed-footnote {
+    border: 2px solid black;
+    text-align: right;
+}
+
+#cancel-button {
+    outline: 2px solid black;
+}
+
+#review-info {
+    border-right: 1px dashed gray;
+    text-align: right;
+}
+
+/* POSITIONING */
+#root-container {
+    margin: auto;
+    width: @main_width;
+}
+
+#main-container {
+}
+
+#main-icon {
+    float: left;
+    font-size: @icon_size;
+    margin-left: -@icon_size - 11px - 4px;
+    margin-bottom: -@icon_size - 5px - 4px;
+
+    padding-left: 7px;
+    padding-right: 5px;
+    padding-top: 4px;
+    padding-bottom: 1px;
+}
+
+#title {
+    line-height: @icon_size + 8px;
+}
+
+#title-text {
+    display: inline-block;
+    width: @main_width - @toggle_button_size;
+}
+
+#toggle-info-map {
+    display: inline-block;
+    margin-left: -30px;
+}
+
+#right-of-main-icon {
+    float: left;
+}
+
+#info-map {
+    height: @info_map_size;
+}
+
+#info {
+    width: @info_map_size;
+    height: @info_map_size;
+    float: left;
+}
+
+#map {
+    width: @info_map_size;
+    height: @info_map_size;
+    float: right;
+}
+
+#ratings, #external-link, [id^="heart-"] {
+    display: inline-block;
+}
+
+#extra-container {
+}
+
+#options-captions {
+    display: inline-block;
+}
+
+#options-yes, #options-no {
+    width: @options_yes_no_size;
+    display: inline-block;
+}
+
+#details {
+
+}
+
+#details-addr {
+    width: 300px;
+}
+
+#review {
+    margin-top: 12px;
+    height: 50px;
+}
+
+#review-info, #review-edit, #review-fav {
+    float: left;
+    height: 50px;
+}
+
+#review-info {
+    width: 50%;
+    padding-right: 10px;
+}
+
+#review-edit {
+    width: 24%;
+    margin-left: 10px;
+}
+
+#review-fav {
+    margin-left: 10px;
+    .debug;
+}
+
+[id^="details-"] {
+    display: inline-block;
+}
+
+#footer-container {
+    margin-top: 20px;
+    float: clear;
+    margin-bottom: 20px;
+}
+
+#timeline {
+    display: block;
+    margin-left: 50%;
+    margin-bottom: -14px;
+}
+
+#timeline-border0 {
+}
+
+#timeline-border-left {
+    float: left;
+    clear: left;
+    width: 50%;
+    border-top: 5px solid @lightgray;
+}
+
+#timeline-border-right {
+    float: left;
+    clear: none;
+    width: @timeline_div0_width;
+    border-top: 5px solid @lightgray;
+}
+
+#timeline-ul {
+    width: @timeline_div0_width
+}
+
+#timeline-border {
+}
+
+.timeline-div {
+    display: inline-block;
+    width: @timeline_icon_width;
+}
+
+#timeline-div0 {
+    display: inline-block;
+    width: @timeline_div0_width;
+    margin-right: -@timeline_div0_width - @skip_current;
+}
+
+.timeline-div.current {
+    margin-right: @skip_current - @timeline_icon_width;
+}
+
+.timeline-div.before {
+    margin-right: -@skip_other - @timeline_icon_width;
+}
+
+.timeline-div.after {
+    margin-right: @skip_other - @timeline_icon_width;
+}
+
+.timeline-div.plus {
+    margin-right: -@timeline_icon_width;
+}
+
+#about {
+    margin-top: 20px;
+    height: 40px;
+}
+#about-timeline {
+    float: left;
+}
+
+#about-sharing {
+    margin-left: 40px;
+    float: left;
+}
+
+#about-lunchere-container  {
+    float: right;
+    margin-right: 40px;
+}
+
+#about-lunchere  {
+    
+}
+
+#power {
+    border-top: 2px dashed gray;
+    text-align: right;
+    margin-right: 40px;
+}
+
+/* TOGGLE */
+.no-info-map #toggle-info-map > i,
+.no-info-map #info-map {
+    display: none;
+}
+
+.no-confirmed #details,
+.no-confirmed #review,
+.no-confirmed #confirmed-footnote,
+.no-confirmed #footer-container {
+    display: none;
+}
+
+.yes-confirmed #footnote,
+.yes-confirmed #options {
+    display: none;
+}
+
+.old #old-container {
+    display: block;
+}
+
+.old #root-container,
+.old #footer-container {
+    display: none;
+}

@@ -196,3 +196,65 @@ $(document).ready(function() {
         select: dynamic_source_select,
     });
 });
+
+function HashURL() {
+    // TODO
+}
+
+
+function MainUI() {
+    function toggled_confirmed() {
+	if ($("body").hasClass("no-confirmed")) {
+	    $("body").removeClass("no-confirmed").addClass("yes-confirmed");
+	    document.location.hash = "#confirmed";
+	}
+	else {
+	    $("body").addClass("no-confirmed").removeClass("no-confirmed");
+	    document.location.hash = "";
+	}
+    }
+    function init() {
+	$("#toggle-info-map").click(function() {
+	    if ($("#main-container").hasClass("no-info-map")) {
+		$("#main-container").removeClass("no-info-map");
+	    }
+	    else {
+		$("#main-container").addClass("no-info-map");
+	    }
+	});
+
+	$("#options-yes").click(function() {
+	    toggled_confirmed();
+	});
+
+	$("#cancel-button").click(function() {
+	    toggled_confirmed();
+	});
+
+	$(window).on("hashchange", function() {
+	    goto_hash();
+	});
+    }
+    function goto_hash() {
+	if (document.location.hash == "#confirmed") {
+	    console.log("confirmed");
+	    $("body").addClass("yes-confirmed").removeClass("no-confirmed").removeClass("old");
+	}
+	else if (document.location.hash == "#old") {
+	    $("body").removeClass("yes-confirmed").removeClass("no-confirmed").addClass("old");
+	}
+	else {
+	    $("body").removeClass("yes-confirmed").addClass("no-confirmed").removeClass("old");
+	}
+    }
+    this.init = init;
+    this.goto_hash = goto_hash;
+    return this;
+}
+
+var mainUI = MainUI();
+
+$(document).ready(function() {
+    mainUI.init();
+    mainUI.goto_hash();
+});
