@@ -210,7 +210,7 @@ function MainUI() {
 	}
 	else {
 	    $("body").addClass("no-confirmed").removeClass("no-confirmed");
-	    document.location.hash = "";
+	    document.location.hash = "#new";
 	}
     }
     function init() {
@@ -240,7 +240,7 @@ function MainUI() {
 	    console.log("confirmed");
 	    $("body").addClass("yes-confirmed").removeClass("no-confirmed").removeClass("old");
 	}
-	else if (document.location.hash == "#old") {
+	else if (document.location.hash != "#new") {
 	    $("body").removeClass("yes-confirmed").removeClass("no-confirmed").addClass("old");
 	}
 	else {
