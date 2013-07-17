@@ -800,10 +800,12 @@ class MainPage(webapp2.RequestHandler):
         else:
             if use_cookie and request.path != "/logout":
                 history_id = history_id_in_cookie
-            if history_id is None:
+            if request.path == "/":
                 self.redirect("/create")
             else:
-                self.redirect(str(history_id).replace("history:", "/history/"))
+                # self.redirect(str(history_id).replace("history:", "/history/"))
+                self.response.set_status(404)
+                self.response.write("404 Not found")
 
 
 class LandingPage(webapp2.RequestHandler):

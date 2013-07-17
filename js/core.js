@@ -111,12 +111,12 @@ function today_recommendation_received(resp) {
 	historyId = resp.historyId;
     }
     if (! resp.name) {
-	document.getElementById("today").innerHTML = "(loading from foursquare)";
 	document.getElementById("confirmed").innerHTML = "";
 	document.getElementById("yes").disabled = true;
 	document.getElementById("no").disabled = ! resp.has_other_recommend;
 	document.getElementById("go").disabled = false;
 	if (resp.hints && (resp.hints.ll || resp.hints.near)) {
+	    document.getElementById("today").innerHTML = "(loading from foursquare)";
 	    get_recommendation_from_foursquare(resp.hints.ll, resp.hints.near, function(name) {
 		console.log("name = " + name);
 		document.getElementById("today").innerHTML = name;
@@ -125,6 +125,21 @@ function today_recommendation_received(resp) {
 		document.getElementById("no").disabled = false;
 		document.getElementById("yes").disabled = false;
 	    });
+	}
+	else {
+	    document.getElementById("today").innerHTML = "(loading from foursquare, but we need you location first)";
+	    if (navigator && navigator.geolocation) {
+		console.log("fetching location");
+		navigator.geolocation.getCurrentPosition(function(position) {
+		    resp.hints = {}
+		    resp.hints.ll = position.coords.latitude + "," + position.coords.longitude;
+		    today_recommendation_received(resp)
+		    return;
+		},
+		function () {
+		    document.getElementById("today").innerHTML = "(no recommendations)";
+		});
+	    }
 	}
     }
     else {
