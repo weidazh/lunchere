@@ -93,7 +93,7 @@ function LLGeocoder(spinner, submit_callback) {
 	}).done(function(data) {
 	    spinner.dec();
 	    var a = []
-	    $(data.results).each(function(i, obj) {
+	    $.each(data.results, function(i, obj) {
 		a.push({
 		    "label": obj.formatted_address,
 		    "value": obj.formatted_address,

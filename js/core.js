@@ -112,8 +112,10 @@ function first_call(authed) {
 
 var today_recommendation;
 
-function today_recommendation_received(resp) {
-    return today_recommendation_received_new_ui(resp);
+function today_recommendation_received(resp, venue) {
+    if (new_mode) {
+	return today_recommendation_received_new_ui(resp, venue);
+    }
     if (resp.historyId && resp.historyId != historyId) {
 	historyId = resp.historyId;
     }
@@ -197,6 +199,9 @@ function send_request(loginfo, func, args, name) {
 	    req["timeslot"] = today_recommendation.timeslot;
 	if (args[i] == "name")
 	    req["name"] = name;
+	if (args[i] == "foursquare_id" && today_recommendation && today_recommendation.foursquare_id) {
+	    req["foursquare_id"] = today_recommendation.foursquare_id;
+	}
     }
     console.log("SEND REQ " + loginfo);
     disable_all();
@@ -239,7 +244,7 @@ function createmeal() {
 
 function confirm_today(name) {
     if (today_recommendation && name) {
-	send_request("confirm", gapi.client.lunchere.yesUnauth, ["historyId", "timeslot", "name"], name);
+	send_request("confirm", gapi.client.lunchere.yesUnauth, ["historyId", "timeslot", "name", "foursquare_id"], name);
     }
     else {
 	console.log("ERROR: today_recommendation is None or name is empty but confirm is clicked");
@@ -248,7 +253,7 @@ function confirm_today(name) {
 
 function cancel_today() {
     if (today_recommendation) {
-	send_request("cancel", gapi.client.lunchere.noUnauth, ["historyId", "timeslot", "name"], get_today_recommendation_name());
+	send_request("cancel", gapi.client.lunchere.noUnauth, ["historyId", "timeslot", "name", "foursquare_id"], get_today_recommendation_name());
     }
     else {
 	console.log("ERROR: today_recommendation is None but cancel is clicked");

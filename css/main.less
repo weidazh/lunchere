@@ -1,5 +1,54 @@
-@main_width: 2 * @info_map_size + 20px;
-@icon_size: 48px;
+@grid_baseline: 18px;
+@grid_column: 60px;
+@grid_num_modules: 12;
+@grid_gutter: 20px;
+@grid_module_height: 4;
+@grid_layout_width: @grid_num_modules * @grid_column + (@grid_num_modules - 1) * @grid_gutter;
+@grid_half_gutter: @grid_gutter / 2;
+@grid_half_baseline: @grid_baseline / 2;
+
+@title_font_size: (8 / 6) * @grid_baseline;
+@normal_font_size: @grid_baseline;
+@small_font_size: (7 / 9) * @grid_baseline;
+@footnote_font_size: 2 * @grid_baseline / 3;
+@font_awesome_size_fix: @grid_baseline;
+
+@color_blue: #2980b9;
+@color_bggray: #ecf0f1;
+@color_bgwhite: #ffffff;
+@color_bgbluegray: #7f8c8d;
+@color_bgbluegray2: #949f9f;
+@color_white: #ffffff;
+@color_gray: @color_bgbluegray;
+@color_black: #1b2e42;
+
+@main_width: 5 * @grid_gutter + 4 * @grid_column;
+@half_main_width: @grid_column + @grid_gutter + @grid_column;
+@major_main_width: 3 * @grid_column + 2 * @grid_gutter;
+@minor_main_width: @grid_column;
+@main_border: 0px;
+
+@icon_size: 88px;
+@icon_border: (@icon_height - @icon_size) / 2;
+@icon_height: @grid_baseline * 5;
+@icon_width: @grid_gutter + @grid_column;
+@icon_inner_width: @icon_width - 2 * @icon_border;
+@icon_vskip: -@main_border - (@grid_column + @grid_gutter);
+@icon_vskip_after: - (@icon_height - @icon_vskip);
+@icon_border_color: @color_blue;
+
+
+@title_min_height: 4 * @grid_baseline; /* including top and bottom half baseline padding */
+@title_lrmargin: @grid_gutter;
+@title_topmargin: @grid_half_baseline;
+@title_bottommargin: @grid_half_baseline;
+
+@ratings_container_top_border: 1px;
+@map_border_bottom_width: 1px;
+
+@details_li_icon_space: 10px;
+@details_li_icon_width: @normal_font_size;
+
 @info_map_size: 160px;
 @toggle_button_size: 40px;
 @options_yes_no_size: 40px;
@@ -12,6 +61,25 @@
 
 .debug {
     outline: 1px solid red;
+    outline-offset: -1px;
+}
+
+.mock {
+    outline: 1px dashed blue;
+}
+
+.gray-small {
+    font-size: 80%;
+    color: gray;
+}
+
+.circle {
+    /* http://davidwalsh.name/css-circles */
+    border-radius: 50%;
+}
+
+.narrow {
+    font-family: "Helvetica Narrow", "Arial Narrow";
 }
 
 #old-container {
@@ -19,273 +87,8 @@
 }
 
 
-/* STYLING */
-#main-icon {
-    border: 2px black solid;
-    background: gray;
-    color: white;
-}
-
-#main-container {
-    border: 2px black solid;
-}
-
-#title {
-    font-size: @icon_size;
-}
-
-#info-map {
-    border-top: 1px dashed gray;
-}
-
-.no-confirmed #info-map {
-    border-bottom: 1px dashed gray;
-}
-
-#options-captions {
-}
-
-#details {
-    border-left: 1px solid black;
-    border-right: 1px solid black;
-    background: @lightgray;
-    padding: 8px;
-    margin-left: 8px;
-    margin-right: 8px;
-}
-
-#confirmed-footnote {
-    border: 2px solid black;
-    text-align: right;
-}
-
-#cancel-button {
-    outline: 2px solid black;
-}
-
-#review-info {
-    border-right: 1px dashed gray;
-    text-align: right;
-}
-
-/* POSITIONING */
-#root-container {
-    margin: auto;
-    width: @main_width;
-}
-
-#main-container {
-}
-
-#main-icon {
-    float: left;
-    font-size: @icon_size;
-    margin-left: -@icon_size - 11px - 4px;
-    margin-bottom: -@icon_size - 5px - 4px;
-
-    padding-left: 7px;
-    padding-right: 5px;
-    padding-top: 4px;
-    padding-bottom: 1px;
-}
-
-#title {
-    line-height: @icon_size + 8px;
-}
-
-#title-text {
-    display: inline-block;
-    width: @main_width - @toggle_button_size;
-}
-
-#toggle-info-map {
-    display: inline-block;
-    margin-left: -30px;
-}
-
-#right-of-main-icon {
-    float: left;
-}
-
-#info-map {
-    height: @info_map_size;
-}
-
-#info {
-    width: @info_map_size;
-    height: @info_map_size;
-    float: left;
-}
-
-#map {
-    width: @info_map_size;
-    height: @info_map_size;
-    float: right;
-}
-
-#ratings, #external-link, [id^="heart-"] {
-    display: inline-block;
-}
-
-#extra-container {
-}
-
-#options-captions {
-    display: inline-block;
-}
-
-#options-yes, #options-no {
-    width: @options_yes_no_size;
-    display: inline-block;
-}
-
-#details {
-
-}
-
-#details-addr {
-    width: 300px;
-}
-
-#review {
-    margin-top: 12px;
-    height: 50px;
-}
-
-#review-info, #review-edit, #review-fav {
-    float: left;
-    height: 50px;
-}
-
-#review-info {
-    width: 50%;
-    padding-right: 10px;
-}
-
-#review-edit {
-    width: 24%;
-    margin-left: 10px;
-}
-
-#review-fav {
-    margin-left: 10px;
-    .debug;
-}
-
-[id^="details-"] {
-    display: inline-block;
-}
-
-#loading-container {
-    display: none;
-    position: fixed;
-    top: 0%;
-    left: 0%;
-    width: 100%;
-    height: 100%;
-    z-index: 2000000;
-}
-
-#loading-spinner {
-    width: 200px;
-    height: 200px;
-    top: 50%;
-    left: 50%;
-    margin-top: 0px;
-    margin-left: 0px;
-    position: fixed;
-}
-
-#footer-container {
-    margin-top: 20px;
-    float: clear;
-    margin-bottom: 20px;
-}
-
-#timeline {
-    display: block;
-    margin-left: 50%;
-    margin-bottom: -14px;
-}
-
-#timeline-border0 {
-}
-
-#timeline-border-left {
-    float: left;
-    clear: left;
-    width: 50%;
-    border-top: 5px solid @lightgray;
-}
-
-#timeline-border-right {
-    float: left;
-    clear: none;
-    width: @timeline_div0_width;
-    border-top: 5px solid @lightgray;
-}
-
-#timeline-ul {
-    width: @timeline_div0_width
-}
-
-#timeline-border {
-}
-
-.timeline-div {
-    display: inline-block;
-    width: @timeline_icon_width;
-}
-
-#timeline-div0 {
-    display: inline-block;
-    width: @timeline_div0_width;
-    margin-right: -@timeline_div0_width - @skip_current;
-}
-
-.timeline-div.current {
-    margin-right: @skip_current - @timeline_icon_width;
-}
-
-.timeline-div.before {
-    margin-right: -@skip_other - @timeline_icon_width;
-}
-
-.timeline-div.after {
-    margin-right: @skip_other - @timeline_icon_width;
-}
-
-.timeline-div.plus {
-    margin-right: -@timeline_icon_width;
-}
-
-#about {
-    margin-top: 20px;
-    height: 40px;
-}
-#about-timeline {
-    float: left;
-}
-
-#about-sharing {
-    margin-left: 40px;
-    float: left;
-}
-
-#about-lunchere-container  {
-    float: right;
-    margin-right: 40px;
-}
-
-#about-lunchere  {
-    
-}
-
-#power {
-    border-top: 2px dashed gray;
-    text-align: right;
-    margin-right: 40px;
-}
+@import "main-style.less";
+@import "main-position.less";
 
 /* TOGGLE */
 .no-info-map #toggle-info-map > i,
@@ -293,15 +96,16 @@
     display: none;
 }
 
-.no-confirmed #details,
 .no-confirmed #review,
 .no-confirmed #confirmed-footnote,
-.no-confirmed #footer-container {
+.no-confirmed #footer-container,
+.no-confirmed .confirmed-only {
     display: none;
 }
 
 .yes-confirmed #footnote,
-.yes-confirmed #options {
+.yes-confirmed #options,
+.yes-confirmed .no-confirmed-only {
     display: none;
 }
 
@@ -316,4 +120,12 @@
 
 .loading #loading-container {
     display: block;
+}
+
+/* MOCKING */
+#ratings,
+#costs-container,
+#footnote,
+#askfriends {
+    /* .mock; */
 }

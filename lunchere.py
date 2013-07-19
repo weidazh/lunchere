@@ -45,10 +45,12 @@ class TodayRecommendation(messages.Message):
     has_other_recommend = messages.BooleanField(10, required=False)
     api_version = messages.StringField(11, required=False)
     hints = messages.MessageField(HintsMessage, 12, required=False)
+    foursquare_id = messages.StringField(13, required=False)
 
 class OneChoice(messages.Message):
     canteenId = messages.StringField(1, required=True)
     freq = messages.FloatField(2, required=True)
+    foursquareId = messages.StringField(3, required=False)
 
 class TodayChoices(messages.Message):
     "Return to client for recommendation"
@@ -93,7 +95,7 @@ class RecommendationChoices:
         self.choices.append((canteen_id, freq))
 
     def to_rpc(self):
-        choices = [OneChoice(canteenId=c, freq=f) for c, f in self.choices]
+        choices = [OneChoice(canteenId=c, freq=f, foursquareId=FoursquareVenue.get_4qr_id(self.history_id, c)) for c, f in self.choices]
         logging.debug("choices.len = %d " % len(choices))
         return TodayChoices(historyId=self.history_id, timeslot=self.timeslot, choices=choices)
 
@@ -135,12 +137,14 @@ class Recommendation:
         for key in self.hints:
             logging.debug("setattr %s %s %s" % (repr(hints), repr(key), repr(self.hints[key])))
             setattr(hints, key, self.hints[key])
+        foursquare_id = FoursquareVenue.get_4qr_id(self.history_id, canteen_id)
         return TodayRecommendation(name=canteen_id, historyId=self.history_id,
                                 timeslot=self.timeslot, timeslotFriendly=timeslot_friendly,
                                 confirmed=self.confirmed,
                                 could_delete=could_delete, has_nextmeal=has_nextmeal, has_prevmeal=has_prevmeal, has_createmeal=has_createmeal,
                                 has_other_recommend=self.has_other_recommend,
-                                api_version=LUNCHERE_API_VERSION, hints=hints)
+                                api_version=LUNCHERE_API_VERSION, hints=hints,
+                                foursquare_id=foursquare_id)
 
 class HistoryEvent(db.Model):
     """A HistoryEvent is an record in History,
@@ -237,8 +241,14 @@ class Choice(db.Model):
                 freq = deffreq
             yield canteen_id, freq, choice
             canteenIds[canteen_id] = True
+
     @classmethod
-    def get_choices(cls, history_id, timeslot0, exclude=()):
+    def alg_freq_filter(cls, freq):
+        "Maybe random, maybe bias the often restaurant"
+        return 1.0
+
+    @classmethod
+    def get_choices(cls, history_id, timeslot0, exclude=(), avoid_cancelled=True):
         canteenIds = dict([(e, True) for e in exclude])
         choice_list = db.GqlQuery("SELECT * FROM Choice WHERE " +
                         "historyId = :1", history_id)
@@ -248,7 +258,7 @@ class Choice(db.Model):
         for (canteen_id, freq, choice) in Choice._yield_choices(choice_list, canteenIds):
             if choice.max_timeslot > max_timeslot:
                 max_timeslot = choice.max_timeslot
-            choices[canteen_id] = freq
+            choices[canteen_id] = Choice.alg_freq_filter(freq)
 
         if len(choices):
             avg = sum([freq for canteen_id, freq in choices]) / len(choices)
@@ -258,7 +268,10 @@ class Choice(db.Model):
         choice_list = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot >= :2", history_id, max_timeslot)
         for (canteen_id, freq, hist_ev) in Choice._yield_choices(choice_list, canteenIds, deffreq=avg):
-            choices[canteen_id] = freq
+            choices[canteen_id] = Choice.alg_freq_filter(freq)
+
+        if not avoid_cancelled:
+            return choices.items()
 
         choice_list = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot = :2", history_id, timeslot0)
@@ -484,6 +497,33 @@ class Timeslot:
             logging.info("new_timeslot is None and not fallback")
             return None
 
+class FoursquareVenue(db.Model):
+    historyId = db.StringProperty(required=True)
+    canteenId = db.StringProperty(required=True)
+    foursquareId = db.StringProperty(required=True)
+
+    @classmethod
+    def get_4qr_id(cls, historyId, canteenId):
+        foursquare_venue = db.GqlQuery("SELECT * FROM FoursquareVenue WHERE " +
+                                "historyId = :1 AND canteenId = :2", historyId, canteenId).get()
+        if foursquare_venue is None:
+            return None
+        else:
+            return foursquare_venue.foursquareId
+
+    @classmethod
+    def set_4qr_id(cls, historyId, canteenId, foursquareId):
+        if historyId is None or canteenId is None or foursquareId is None:
+            return
+        foursquare_venue = db.GqlQuery("SELECT * FROM FoursquareVenue WHERE " +
+                                "historyId = :1 AND canteenId = :2", historyId, canteenId).get()
+        if foursquare_venue is None:
+            foursquare_venue = FoursquareVenue(historyId=historyId, canteenId=canteenId, foursquareId=foursquareId)
+            foursquare_venue.put()
+        elif foursquare_venue.foursquareId != foursquareId:
+            foursquare_venue.foursquareId = foursquareId
+            foursquare_venue.put()
+
 class History:
     "A history is a sequence of guessings, recommendations, confirms and rejects/cancels"
     def _datastore_get_no_cancelled(self):
@@ -593,7 +633,7 @@ class History:
         logging.debug("EXCLUDE = " + repr(exclude))
         # if self.next_recommend is not None:
         #     exclude = exclude + (self.next_recommend,)
-        choices = Choice.get_choices(history_id=self.history_id, timeslot0=self.timeslot, exclude=exclude)
+        choices = Choice.get_choices(history_id=self.history_id, timeslot0=self.timeslot, exclude=exclude, avoid_cancelled=False)
         return RecommendationChoices(self.history_id, self.timeslot, choices)
 
 
@@ -694,6 +734,7 @@ class LuncHereAPI(remote.Service):
     def no_unauth(self, request):
         "cancel/reject"
         self.counter += 1
+        FoursquareVenue.set_4qr_id(request.historyId, request.name, request.foursquare_id)
         recommendation = History.recommend_from(request.historyId, request.timeslot, cancel=request.name)
         return recommendation.to_rpc()
 
@@ -701,6 +742,7 @@ class LuncHereAPI(remote.Service):
     def yes_unauth(self, request):
         "confirm"
         self.counter += 1
+        FoursquareVenue.set_4qr_id(request.historyId, request.name, request.foursquare_id)
         recommendation = History.recommend_from(request.historyId, request.timeslot, confirm=request.name)
         return recommendation.to_rpc()
 

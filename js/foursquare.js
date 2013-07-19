@@ -129,7 +129,7 @@ function get_recommendation_from_foursquare(ll, near, callback) {
             if (group.name == "recommended") {
                 $(group.items).each(function(j, item) {
                     foursquare_recommendation_offset++;
-                    callback(item.venue.name);
+                    callback(item.venue.name, item.venue);
                     return;
                 });
             }
@@ -140,3 +140,16 @@ function get_recommendation_from_foursquare(ll, near, callback) {
     });
 }
 
+function get_details_from_foursquare(foursquare_id, callback) {
+    var query = "";
+    $.ajax({
+	url: "https://api.foursquare.com/v2/venues/" + foursquare_id + "?" + NOLOGIN_SUFFIX
+    }).done(function (data) {
+        console.log(data);
+        var venue = data.response.venue;
+	callback(venue);
+    }).fail(function() {
+        console.log("ERROR");
+    });
+
+}

@@ -1,0 +1,155 @@
+/* **************** STYLING ************** */
+@import url(http://www.google.com/fonts/specimen/PT+Sans+Narrow);
+
+body {
+    background: @color_bggray;
+    font-size: @normal_font_size;
+    font-family: Tahoma, Arial, Helvetica, sans-serif;
+    line-height: @grid_baseline;
+}
+
+#main-icon {
+    border-style: solid;
+    border-color: @icon_border_color;
+    background: @color_blue;
+    color: white;
+    width: @icon_inner_width;
+    height: @icon_height - 2 * @icon_border;
+
+    background-image: url(https://foursquare.com/img/categories_v2/food/default_88.png);
+    background-position-x: (@icon_inner_width - @icon_size) / 2;
+}
+
+#main-container {
+    border-style: solid;
+    border-color: black;
+    background: @color_bgwhite;
+}
+
+#title {
+    .narrow;
+    color: @color_black;
+    font-family: "PT Sans Narrow", "Helvetica Narrow", "Heiti";
+}
+
+#info-map {
+}
+
+.no-confirmed #info-map {
+}
+
+#info {
+    color: @color_gray;
+}
+
+#ratings-container {
+    border-top-style: solid;
+    border-top-color: @color_bgbluegray2;
+}
+
+#ratings {
+    color: @color_blue;
+}
+
+#external-link > a[href="#"] {
+    display: none;
+}
+
+#map {
+    border-bottom-style: solid;
+    border-bottom-color: @color_bgbluegray2;
+}
+
+#footnote {
+    .footnotes;
+}
+
+#options {
+    background: @color_bgbluegray;
+}
+
+#options-captions {
+}
+
+#options-captions > i {
+}
+
+#options-captions > #askfriends {
+    margin-left: 17px;
+}
+
+#extra-container {
+    background: @color_bggray;
+    color: @color_gray;
+}
+
+#details {
+    background: @color_bgwhite;
+    .narrow;
+}
+
+#details-town {
+    font-size: @small_font_size;
+}
+
+#buttons {
+    background: @color_bgwhite;
+    border-right-color: @color_blue;
+    border-right-style: solid;
+}
+
+[id^="buttons-"].disabled {
+    color: inherit;
+}
+
+[id^="buttons-"] {
+    color: @color_blue;
+}
+
+[id^="buttons-"]:hover {
+    color: green;
+}
+
+[id^="buttons-"].clicked {
+    color: @color_bgwhite;
+    backgroun: @color_blue;
+}
+
+.footnotes {
+    text-align: left;
+    padding-left: @grid_half_gutter;
+    padding-right: @grid_half_gutter;
+    font-size: @footnote_font_size;
+    background: @color_bgbluegray;
+    color: @color_white;
+}
+
+#confirmed-footnote {
+    .footnotes;
+}
+
+#cancel-button {
+    outline: 2px solid black;
+}
+
+#review-info {
+    border-right-style: dashed;
+    border-right-color: gray;
+    text-align: right;
+}
+
+#options {
+    background: @color_bgbluegray;
+    color: @color_bgwhite;
+}
+
+#options-yes, #options-no {
+    background: @color_bgbluegray2;
+    .circle;
+    border-style: solid;
+    border-color: white;
+}
+
+#options-yes:hover, #options-no:hover {
+    background: green;
+}
