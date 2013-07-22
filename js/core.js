@@ -108,11 +108,6 @@ function first_call(authed) {
     });
 }
 
-var today_recommendation = {
-    "historyId": historyId,
-    "name": "Testing name",
-};
-
 function today_recommendation_received(resp, venue) {
     if (hashurl.new_mode()) {
 	return today_recommendation_received_new_ui(resp, venue);
