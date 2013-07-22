@@ -50,7 +50,6 @@
 @details_li_icon_width: @normal_font_size;
 
 @info_map_size: 160px;
-@toggle_button_size: 40px;
 @options_yes_no_size: 40px;
 @lightgray: #cccccc;
 
@@ -76,10 +75,6 @@
 .circle {
     /* http://davidwalsh.name/css-circles */
     border-radius: 50%;
-}
-
-.narrow {
-    font-family: "Helvetica Narrow", "Arial Narrow";
 }
 
 #old-container {
@@ -118,8 +113,18 @@
     display: none;
 }
 
-.loading #loading-container {
+.loading-placeholder {
+    display: none;
+}
+
+.loading .loading-placeholder {
     display: block;
+}
+
+.loading #info-map,
+.loading #extra-container,
+.loading #options {
+    display: none;
 }
 
 /* MOCKING */
@@ -129,3 +134,4 @@
 #askfriends {
     /* .mock; */
 }
+

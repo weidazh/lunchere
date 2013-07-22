@@ -1,10 +1,14 @@
 /* **************** STYLING ************** */
 @import url(http://fonts.googleapis.com/css?family=PT+Sans+Narrow);
 
+.narrow {
+    font-family: "PT Sans Narrow", "Helvetica Narrow", "Arial Narrow", "Heiti";
+}
+
 body {
     background: @color_bggray;
     font-size: @normal_font_size;
-    font-family: Tahoma, Arial, Helvetica, sans-serif;
+    font-family: "PT Sans", Tahoma, Arial, Helvetica, sans-serif;
     line-height: @grid_baseline;
 }
 
@@ -13,8 +17,6 @@ body {
     border-color: @icon_border_color;
     background: @color_blue;
     color: white;
-    width: @icon_inner_width;
-    height: @icon_height - 2 * @icon_border;
 
     background-image: url(https://foursquare.com/img/categories_v2/food/default_88.png);
     background-position-x: (@icon_inner_width - @icon_size) / 2;
@@ -23,13 +25,15 @@ body {
 #main-container {
     border-style: solid;
     border-color: black;
+}
+
+#title-container, #info-map, #details-buttons, #details, #buttons {
     background: @color_bgwhite;
 }
 
-#title {
+#title-container {
     .narrow;
     color: @color_black;
-    font-family: "PT Sans Narrow", "Helvetica Narrow", "Heiti";
 }
 
 #info-map {
@@ -61,7 +65,7 @@ body {
 }
 
 #footnote {
-    .footnotes;
+    .footnotes_style;
 }
 
 #options {
@@ -83,6 +87,13 @@ body {
     color: @color_gray;
 }
 
+#details-buttons {
+    border-right-color: @color_blue;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-bottom-color: @color_bgbluegray2;
+}
+
 #details {
     background: @color_bgwhite;
     .narrow;
@@ -94,16 +105,21 @@ body {
 
 #buttons {
     background: @color_bgwhite;
-    border-right-color: @color_blue;
-    border-right-style: solid;
 }
 
 [id^="buttons-"].disabled {
     color: inherit;
 }
 
+
+#buttons-last {
+    border-bottom-width: 0px; /* details-buttons has the border */
+}
+
 [id^="buttons-"] {
     color: @color_blue;
+    border-bottom-style: solid;
+    border-bottom-color: @color_bgbluegray2;
 }
 
 [id^="buttons-"]:hover {
@@ -112,20 +128,25 @@ body {
 
 [id^="buttons-"].clicked {
     color: @color_bgwhite;
-    backgroun: @color_blue;
+    background: @color_blue;
 }
 
-.footnotes {
+#extra-toggle {
+    text-align: center;
+}
+
+#extra-toggle:hover {
+    color: green;
+}
+
+.footnotes_style {
     text-align: left;
-    padding-left: @grid_half_gutter;
-    padding-right: @grid_half_gutter;
-    font-size: @footnote_font_size;
-    background: @color_bgbluegray;
-    color: @color_white;
+    background: @color_bggray;
+    color: @color_gray;
 }
 
 #confirmed-footnote {
-    .footnotes;
+    .footnotes_style;
 }
 
 #cancel-button {
@@ -150,6 +171,10 @@ body {
     border-color: white;
 }
 
-#options-yes:hover, #options-no:hover {
+#options-yes:hover {
     background: green;
+}
+
+#options-no:hover {
+    background: red;
 }

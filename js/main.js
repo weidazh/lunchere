@@ -316,28 +316,41 @@ function MainUI() {
 	}
 	else if (document.location.hash == "#loading") {
 	    new_mode = true;
-	    var opts = {
-		lines: 20, // The number of lines to draw
-		length: 100, // The length of each line
-		width: 20, // The line thickness
-		radius: 100, // The radius of the inner circle
-		corners: 0.8, // Corner roundness (0..1)
-		rotate: 0, // The rotation offset
-		direction: 1, // 1: clockwise, -1: counterclockwise
-		color: '#000', // #rgb or #rrggbb
-		speed: 1, // Rounds per second
-		trail: 60, // Afterglow percentage
-		shadow: false, // Whether to render a shadow
-		hwaccel: false, // Whether to use hardware acceleration
-		className: 'spinner', // The CSS class to assign to the spinner
-		zIndex: 1, // The z-index (defaults to 2000000000)
-		top: 'auto', // Top position relative to parent in px
-		left: 'auto' // Left position relative to parent in px
-	    };
-	    if (! spinner)
-		spinner = new Spinner(opts);
-	    if (spinner)
-		spinner.spin($("#loading-spinner")[0]);
+	    $(".loading-placeholder").each(function(i, obj) {
+		var opts = {
+		    lines: 9, // The number of lines to draw
+		    corners: 0.8, // Corner roundness (0..1)
+		    rotate: 0, // The rotation offset
+		    direction: 1, // 1: clockwise, -1: counterclockwise
+		    color: '#000', // #rgb or #rrggbb
+		    speed: 1, // Rounds per second
+		    trail: 60, // Afterglow percentage
+		    shadow: false, // Whether to render a shadow
+		    hwaccel: false, // Whether to use hardware acceleration
+		    className: 'spinner', // The CSS class to assign to the spinner
+		    zIndex: 1, // The z-index (defaults to 2000000000)
+		    top: "auto", // Top position relative to parent in px
+		    left: "auto", // Left position relative to parent in px
+
+		    length: 10, // The length of each line
+		    width: 8, // The line thickness
+		    radius: 10, // The radius of the inner circle
+		};
+		var radius = $(obj).width();
+		if (!radius)
+		    radius = 9;
+		opts.length = radius / 2;
+		opts.radius = radius / 2;
+		opts.width = 2 * Math.PI * opts.radius / opts.lines / 2;
+
+		var spinner = new Spinner(opts);
+		if (obj._spinner) {
+		    obj._spinner.stop();
+		    obj._spinner = null;
+		}
+		obj._spinner = spinner;
+		spinner.spin(obj);
+	    });
 	    $("body").removeClass("yes-confirmed").addClass("no-confirmed").removeClass("old").addClass("loading").removeClass("failed");
 	}
 	else if (document.location.hash == "#failed") {

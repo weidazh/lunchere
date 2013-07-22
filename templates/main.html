@@ -40,29 +40,32 @@ function initClientIdHistoryId() {
 </div>
 
 
-<div id="root-container">
+<div id="root-container" class="container">
+<div id="root-others">
     <a href="#old">Go back old version</a>
     <button id="toggle-info-map"><i class="icon-caret-down"></i></button>
     <button id="cancel-button"><i class="icon-ok"></i></button>
     <div id="external-link"><a target="_blank" class="icon-external-link" href="#"></a></div>
+</div>
+<div id="main-icon" ><div class="loading-placeholder"></div></div><!-- what icon to show ? -->
 <div id="main-container">
-    <div id="main-icon"></div><!-- what icon to show ? -->
-    <div id="title">
-	<div id="title-line"><span id="title-text">
-	Tak Kee Chiu Chow<br/>
-	德记海鲜酒家
-	</span><span id="title-source"></span></div>
+    <div id="title-container">
+	<span id="title-text">
+	    Tak Kee Chiu Chow<br/>
+	    德记海鲜酒家
+	</span>
+	<span id="title-source"></span>
     </div>
 
     <div id="info-map">
 	<div id="info">
-	    <div id="ratings-container" class="font-awesome-fix">
+	    <div id="ratings-container">
 		<div id="ratings">
-		    <div id="heart-1"><i class="icon-star"></i></div>
-		    <div id="heart-2"><i class="icon-star"></i></div>
-		    <div id="heart-3"><i class="icon-star"></i></div>
-		    <div id="heart-4"><i class="icon-star-half-empty"></i></div>
-		    <div id="heart-5"><i class="icon-star-empty"></i></div>
+		    <i id="heart-1" class="icon-star"></i>
+		    <i id="heart-2" class="icon-star"></i>
+		    <i id="heart-3" class="icon-star"></i>
+		    <i id="heart-4" class="icon-star-half-empty"></i>
+		    <i id="heart-5" class="icon-star-empty"></i>
 		</div>
 	    </div>
 	    <div id="title-addr">Chiu Chow restaurant in Sai Wan</div>
@@ -72,29 +75,34 @@ function initClientIdHistoryId() {
     </div>
 
     <div id="extra-container">
-	<div id="details">
-	    <ul>
-		<li id="details-addr-li"><i class="icon-map-marker details-logo"></i><span id="details-addr">G/F, No 3 Belcher's Street</span><span
-		id="details-town">Kennedy Town, Western District</span></li>
-		<li id="details-phonenumber-li">
-		    <i class="icon-phone details-logo"></i><span id="details-phonenumber">2819 5568</span>
-		</li>
-		<li id="details-hours-li">
-		    <i class="icon-globe details-logo"></i><span id="details-hours">open until 15:00</span>
-		</li>
-	    </ul>
-	</div><div id="buttons">
-	    <div id="buttons-1" class="disabled"><i class="icon-chevron-up"></i></div>
-	    <div id="buttons-2" class="confirmed-only"><i class="icon-share-alt"></i></div>
-	    <div id="buttons-3" class="confirmed-only"><i class="icon-foursquare"></i></div>
-	    <div id="buttons-yes" class="no-confirmed-only"><i class="icon-share-alt"></i></div>
-	    <div id="buttons-no" class="no-confirmed-only"><i class="icon-foursquare"></i></div>
-	    <div id="buttons-4" class="disabled">...</div>
-
+        <div id="details-buttons">
+	    <div id="details">
+		<ul>
+		    <li id="details-addr-li"><i class="icon-map-marker details-logo"></i><span id="details-addr">G/F, No 3 Belcher's Street</span><span
+		    id="details-town">Kennedy Town, Western District</span></li>
+		    <li id="details-phonenumber-li">
+			<i class="icon-phone details-logo"></i><span id="details-phonenumber">2819 5568</span>
+		    </li>
+		    <li id="details-hours-li">
+			<i class="icon-globe details-logo"></i><span id="details-hours">open until 15:00</span>
+		    </li>
+		</ul>
+	    </div>
+	    <div id="buttons">
+		<div id="buttons-1" class="disabled"><i class="icon-chevron-up"></i></div>
+		<div id="buttons-2" ><i class="icon-share-alt"></i></div>
+		<div id="buttons-3" ><i class="icon-foursquare"></i></div>
+		<div id="buttons-last" class="disabled">...</div>
+	    </div>
 	</div>
+	<div id="extra-toggle">
+	    <div id="extra-toggle-button">
+	        <i class="icon-chevron-up"></i>
+	    </div>
+	</div>
+	<div id="confirmed-footnote">you liked this place | last time here about 1 month ago <i class="icon-magic"></i></div><!-- showed only in confirmed mode -->
+	<div id="footnote">you liked this place | last meal here: about 1 months ago</div><!-- showed only in non-confirmed mode -->
     </div>
-    <div id="confirmed-footnote">you liked this place | last time here about 1 month ago <i class="icon-magic"></i></div><!-- showed only in confirmed mode -->
-    <div id="footnote">you liked this place | last meal here: about 1 months ago</div><!-- showed only in non-confirmed mode -->
     <div id="options">
 	<div id="options-captions">
 	    <i>Lunch here today?</i><!-- <br/>
@@ -111,6 +119,7 @@ function initClientIdHistoryId() {
     </div><!-- showed only in non-confirmed mode -->
 
 </div>
+<div id="main-icon-after"></div><!-- what icon to show ? -->
 
     <div id="review">
         <div id="review-info">
@@ -127,10 +136,6 @@ function initClientIdHistoryId() {
 	</div>
 	&nbsp;
     </div><!-- showed only in confirmed mode -->
-</div>
-
-<div id="loading-container">
-    <div id="loading-spinner"></div>
 </div>
 
 <div id="footer-container">
