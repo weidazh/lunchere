@@ -121,10 +121,17 @@
     display: block;
 }
 
-.loading #info-map,
-.loading #extra-container,
-.loading #options {
+.refreshing #info-map,
+.refreshing #extra-container,
+.refreshing #options,
+.refreshing #title-text,
+.refreshing #title-source,
+.refreshing #extra-options {
     display: none;
+}
+
+.refreshing #title-loading:after {
+    content: "(Loading ...)";
 }
 
 /* MOCKING */

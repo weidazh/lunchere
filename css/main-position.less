@@ -184,14 +184,6 @@ body {
     line-height: @grid_baseline * 2;
     width: @grid_column + @grid_gutter + @grid_column + @grid_half_gutter;
 }
-
-#typehere {
-    width: 80px;
-    padding: 0px;
-    border: 0px;
-    border-bottom: 1px solid black;
-}
-
 #options-captions, #options-yes-container, #options-no-container {
     float: left;
 }
@@ -219,6 +211,18 @@ body {
     line-height: @grid_column;
     vertical-align: top;
 }
+
+#extra-options {
+    .float;
+    height: 480px;
+}
+
+#typehere {
+    padding: 0px;
+    border: 0px;
+    border-bottom: 1px solid black;
+}
+
 
 #extra-container {
     .tight_float;

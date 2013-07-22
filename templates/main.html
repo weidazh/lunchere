@@ -26,7 +26,7 @@ function initClientIdHistoryId() {
 <script src="https://apis.google.com/js/client.js?onload=lunchere_api_init"></script>
 <!-- script src="/js/client.js?onload=lunchere_api_init"></script -->
 </head>
-<body class="no-confirmed">
+<body class="no-confirmed loading refreshing">
 
 <div id="old-container">
     <a href="#new">Try new version</a>
@@ -55,6 +55,7 @@ function initClientIdHistoryId() {
 	    德记海鲜酒家
 	</span>
 	<span id="title-source"></span>
+	<span id="title-loading"></span>
     </div>
 
     <div id="info-map">
@@ -117,7 +118,9 @@ function initClientIdHistoryId() {
 	    <div id="options-no"><i class="icon-remove"></i></div>
 	</div>
     </div><!-- showed only in non-confirmed mode -->
-
+    <div id="extra-options">
+	<input id="typehere" value="type here" valuesource="type here" ></input>
+    </div>
 </div>
 <div id="main-icon-after"></div><!-- what icon to show ? -->
 

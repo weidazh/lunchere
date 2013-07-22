@@ -245,21 +245,146 @@ $(document).ready(function() {
 });
 
 function HashURL() {
-    // TODO
+    // Hash could be changed to a list of flags, a dict!
+    // status could be toload, loading, confirmed
+    // noload could be noload or !noload
+    // old could be old or !old
+    var default_hash = "#status=toload,!noload,!old,!refreshing";
+    var default_flags;
+    var flags = {};
+    var that = this;
+    function _get_flag(flags, key) {
+	return flags.hasOwnProperty(key) ? flags[key] : default_flags[key];
+    }
+    function get_flag(key) {
+	return _get_flag(flags, key);
+    }
+    function not_equal(fa, fb) {
+	var ne = false;
+	$.each(fa, function(k, v) {
+	    if (v != _get_flag(fb, k))
+		ne = true;
+	});
+	$.each(fb, function(k, v) {
+	    if (v != _get_flag(fa, k))
+		ne = true;
+	});
+	return ne;
+    }
+    function recognize_new_hash() {
+	var new_flags = _parse_hash(document.location.hash);
+	if (not_equal(flags, new_flags)) {
+	    flags = new_flags;
+	    that.hash = document.location.hash;
+	    _set_body_class();
+	}
+    }
+    function _parse_hash(hash) {
+	if (hash == "" || hash == "#") {
+	    hash = default_hash;
+	}
+	var flags = {};
+	hash = hash.slice(1); // get rid of the '#'
+	$.each(hash.split(','), function (i, tag) {
+	    var flag = true;
+	    if (tag[0] == '!') {
+		flag = false;
+		tag = tag.slice(1);
+	    }
+	    else if (tag.indexOf("=") > 0) {
+		var assigment = tag.split("=");
+		tag = assigment[0];
+		flag = assigment[1];
+	    }
+	    flags[tag] = flag;
+	});
+	return flags;
+    }
+    function _encode_hash(flags, new_flags) {
+	var non_default_flags = {};
+	$.each(new_flags, function (k, v) {
+	    if (_get_flag(default_flags, k) != v) {
+		non_default_flags[k] = v;
+	    }
+	});
+	$.each(flags, function (k, v) {
+	    if (new_flags.hasOwnProperty(k))
+		return;
+	    if (_get_flag(default_flags, k) != v) {
+		non_default_flags[k] = v;
+	    }
+	});
+	var tags = "";
+	$.each(non_default_flags, function (k, v) {
+	    var tag;
+	    if (v === true) {
+		tag = k;
+	    }
+	    else if (v === false) {
+		tag = "!" + k;
+	    }
+	    else {
+		tag = k + "=" + v;
+	    }
+	    if (tags)
+		tags = tags + "," + tag;
+	    else
+		tags = tag;
+	});
+	return tags;
+    }
+    function _set_body_class() {
+	var mapping = {
+	    "yes-confirmed": function() { return get_flag("status") == "confirmed"; },
+	    "no-confirmed": function() { return get_flag("status") != "confirmed"; },
+	    "old": function() { return get_flag("old"); },
+	    "loading": function() { return get_flag("status") == "loading"; },
+	    "failed": function() { return get_flag("status") == "failed"; },
+	    "refreshing": function() { return get_flag("status") == "loading" && get_flag("refreshing"); }
+	};
+	var $body = $("body");
+	$.each(mapping, function (cssClass, callback) {
+	    if (callback()) {
+		$body.addClass(cssClass);
+	    }
+	    else {
+		$body.removeClass(cssClass);
+	    }
+	});
+    }
+    function goes_to_loading(refreshing) {
+	document.location.hash = _encode_hash(flags, {"status": "loading", "refreshing": !!refreshing});
+    }
+    function goes_to_normal() {
+	document.location.hash = _encode_hash(flags, {"status": "normal", "refreshing": false });
+    }
+    function goes_to_failed() {
+	document.location.hash = _encode_hash(flags, {"status": "failed", "refreshing": false});
+    }
+    function goes_to_confirmed() {
+	document.location.hash = _encode_hash(flags, {"status": "confirmed", "refreshing": false});
+    }
+
+    function new_mode() {
+	return ! get_flag("old");
+    }
+    function noload() {
+	return get_flag("noload");
+    }
+
+    default_flags =  _parse_hash(default_hash);
+    this.recognize_new_hash = recognize_new_hash;
+    this.new_mode = new_mode;
+    this.get_flag = get_flag;
+    this.goes_to_loading = goes_to_loading;
+    this.goes_to_normal = goes_to_normal;
+    this.goes_to_failed = goes_to_failed;
+    this.goes_to_confirmed = goes_to_confirmed;
+    this.noload = noload;
 }
 
 
 function MainUI() {
-    function toggled_confirmed() {
-	if ($("body").hasClass("no-confirmed")) {
-	    $("body").removeClass("no-confirmed").addClass("yes-confirmed");
-	    document.location.hash = "#confirmed";
-	}
-	else {
-	    $("body").addClass("no-confirmed").removeClass("no-confirmed");
-	    document.location.hash = "#new";
-	}
-    }
     function init() {
 	$("#toggle-info-map").click(function() {
 	    if ($("#main-container").hasClass("no-info-map")) {
@@ -281,7 +406,6 @@ function MainUI() {
 	});
 
 	$("#options-yes").click(function() {
-	    // toggled_confirmed();
 	    if (today_recommendation) {
 		confirm_today(get_today_recommendation_name());
 	    }
@@ -307,71 +431,63 @@ function MainUI() {
 	    goto_hash();
 	});
     }
-    var spinner;
+    function show_loading() {
+	$(".loading-placeholder").each(function(i, obj) {
+	    var opts = {
+		lines: 9, // The number of lines to draw
+		corners: 0.8, // Corner roundness (0..1)
+		rotate: 0, // The rotation offset
+		direction: 1, // 1: clockwise, -1: counterclockwise
+		color: '#000', // #rgb or #rrggbb
+		speed: 1, // Rounds per second
+		trail: 60, // Afterglow percentage
+		shadow: false, // Whether to render a shadow
+		hwaccel: false, // Whether to use hardware acceleration
+		className: 'spinner', // The CSS class to assign to the spinner
+		zIndex: 1, // The z-index (defaults to 2000000000)
+		top: "auto", // Top position relative to parent in px
+		left: "auto", // Left position relative to parent in px
+
+		length: 10, // The length of each line
+		width: 8, // The line thickness
+		radius: 10, // The radius of the inner circle
+	    };
+	    var radius = $(obj).width();
+	    if (!radius)
+		radius = 9;
+	    opts.length = radius / 2;
+	    opts.radius = radius / 2;
+	    opts.width = 2 * Math.PI * opts.radius / opts.lines / 2;
+
+	    if (obj._spinner) {
+		obj._spinner.stop();
+	    }
+	    else {
+		obj._spinner = new Spinner(opts);
+	    }
+	    obj._spinner.spin(obj);
+	});
+    }
+    function stop_loading() {
+	$(".loading-placeholder").each(function(i, obj) {
+	    if (obj._spinner) {
+		obj._spinner.stop();
+		obj._spinner = null;
+	    }
+	});
+    }
     function goto_hash() {
-	console.log("goto_hash " + document.location.hash);
-	if (document.location.hash == "#confirmed") {
-	    new_mode = true;
-	    $("body").addClass("yes-confirmed").removeClass("no-confirmed").removeClass("old").removeClass("loading").removeClass("failed");
-	}
-	else if (document.location.hash == "#loading") {
-	    new_mode = true;
-	    $(".loading-placeholder").each(function(i, obj) {
-		var opts = {
-		    lines: 9, // The number of lines to draw
-		    corners: 0.8, // Corner roundness (0..1)
-		    rotate: 0, // The rotation offset
-		    direction: 1, // 1: clockwise, -1: counterclockwise
-		    color: '#000', // #rgb or #rrggbb
-		    speed: 1, // Rounds per second
-		    trail: 60, // Afterglow percentage
-		    shadow: false, // Whether to render a shadow
-		    hwaccel: false, // Whether to use hardware acceleration
-		    className: 'spinner', // The CSS class to assign to the spinner
-		    zIndex: 1, // The z-index (defaults to 2000000000)
-		    top: "auto", // Top position relative to parent in px
-		    left: "auto", // Left position relative to parent in px
-
-		    length: 10, // The length of each line
-		    width: 8, // The line thickness
-		    radius: 10, // The radius of the inner circle
-		};
-		var radius = $(obj).width();
-		if (!radius)
-		    radius = 9;
-		opts.length = radius / 2;
-		opts.radius = radius / 2;
-		opts.width = 2 * Math.PI * opts.radius / opts.lines / 2;
-
-		var spinner = new Spinner(opts);
-		if (obj._spinner) {
-		    obj._spinner.stop();
-		    obj._spinner = null;
-		}
-		obj._spinner = spinner;
-		spinner.spin(obj);
-	    });
-	    $("body").removeClass("yes-confirmed").addClass("no-confirmed").removeClass("old").addClass("loading").removeClass("failed");
-	}
-	else if (document.location.hash == "#failed") {
-	    new_mode = true;
-	    $("body").removeClass("yes-confirmed").addClass("no-confirmed").removeClass("old").removeClass("loading").addClass("failed");
-	}
-	else if (document.location.hash != "#new") {
-	    new_mode = false;
-	    $("body").removeClass("yes-confirmed").removeClass("no-confirmed").addClass("old").removeClass("loading").removeClass("failed");
+	hashurl.recognize_new_hash();
+	if (hashurl.get_flag("status") == "loading") {
+	    show_loading();
 	}
 	else {
-	    new_mode = true;
-	    $("body").removeClass("yes-confirmed").addClass("no-confirmed").removeClass("old").removeClass("loading").removeClass("failed");
+	    stop_loading();
 	}
     }
     this.init = init;
     this.goto_hash = goto_hash;
     return this;
-}
-
-function URLHasher() {
 }
 
 function FoursquareFormatted(venue) {
@@ -534,7 +650,7 @@ function Backend() {
 	$("#title-text").text(name);
 	$("#title-source").text(resp.source);
 	foursquare_details_received(resp, venue);
-	document.location.hash = "#new";
+	hashurl.goes_to_normal();
     }
     function today_recommendation_received_new_ui(resp, venue) {
 	console.log("new UI");
@@ -544,7 +660,7 @@ function Backend() {
 	    historyId = resp.historyId;
 	}
 	if (! resp.name) {
-	    document.location.hash = "#loading";
+	    hashurl.goes_to_loading(true);
 	    if (resp && resp.hints && resp.hints.ll)
 		console.log("resp.hints.ll = " + resp.hints.ll);
 	    if (! venue && resp.hints && (resp.hints.ll || resp.hints.near)) {
@@ -553,7 +669,7 @@ function Backend() {
 		});
 	    }
 	    else {
-		document.location.hash = "#loading";
+		hashurl.goes_to_loading(true);
 		if (navigator && navigator.geolocation) {
 		    navigator.geolocation.getCurrentPosition(function(position) {
 			resp.hints = {}
@@ -562,7 +678,7 @@ function Backend() {
 			return;
 		    },
 		    function () {
-			document.location.hash = "#failed";
+			hashurl.goes_to_failed();
 		    });
 		}
 	    }
@@ -571,10 +687,10 @@ function Backend() {
 	    $("#title-source").text(" (lunchere)");
 	    $("#title-text").text(resp.name);
 	    if (resp.confirmed) {
-		document.location.hash = "#confirmed";
+		hashurl.goes_to_confirmed();
 	    }
 	    else {
-		document.location.hash = "#new";
+		hashurl.goes_to_normal();
 	    }
 	}
 	if (venue) {
@@ -637,8 +753,8 @@ function LunchereCache() {
     return this;
 }
 
-var new_mode = false;
 var mainUI = new MainUI();
+var hashurl = new HashURL();
 var backend = new Backend();
 var today_recommendation_received_new_ui = backend.today_recommendation_received_new_ui;
 var foursquareCache = new FoursquareCache();
