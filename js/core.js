@@ -187,16 +187,20 @@ function disable_all(refreshing) {
 	document.getElementById("nextmeal").disabled = true;
 	document.getElementById("createmeal").disabled = true;
     }
-    else {
-	hashurl.goes_to_loading(refreshing);
-    }
 }
 
 function get_today_recommendation_name() {
     if (today_recommendation && today_recommendation.name)
 	return today_recommendation.name;
     else
-	return "No recommendation";
+	return "";
+}
+
+function get_today_recommendation_4sq() {
+    if (today_recommendation && today_recommendation.foursquare_id)
+	return today_recommendation.foursquare_id;
+    else
+	return "";
 }
 
 function send_request(loginfo, refreshing, func, args, name) {
@@ -244,25 +248,31 @@ function second_call(authed) {
 
 function deletemeal() {
     send_request("deletemeal", true, gapi.client.lunchere.deletemealUnauth, ["historyId", "timeslot"]);
+    hashurl.goes_to_loading("", "");
 }
 
 function prevmeal() {
     send_request("prevmeal", true, gapi.client.lunchere.prevmealUnauth, ["historyId", "timeslot"]);
+    hashurl.goes_to_loading("", "");
 }
 
 function nextmeal() {
     send_request("nextmeal", true, gapi.client.lunchere.nextmealUnauth, ["historyId", "timeslot"]);
+    hashurl.goes_to_loading("", "");
 }
 
 function createmeal() {
     // currently dup nextmeal
     send_request("createmeal", true, gapi.client.lunchere.nextmealUnauth, ["historyId", "timeslot"]);
+    hashurl.goes_to_loading("", "");
 }
 
-function confirm_today(name) {
+function confirm_today(name, foursquare_id) {
     send_request("confirm", false, gapi.client.lunchere.yesUnauth, ["historyId", "timeslot", "name", "foursquare_id"], name);
+    hashurl.goes_to_loading(name, foursquare_id);
 }
 
 function cancel_today() {
     send_request("cancel", true, gapi.client.lunchere.noUnauth, ["historyId", "timeslot", "name", "foursquare_id"], get_today_recommendation_name());
+    hashurl.goes_to_loading("", "");
 }

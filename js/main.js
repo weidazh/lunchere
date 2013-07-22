@@ -28,13 +28,13 @@ window.addEventListener("load", function load() {
 	nextmeal();
     });
     document.getElementById("yes").addEventListener("click", function() {
-	confirm_today(get_today_recommendation_name());
+	confirm_today(get_today_recommendation_name(), "");
     });
     document.getElementById("no").addEventListener("click", function() {
 	cancel_today();
     });
     document.getElementById("go").addEventListener("click", function() {
-	confirm_today(document.getElementById("newplace").value);
+	confirm_today(document.getElementById("newplace").value, "");
     });
 }, false);
 
@@ -249,7 +249,7 @@ function HashURL() {
     // status could be toload, loading, confirmed
     // noload could be noload or !noload
     // old could be old or !old
-    var default_hash = "#status=toload,!noload,!old,!refreshing";
+    var default_hash = "#!confirmed,!noload,!old,!failed,id=,4sq=";
     var default_flags;
     var flags = {};
     var that = this;
@@ -273,18 +273,22 @@ function HashURL() {
     }
     function recognize_new_hash() {
 	var new_flags = _parse_hash(document.location.hash);
+	var changed = false;
 	if (not_equal(flags, new_flags)) {
 	    flags = new_flags;
 	    that.hash = document.location.hash;
-	    _set_body_class();
+	    changed = true;
 	}
+	_set_body_class(new_flags);
+	return changed;
     }
     function _parse_hash(hash) {
 	if (hash == "" || hash == "#") {
 	    hash = default_hash;
 	}
 	var flags = {};
-	hash = hash.slice(1); // get rid of the '#'
+	if (hash[0] == '#')
+	    hash = hash.slice(1); // get rid of the '#'
 	$.each(hash.split(','), function (i, tag) {
 	    var flag = true;
 	    if (tag[0] == '!') {
@@ -300,17 +304,10 @@ function HashURL() {
 	});
 	return flags;
     }
-    function _encode_hash(flags, new_flags) {
+    function _encode_hash() {
 	var non_default_flags = {};
-	$.each(new_flags, function (k, v) {
-	    if (_get_flag(default_flags, k) != v) {
-		non_default_flags[k] = v;
-	    }
-	});
 	$.each(flags, function (k, v) {
-	    if (new_flags.hasOwnProperty(k))
-		return;
-	    if (_get_flag(default_flags, k) != v) {
+	    if (_get_flag(default_flags, k) !== v) {
 		non_default_flags[k] = v;
 	    }
 	});
@@ -332,104 +329,6 @@ function HashURL() {
 		tags = tag;
 	});
 	return tags;
-    }
-    function _set_body_class() {
-	var mapping = {
-	    "yes-confirmed": function() { return get_flag("status") == "confirmed"; },
-	    "no-confirmed": function() { return get_flag("status") != "confirmed"; },
-	    "old": function() { return get_flag("old"); },
-	    "loading": function() { return get_flag("status") == "loading"; },
-	    "failed": function() { return get_flag("status") == "failed"; },
-	    "refreshing": function() { return get_flag("status") == "loading" && get_flag("refreshing"); }
-	};
-	var $body = $("body");
-	$.each(mapping, function (cssClass, callback) {
-	    if (callback()) {
-		$body.addClass(cssClass);
-	    }
-	    else {
-		$body.removeClass(cssClass);
-	    }
-	});
-    }
-    function goes_to_loading(refreshing) {
-	document.location.hash = _encode_hash(flags, {"status": "loading", "refreshing": !!refreshing});
-    }
-    function goes_to_normal() {
-	document.location.hash = _encode_hash(flags, {"status": "normal", "refreshing": false });
-    }
-    function goes_to_failed() {
-	document.location.hash = _encode_hash(flags, {"status": "failed", "refreshing": false});
-    }
-    function goes_to_confirmed() {
-	document.location.hash = _encode_hash(flags, {"status": "confirmed", "refreshing": false});
-    }
-
-    function new_mode() {
-	return ! get_flag("old");
-    }
-    function noload() {
-	return get_flag("noload");
-    }
-
-    default_flags =  _parse_hash(default_hash);
-    this.recognize_new_hash = recognize_new_hash;
-    this.new_mode = new_mode;
-    this.get_flag = get_flag;
-    this.goes_to_loading = goes_to_loading;
-    this.goes_to_normal = goes_to_normal;
-    this.goes_to_failed = goes_to_failed;
-    this.goes_to_confirmed = goes_to_confirmed;
-    this.noload = noload;
-}
-
-
-function MainUI() {
-    function init() {
-	$("#toggle-info-map").click(function() {
-	    if ($("#main-container").hasClass("no-info-map")) {
-		$("#main-container").removeClass("no-info-map");
-	    }
-	    else {
-		$("#main-container").addClass("no-info-map");
-	    }
-	});
-
-	$("#typehere").click(function() {
-	    var contenteditable = $("#typehere").attr("contenteditable");
-	    if (typeof contenteditable == "string") {
-	        $("#typehere").attr("contenteditable", null);
-	    }
-	    else {
-	        $("#typehere").attr("contenteditable", "");
-	    }
-	});
-
-	$("#options-yes").click(function() {
-	    if (today_recommendation) {
-		confirm_today(get_today_recommendation_name());
-	    }
-	});
-
-	$("#options-no").click(function() {
-	    cancel_today();
-	});
-
-	$("#cancel-button").click(function() {
-	    cancel_today();
-	});
-
-	$(".timeline-div.plus").click(function() {
-	    createmeal();
-	});
-
-	$("#review-delete").click(function() {
-	    deletemeal();
-	});
-
-	$(window).on("hashchange", function() {
-	    goto_hash();
-	});
     }
     function show_loading() {
 	$(".loading-placeholder").each(function(i, obj) {
@@ -476,13 +375,154 @@ function MainUI() {
 	    }
 	});
     }
-    function goto_hash() {
-	hashurl.recognize_new_hash();
-	if (hashurl.get_flag("status") == "loading") {
-	    show_loading();
+    function _set_body_class(flags) {
+	console.log("_set_body_class flags=");
+	console.log(flags);
+	function get_flag(tag) {
+	    return _get_flag(flags, tag);
 	}
-	else {
-	    stop_loading();
+	var mapping = {
+	    "yes-confirmed": function() { return get_flag("confirmed"); },
+	    "no-confirmed": function() { return !get_flag("confirmed"); },
+	    "old": function() { return get_flag("old"); },
+	    "loading": function() {
+		return (get_flag("id") == "" || !lunchereCache.has_title(get_flag("id"))) &&
+		    (get_flag("4sq") == "" || !foursquareCache.has(get_flag("4sq")));
+	    },
+	    "failed": function() { return get_flag("failed"); },
+	    "refreshing": function() {
+		return (get_flag("4sq") == "" || !foursquareCache.has(get_flag("4sq")));
+	    }
+	};
+	var $body = $("body");
+	$.each(mapping, function (cssClass, callback) {
+	    if (callback()) {
+		$body.addClass(cssClass);
+		if (cssClass == "loading")
+		    show_loading();
+	    }
+	    else {
+		$body.removeClass(cssClass);
+		if (cssClass == "loading")
+		    stop_loading();
+	    }
+	});
+    }
+    function copy(flags) {
+	var new_flags = {};
+	$.each(flags, function(k, v){
+	    new_flags[k] = v;
+	});
+	return new_flags;
+    }
+    function goes_to_loading(canteen_id, foursquare_id) {
+	// do not change the url, only set the classes
+	console.log("goes_to_loading " + canteen_id + " " + foursquare_id);
+	var new_flags = copy(flags);
+	new_flags["confirmed"] = false;
+	new_flags["id"] = canteen_id;
+	new_flags["4sq"] = foursquare_id;
+	// that.hash = _encode_hash();
+	// that.flags = new_flags;
+	_set_body_class(new_flags);
+    }
+    function goes_to_normal(canteen_id, foursquare_id) {
+	console.log("goes_to_normal " + canteen_id + " " + foursquare_id);
+	flags["confirmed"] = false;
+	flags["id"] = canteen_id;
+	flags["4sq"] = foursquare_id;
+	document.location.hash = that.hash = _encode_hash();
+	recognize_new_hash();
+    }
+    function goes_to_failed() {
+	console.log("goes_to_failed");
+	flags["failed"] = true;
+	document.location.hash = that.hash = _encode_hash();
+	recognize_new_hash();
+    }
+    function goes_to_confirmed() {
+	console.log("goes_to_confirmed");
+	flags["confirmed"] = true;
+	document.location.hash = that.hash = _encode_hash();
+	recognize_new_hash();
+    }
+
+    function new_mode() {
+	return ! get_flag("old");
+    }
+    function noload() {
+	return get_flag("noload");
+    }
+
+    default_flags =  _parse_hash(default_hash);
+    this.recognize_new_hash = recognize_new_hash;
+    this.new_mode = new_mode;
+    this.get_flag = get_flag;
+    this.goes_to_loading = goes_to_loading;
+    this.goes_to_normal = goes_to_normal;
+    this.goes_to_failed = goes_to_failed;
+    this.goes_to_confirmed = goes_to_confirmed;
+    this.noload = noload;
+
+    this.default_flags = default_flags;
+}
+
+
+function MainUI() {
+    function init() {
+	$("#toggle-info-map").click(function() {
+	    if ($("#main-container").hasClass("no-info-map")) {
+		$("#main-container").removeClass("no-info-map");
+	    }
+	    else {
+		$("#main-container").addClass("no-info-map");
+	    }
+	});
+
+	$("#typehere").click(function() {
+	    var contenteditable = $("#typehere").attr("contenteditable");
+	    if (typeof contenteditable == "string") {
+	        $("#typehere").attr("contenteditable", null);
+	    }
+	    else {
+	        $("#typehere").attr("contenteditable", "");
+	    }
+	});
+
+	$("#options-yes").click(function() {
+	    if (today_recommendation) {
+		confirm_today(get_today_recommendation_name(), get_today_recommendation_4sq());
+	    }
+	});
+
+	$("#options-no").click(function() {
+	    cancel_today();
+	});
+
+	$("#cancel-button").click(function() {
+	    cancel_today();
+	});
+
+	$(".timeline-div.plus").click(function() {
+	    createmeal();
+	});
+
+	$("#review-delete").click(function() {
+	    deletemeal();
+	});
+
+	$(window).on("hashchange", function() {
+	    goto_hash();
+	});
+    }
+    function goto_hash() {
+	var hash_changed = hashurl.recognize_new_hash();
+	if (hash_changed) {
+	    console.log("hash_changed by user");
+	    lunchereCache.fetch(hashurl.get_flag("id"),
+	        hashurl.get_flag("4sq"), function(resp, venue) {
+		    today_recommendation_received(resp, venue);
+	    });
 	}
     }
     this.init = init;
@@ -650,7 +690,7 @@ function Backend() {
 	$("#title-text").text(name);
 	$("#title-source").text(resp.source);
 	foursquare_details_received(resp, venue);
-	hashurl.goes_to_normal();
+	hashurl.goes_to_normal(name, venue.id);
     }
     function today_recommendation_received_new_ui(resp, venue) {
 	console.log("new UI");
@@ -660,16 +700,17 @@ function Backend() {
 	    historyId = resp.historyId;
 	}
 	if (! resp.name) {
-	    hashurl.goes_to_loading(true);
+	    hashurl.goes_to_loading("", "");
 	    if (resp && resp.hints && resp.hints.ll)
 		console.log("resp.hints.ll = " + resp.hints.ll);
 	    if (! venue && resp.hints && (resp.hints.ll || resp.hints.near)) {
-		get_recommendation_from_foursquare(resp.hints.ll, resp.hints.near, function(name, venue) {
-		    foursquare_received(resp, name, venue);
-		});
+		foursquareCache.fetch_recommendation(resp.hints.ll, resp.hints.near,
+		    function(name, venue) {
+			foursquare_received(resp, name, venue);
+		    });
 	    }
 	    else {
-		hashurl.goes_to_loading(true);
+		hashurl.goes_to_loading("", "");
 		if (navigator && navigator.geolocation) {
 		    navigator.geolocation.getCurrentPosition(function(position) {
 			resp.hints = {}
@@ -686,11 +727,14 @@ function Backend() {
 	else {
 	    $("#title-source").text(" (lunchere)");
 	    $("#title-text").text(resp.name);
+	    var foursquare_id = resp.foursquare_id;
+	    if (!foursquare_id)
+		foursquare_id = "";
 	    if (resp.confirmed) {
-		hashurl.goes_to_confirmed();
+		hashurl.goes_to_confirmed(resp.name, foursquare_id);
 	    }
 	    else {
-		hashurl.goes_to_normal();
+		hashurl.goes_to_normal(resp.name, foursquare_id);
 	    }
 	}
 	if (venue) {
@@ -726,13 +770,25 @@ function FoursquareCache() {
 	    callback(venue);
 	});
     }
+    function fetch_recommendation(ll, near, callback) {
+	get_recommendation_from_foursquare(ll, near, function(name, venue) {
+	    cache[venue.id] = venue;
+	    callback(name, venue);
+	});
+    }
+    function has(id) {
+	return cache.hasOwnProperty(id);
+    }
 
     this.fetch = fetch;
+    this.fetch_recommendation = fetch_recommendation;
+    this.has = has;
     this.cache = cache;
     return this;
 }
 
 function LunchereCache() {
+    var cache = {};
     function fetch(canteen_id, foursquare_id, callback) {
 	var lunch = {
 	    "historyId": historyId,
@@ -740,6 +796,7 @@ function LunchereCache() {
 	    "timeslot": today_recommendation.timeslot,
 	    "foursquare_id": foursquare_id,
 	};
+	cache[canteen_id] = lunch;
 	if (foursquare_id) {
 	    foursquareCache.fetch(foursquare_id, function(venue) {
 		callback(lunch, venue);
@@ -749,7 +806,26 @@ function LunchereCache() {
 	    callback(lunch, null);
 	}
     }
+    function has_title(canteen_id) {
+	if (cache.hasOwnProperty(canteen_id)) {
+	    return true;
+	}
+	return false;
+    }
+    function has(canteen_id, foursquare_id) {
+	if (cache.hasOwnProperty(canteen_id) && !foursquare_id) {
+	    foursquare_id = cache[canteen_id];
+	}
+	if (foursquareCache.has(foursquare_id)) {
+		return true;
+	}
+	return false;
+    }
+
+    this.has = has;
+    this.has_title = has_title;
     this.fetch = fetch;
+    this.cache = cache;
     return this;
 }
 
