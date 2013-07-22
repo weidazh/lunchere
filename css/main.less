@@ -122,15 +122,18 @@
 }
 
 .refreshing #info-map,
-.refreshing #extra-container,
-.refreshing #options,
-.refreshing #title-text,
-.refreshing #title-source,
-.refreshing #extra-options {
+.refreshing #extra-container {
     display: none;
 }
 
-.refreshing #title-loading:after {
+.loading #options,
+.loading #title-text,
+.loading #title-source,
+.loading #extra-options {
+    display: none;
+}
+
+.loading #title-loading:after {
     content: "(Loading ...)";
 }
 

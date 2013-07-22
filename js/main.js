@@ -298,7 +298,7 @@ function HashURL() {
 	    else if (tag.indexOf("=") > 0) {
 		var assigment = tag.split("=");
 		tag = assigment[0];
-		flag = assigment[1];
+		flag = unescape(assigment[1]);
 	    }
 	    flags[tag] = flag;
 	});
@@ -321,7 +321,7 @@ function HashURL() {
 		tag = "!" + k;
 	    }
 	    else {
-		tag = k + "=" + v;
+		tag = k + "=" + escape(v);
 	    }
 	    if (tags)
 		tags = tags + "," + tag;
@@ -728,6 +728,8 @@ function Backend() {
 	    $("#title-source").text(" (lunchere)");
 	    $("#title-text").text(resp.name);
 	    var foursquare_id = resp.foursquare_id;
+	    if (!foursquare_id && venue)
+		foursquare_id = venue.id;
 	    if (!foursquare_id)
 		foursquare_id = "";
 	    if (resp.confirmed) {
@@ -739,12 +741,14 @@ function Backend() {
 	}
 	if (venue) {
 	    foursquare_details_received(resp, venue);
+	    hashurl.goes_to_normal(resp.name, venue.id);
 	}
 	if (resp && resp.foursquare_id &&
 		(!today_recommendation || resp.foursquare_id != today_recommendation.foursquare_id) &&
 		!resp.foursquare_venue && ! venue) {
 	    foursquareCache.fetch(resp.foursquare_id, function(venue) {
 		foursquare_details_received(resp, venue);
+		hashurl.goes_to_normal(resp.name, venue.id);
 	    });
 	}
 	// document.getElementById("historyId").innerHTML = historyId;

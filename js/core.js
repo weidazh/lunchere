@@ -5,12 +5,12 @@ var CLIENT_ID = initObj["CLIENT_ID"];
 var API_VERSION = initObj["API_VERSION"];
 var autocomplete_should_reload = false;
 
-function lunchere_api_init() {
+function lunchere_api_init(callback) {
     var apisToLoad;
     var callback = function(msg) {
         console.log(msg + " loaded");
         if (--apisToLoad == 0) {
-	    if (hashurl.noload()) {
+	    if (hashurl.noload() || hashurl.get_flag("id") != "" || hashurl.get_flag("4sq") != "") {
 		console.log("because hash == " + hashurl.hash + ", we cancel fetching");
 		return;
 	    }
