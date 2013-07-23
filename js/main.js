@@ -309,6 +309,7 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 	    "refreshing": current_view.loading_details,
 	    "api-loading": lunchere_api.api_loading,
 	    "typehere-focusing": function () { return autocomplete.focusing; },
+	    "debugging": function () { return hashurl.get_flag("debug"); },
 	};
 	console.log("BodyClass.refresh with mapping = ");
 	console.log(mapping);
@@ -343,7 +344,7 @@ function HashURL() {
     // status could be toload, loading, confirmed
     // noload could be noload or !noload
     // old could be old or !old
-    var DEFAULT_HASH = "#!confirmed,!noload,!old,!failed,id=,4sq=";
+    var DEFAULT_HASH = "#!confirmed,!noload,!old,!failed,id=,4sq=,!debug";
     var that = this;
     this.flags = {};
     this.initialized = false;
@@ -493,23 +494,32 @@ function MainUI() {
 	    else {
 		$("#main-container").addClass("no-info-map");
 	    }
-	});
+	}).removeClass("disabled").addClass("enabled");
 
-	$("#options-yes").click(current_view.yes_clicked);
+	$("#extra-toggle").click(function() {
+	    if ($("#main-container").hasClass("no-details-buttons")) {
+		$("#main-container").removeClass("no-details-buttons");
+	    }
+	    else {
+		$("#main-container").addClass("no-details-buttons");
+	    }
+	}).removeClass("disabled").addClass("enabled");
 
-	$("#options-no").click(current_view.no_clicked);
+	$("#options-yes").click(current_view.yes_clicked).removeClass("disabled").addClass("enabled");
 
-	$("#cancel-button").click(current_view.no_clicked);
+	$("#options-no").click(current_view.no_clicked).removeClass("disabled").addClass("enabled");
+
+	$("#cancel-button").click(current_view.no_clicked).removeClass("disabled").addClass("enabled");
 
 	$(".timeline-div.plus").click(function() {
 	    createmeal();
 	    // use current_view
-	});
+	}).removeClass("disabled").addClass("enabled");
 
 	$("#review-delete").click(function() {
 	    deletemeal();
 	    // use current_view
-	});
+	}).removeClass("disabled").addClass("enabled");
 
 	$(window).on("hashchange", function() {
 	    current_view.on_hashchange();
@@ -1501,12 +1511,15 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    $("#extra-container").stop().animate({
 		"height": "0px",
 	    }, {
-		"duration": 400
+		"duration": 400,
 	    });
 	    $("#info-map").stop().animate({
 		"height": "0px",
 	    }, {
-		"duration": 800
+		"duration": 800,
+		"done": function () {
+		    $("#info-map").css({ "border-bottom-width": "0px" });
+		}
 	    });
 	}
 	else if (!on && previous) {
@@ -1521,7 +1534,9 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		    });
 		}
 	    });
-	    $("#info-map").stop().animate({
+	    $("#info-map").stop().css({
+		"border-bottom-width": "",
+	    }).animate({
 		"height": that.refreshing_previous_info_map_height,
 	    }, {
 		"done": function() {

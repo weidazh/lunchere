@@ -97,9 +97,10 @@ function initClientIdHistoryId() {
 		<div id="buttons-last" class="disabled">...</div>
 	    </div>
 	</div>
-	<div id="extra-toggle">
+	<div id="extra-toggle" class="disabled">
 	    <div id="extra-toggle-button">
-	        <i class="icon-chevron-up"></i>
+	        <i id="extra-toggle-button-up" class="icon-chevron-up"></i>
+	        <i id="extra-toggle-button-down" class="icon-chevron-down"></i>
 	    </div>
 	</div>
 	<div id="confirmed-footnote">
@@ -107,7 +108,7 @@ function initClientIdHistoryId() {
 	    You selected this place 3 minutes ago.
 	</div>
 	<div id="footnote">
-	    <div id="magic-tag"><i class="icon-magic"></i>MAGIC</div>
+	    <div id="magic-tag" class="disabled"><i class="icon-magic"></i>MAGIC</div>
 	    You haven't been to this place for 21 days.
 	</div>
     </div>
@@ -119,15 +120,22 @@ function initClientIdHistoryId() {
 	       -->
 	</div>
 	<div id="options-yes-container">
-	    <div id="options-yes"><i class="icon-ok"></i></div>
+	    <div id="options-yes" class="disabled"><i class="icon-ok"></i></div>
 	</div>
 	<div id="options-no-container">
-	    <div id="options-no"><i class="icon-remove"></i></div>
+	    <div id="options-no" class="disabled"><i class="icon-remove"></i></div>
 	</div>
     </div><!-- showed only in non-confirmed mode -->
-    <div id="extra-options">
-        <div id="typehere-autocomplete-container"></div>
-	<input id="typehere" value="type here" valuesource="type here" ></input>
+    <div id="extra-options" class="container">
+        <div id="typehere-container" class="container">
+	    <div id="typehere-autocomplete-container"></div>
+	    <div id="typehere-text">type here: </div>
+	    <input id="typehere" value="type here" valuesource="type here" ></input>
+	    <div id="typehere-search"><i class="icon-search"></i></div>
+	</div>
+	<div id="delete-this-meal" class="disabled">
+	    <i class="icon-trash"></i> delete this meal
+	</div>
     </div>
 </div>
 <div id="main-icon-after"></div><!-- what icon to show ? -->

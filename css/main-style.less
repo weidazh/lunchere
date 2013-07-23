@@ -2,14 +2,39 @@
 @import url(https://fonts.googleapis.com/css?family=PT+Sans);
 @import url(https://fonts.googleapis.com/css?family=PT+Sans+Narrow);
 
+.normal {
+    font-family: "PT Sans", Tahoma, Arial, Helvetica, sans-serif;
+}
+
 .narrow {
     font-family: "PT Sans Narrow", "Helvetica Narrow", "Arial Narrow", "Heiti";
+}
+
+.clickable (@color, @bgcolor, @hover_color, @hover_bgcolor, @disabled_color) {
+    &.enabled {
+	color: @color;
+	background-color: @bgcolor;
+    }
+    &.enabled:hover {
+	color: @hover_color;
+	background-color: @hover_bgcolor;
+	@hover_bgcolor; cursor: pointer;
+    }
+    &.disabled {
+	color: @disabled_color;
+	background-color: @bgcolor;
+    }
+    &.disabled:hover {
+	color: @disabled_color;
+	background-color: @bgcolor;
+	cursor: default;
+    }
 }
 
 body {
     background: @color_bggray;
     font-size: @normal_font_size;
-    font-family: "PT Sans", Tahoma, Arial, Helvetica, sans-serif;
+    .normal;
     line-height: @grid_baseline;
 }
 
@@ -112,7 +137,6 @@ body {
     color: inherit;
 }
 
-
 #buttons-last {
     border-bottom-width: 0px; /* details-buttons has the border */
 }
@@ -121,10 +145,8 @@ body {
     color: @color_blue;
     border-bottom-style: solid;
     border-bottom-color: @color_bgbluegray2;
-}
 
-[id^="buttons-"]:hover {
-    color: @color_green;
+    .clickable(@color_blue, @color_bgwhite, @color_green, @color_bgwhite, inherit);
 }
 
 [id^="buttons-"].clicked {
@@ -134,10 +156,8 @@ body {
 
 #extra-toggle {
     text-align: center;
-}
 
-#extra-toggle:hover {
-    color: @color_green;
+    .clickable(@color_blue, @color_bggray, @color_green, @color_bgbluegray, inherit);
 }
 
 .footnotes_style {
@@ -151,15 +171,14 @@ body {
 }
 
 #magic-tag, #selected-tag {
-    color: white;
     font-weight: bold;
     .narrow;
 }
 #magic-tag {
-    background: @color_blue;
+    .clickable(@color_white, @color_blue, @color_blue, @color_white, @color_white);
 }
 #selected-tag {
-    background: @color_green;
+    .clickable(@color_white, @color_green, @color_green, @color_white, @color_white);
 }
 
 #cancel-button {
@@ -178,16 +197,41 @@ body {
 }
 
 #options-yes, #options-no {
-    background: @color_bgbluegray2;
     .circle;
     border-style: solid;
     border-color: @color_bggray;
+
 }
 
-#options-yes:hover {
+#options-yes {
+    .clickable(inherit, @color_bgbluegray2, inherit, @color_green, inherit);
+}
+
+#options-no {
+    .clickable(inherit, @color_bgbluegray2, inherit, @color_red, inherit);
+}
+
+#typehere-container {
+    background: @color_bgbluegray;
+    border-top-style: solid;
+    border-top-color: white;
+}
+
+#typehere-text {
+    color: white;
+}
+
+#typehere {
+    color: @color_gray;
+    background: @color_bggray;
+    .normal;
+}
+
+#typehere-search {
+    color: white;
     background: @color_green;
 }
 
-#options-no:hover {
-    background: @color_red;
+#delete-this-meal {
+    .clickable(@color_white, @color_red, @color_white, @color_bgbluegray2, @color_white);
 }

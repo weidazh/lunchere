@@ -218,7 +218,27 @@ body {
 }
 
 #extra-options {
-    .float;
+    .tight_float;
+}
+
+#typehere-container {
+    border-top-width: 1px;
+    padding-top: @grid_baseline - 1px;
+    height: 2 * @grid_baseline;
+}
+
+#delete-this-meal {
+    width: @main_width;
+    height: 1.5 * @grid_baseline;
+    margin-bottom: @grid_half_baseline;
+    text-align: center;
+    font-size: @small_font_size;
+    line-height: 1.5 * @grid_baseline;
+}
+
+#typehere-autocomplete-container, #typehere-text, #typehere, #typehere-search {
+    .tight_float;
+    clear: none;
 }
 
 @autocomplete_max_height: 400px;
@@ -228,10 +248,34 @@ body {
     margin-top: -0px;
 }
 
+@typehere_font_size: @small_font_size;
+@typehere_height: 1.5 * @grid_baseline;
+#typehere-text, #typehere, #typehere-search {
+    line-height: @typehere_height;
+    height: @typehere_height;
+}
+
+#typehere-text {
+    margin-left: @grid_gutter;
+    font-size: @typehere_font_size;
+    width: @grid_column + @grid_half_gutter;
+}
+
+@typehere_search_width: @typehere_height;
 #typehere {
+    width: 1.5 * @grid_gutter + 3 * @grid_column - @typehere_search_width;
     padding: 0px;
+    padding-left: @grid_half_gutter;
+    padding-right: @grid_half_gutter;
     border: 0px;
-    border-bottom: 1px solid black;
+    margin: 0px;
+    font-size: @typehere_font_size;
+}
+
+#typehere-search {
+    font-size: @typehere_font_size;
+    width: @typehere_search_width;
+    text-align: center;
 }
 
 
@@ -283,7 +327,6 @@ body {
 
 
 #details-addr-li {
-    
 }
 
 #details-addr {
@@ -452,7 +495,6 @@ body {
 }
 
 #about-lunchere  {
-    
 }
 
 #power {
