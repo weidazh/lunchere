@@ -2,7 +2,6 @@
 window.addEventListener("load", function load() {
     disable_all();
 
-    console.log("window.load");
     window.removeEventListener("load", load, false);
     document.getElementById("logout").addEventListener("click", function() {
 	gapi.auth.setToken(null);
@@ -319,10 +318,11 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 	    "typehere-focusing": autocomplete.try_focus,
 	};
 	var $body = $("body");
+	var debug_obj = {};
 	$.each(mapping, function (cssClass, bool_func) {
 	    var on = bool_func();
 	    var previous = $body.hasClass(cssClass);
-	    console.log("    - " + cssClass + " : " + (on ? "1" : "0"));
+	    debug_obj[cssClass] = on ? 1 : 0;
 	    if (on) {
 		$body.addClass(cssClass);
 	    }
@@ -333,6 +333,8 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 		callbacks[cssClass](on, previous);
 	    }
 	});
+	console.log("                       debug_obj = ");
+	console.log(debug_obj);
     }
     return this;
 }
@@ -344,6 +346,7 @@ function HashURL() {
     var DEFAULT_HASH = "#!confirmed,!noload,!old,!failed,id=,4sq=";
     var that = this;
     this.flags = {};
+    this.initialized = false;
     var _get_flag = this._get_flag = function (flags, key) {
 	return flags.hasOwnProperty(key) ? flags[key] : that.default_flags[key];
     }
@@ -365,7 +368,8 @@ function HashURL() {
     var recognize_new_hash = this.recognize_new_hash = function () {
 	var new_flags = _parse_hash(document.location.hash);
 	var changed = false;
-	if (not_equal(that.flags, new_flags)) {
+	if (not_equal(that.flags, new_flags) || ! that.initialized) {
+	    that.initialized = true;
 	    that.flags = new_flags;
 	    that.hash = document.location.hash;
 	    changed = true;
@@ -893,6 +897,9 @@ function LunchereAPI() {
 	that.gapi = gapi;
 	that.old_init();
     }
+    var is_ready = this.is_ready = function() {
+	return !! that.gapi;
+    }
     var api_loading = this.api_loading = function () {
 	return ! that.loaded;
     }
@@ -903,6 +910,7 @@ function LunchereAPI() {
 	    console.log("LunchereAPI loaded");
 
 	    body_class.refresh();
+	    that.on_load();
 	}, function() {
 	    console.log("failed");
 	});
@@ -1031,6 +1039,7 @@ function LunchereAPI() {
 	that.should_reset = false;
 	return ret;
     }
+    this.on_load = function () { console.log("LunchereAPI.on_load"); };
     return this;
 }
 
@@ -1400,11 +1409,9 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
     }
     var loading_title = this.loading_title = function () {
 	if (that.canteen_id == "" || !lunchereCache.has_title(that.canteen_id)) {
-	    console.log("loading_title = true");
 	    return true;
 	}
 	else {
-	    console.log("loading_title = false");
 	    return false;
 	}
     }
@@ -1583,10 +1590,28 @@ autocomplete.on_select = function(_event, ui) {
     }
 }
 
+var main_ui_to_load = false;
+lunchere_api.on_load = function () {
+    if (main_ui_to_load) {
+	console.log("[PROGRESS] mainUI goto_hash (from LunchereAPI.on_load)");
+	mainUI.goto_hash();
+    }
+}
+
 $(document).ready(function() {
+    console.log("[PROGRESS] document ready");
+    console.log("[PROGRESS] autocomplete bind_ui");
     autocomplete.bind_ui();
+    console.log("[PROGRESS] mainUI init");
     mainUI.init();
-    mainUI.goto_hash();
+    if (lunchere_api.is_ready()) {
+	console.log("[PROGRESS] mainUI goto_hash");
+	mainUI.goto_hash();
+    }
+    else {
+	console.log("[PROGRESS] mainUI goto_hash delayed");
+	main_ui_to_load = true;
+    }
 });
 
 function gapi_ready() {
