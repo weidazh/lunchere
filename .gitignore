@@ -9,4 +9,4 @@ private.py
 *~
 /app.yaml
 /*.lint.txt
-
+/*.deploy.log
