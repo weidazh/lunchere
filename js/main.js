@@ -509,7 +509,11 @@ function MainUI() {
 
 	$("#options-no").click(current_view.no_clicked).removeClass("disabled").addClass("enabled");
 
-	$("#cancel-button").click(current_view.no_clicked).removeClass("disabled").addClass("enabled");
+	$("#review-reselect").click(current_view.no_clicked).removeClass("disabled").addClass("enabled");
+
+	$("#delete-this-meal").click(current_view.delete_clicked).removeClass("disabled").addClass("enabled");
+
+	$("#review-delete-meal").click(current_view.delete_clicked).removeClass("disabled").addClass("enabled");
 
 	$(".timeline-div.plus").click(function() {
 	    createmeal();
@@ -1142,6 +1146,7 @@ function Backend() {
 		$("#external-link > a").attr("href", link_url);
 		return "#external-link";
 	    },
+	    "timeslotFriendly": "#confirmed-info-date",
 	};
 	formatted.apply(view);
     }
@@ -1219,12 +1224,6 @@ function Backend() {
 		hashurl.goes_to_normal(resp.name, venue.id);
 	    });
 	}
-	// document.getElementById("historyId").innerHTML = historyId;
-	// document.getElementById("timeslot").innerHTML = resp.timeslotFriendly;
-	// document.getElementById("deletemeal").disabled = ! resp.could_delete;
-	// document.getElementById("prevmeal").disabled = ! resp.has_prevmeal;
-	// document.getElementById("nextmeal").disabled = ! resp.has_nextmeal;
-	// document.getElementById("createmeal").disabled = ! resp.has_createmeal;
 	today_recommendation = resp;
 	autocomplete_should_reload = true;
     }
@@ -1497,6 +1496,20 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		new_backend.receive(resp, null);
 	    }
 	    );
+    }
+    var delete_clicked = this.delete_clicked = function () {
+	body_class.refresh();
+	that.canteen_id = "";
+	that.foursquare_id = "";
+	lunchere_api.delete_meal(
+	    get_history_id(),
+	    get_timeslot(),
+	    function (resp) {
+		that.timeslot = resp.timeslot;
+		that.canteen_id = resp.name;
+		that.foursquare_id = resp.foursquare_id;
+		new_backend.receive(resp, null);
+	    });
     }
     this.refreshing_previous_info_map_height = "200px";
     this.refreshing_previous_extra_container_height = "200px";

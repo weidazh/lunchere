@@ -473,11 +473,6 @@ body {
     margin-right: auto;
 }
 
-.timeline-block {
-    outline: 1px solid;
-    outline-offset: -2px;
-}
-
 @timeline_block_width: 40px;
 @timeline_block_height: 3 * @grid_baseline;
 @timeline_center_block_width: 120px;
@@ -487,7 +482,6 @@ body {
     clear: none;
     width: @timeline_block_width;
     height: @timeline_block_height;
-    outline-color: blue;
 }
 
 .timeline-block.center {
@@ -495,7 +489,6 @@ body {
     clear: none;
     width: @timeline_center_block_width;
     height: 72px;
-    outline-color: red;
 }
 
 .timeline-block.right {
@@ -503,7 +496,61 @@ body {
     clear: none;
     width: @timeline_block_width;
     height: @timeline_block_height;
-    outline-color: green;
+}
+
+.timeline-label {
+    height: 2 * @grid_baseline; 
+    line-height: 2 * @grid_baseline; 
+    width: 100%;
+    text-align: center;
+    color: @color_bgbluegray;
+    font-size: 12px;
+    font-weight: bold;
+    .narrow;
+}
+
+@timeline_button_border: 2px;
+@timeline_button_size: @grid_baseline - @timeline_button_border * 2;
+.timeline-button {
+    text-align: center;
+    .circle;
+    width: @timeline_button_size;
+    height: @timeline_button_size;
+    border-style: solid;
+    border-color: @color_bggray;
+    border-width: @timeline_button_border;
+    margin-left: auto;
+    margin-right: auto;
+    background: @color_bgbluegray3;
+    color: @color_bggray;
+    font-size: 10px;
+    line-height: @timeline_button_size;
+}
+
+.timeline-button.hidden {
+    display: none;
+}
+
+.timeline-label-center {
+    .timeline-label;
+    height: 1.5 * @grid_baseline;
+}
+@timeline_button_center_border: 2px;
+@timeline_button_center_size: 2 * @grid_baseline - @timeline_button_border * 2;
+.timeline-button-center {
+    text-align: center;
+    .circle;
+    width: @timeline_button_center_size;
+    height: @timeline_button_center_size;
+    border-style: solid;
+    border-color: @color_bggray;
+    border-width: @timeline_button_center_border;
+    margin-left: auto;
+    margin-right: auto;
+    background: @color_green;
+    color: @color_bggray;
+    font-size: 24px;
+    line-height: @timeline_button_center_size;
 }
 
 #timeline-title {
