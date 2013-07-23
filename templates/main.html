@@ -26,7 +26,7 @@ function initClientIdHistoryId() {
 <script src="https://apis.google.com/js/client.js?onload=gapi_ready"></script>
 <!-- script src="/js/client.js?onload=lunchere_api_init"></script -->
 </head>
-<body class="no-confirmed loading refreshing">
+<body class="no-confirmed loading refreshing no-map">
 
 <div id="old-container">
     <a href="#new">Try new version</a>
@@ -40,7 +40,6 @@ function initClientIdHistoryId() {
 </div>
 
 
-<div id="root-container" class="container">
 <div id="root-others">
     <a href="#old">Go back old version</a>
     <button id="toggle-info-map"><i class="icon-caret-down"></i></button>
@@ -48,6 +47,7 @@ function initClientIdHistoryId() {
     <div id="external-link"><a target="_blank" class="icon-external-link" href="#"></a></div>
     <div id="api-loading-text"></div>
 </div>
+<div id="root-container" class="container">
 <div id="main-icon" ><div class="loading-placeholder"></div></div><!-- what icon to show ? -->
 <div id="main-container">
     <div id="title-container">
@@ -92,8 +92,8 @@ function initClientIdHistoryId() {
 	    </div>
 	    <div id="buttons">
 		<div id="buttons-1" class="disabled"><i class="icon-chevron-up"></i></div>
-		<div id="buttons-2" ><i class="icon-share-alt"></i></div>
-		<div id="buttons-3" ><i class="icon-foursquare"></i></div>
+		<div id="buttons-2" class="disabled"><i class="icon-share-alt"></i></div>
+		<div id="buttons-3" class="disabled"><i class="icon-foursquare"></i></div>
 		<div id="buttons-last" class="disabled">...</div>
 	    </div>
 	</div>
@@ -120,6 +120,7 @@ function initClientIdHistoryId() {
 	</div>
     </div><!-- showed only in non-confirmed mode -->
     <div id="extra-options">
+        <div id="typehere-autocomplete-container"></div>
 	<input id="typehere" value="type here" valuesource="type here" ></input>
     </div>
 </div>

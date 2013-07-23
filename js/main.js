@@ -278,7 +278,7 @@ function LoadingSpinners() {
 	    }
 	});
     }
-    var loading_callback = this.loading_callback = function(on) {
+    var loading_callback = this.loading_callback = function(on, previous) {
 	if (on) {
 	    show_loading();
 	}
@@ -309,15 +309,19 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 	    "failed": is_failed,
 	    "refreshing": current_view.loading_details,
 	    "api-loading": lunchere_api.api_loading,
+	    "typehere-focusing": function () { return autocomplete.focusing; },
 	};
 	console.log("BodyClass.refresh with mapping = ");
 	console.log(mapping);
 	var callbacks = {
 	    "loading": loading_spinners.loading_callback,
+	    "refreshing": current_view.refreshing,
+	    "typehere-focusing": autocomplete.try_focus,
 	};
 	var $body = $("body");
 	$.each(mapping, function (cssClass, bool_func) {
 	    var on = bool_func();
+	    var previous = $body.hasClass(cssClass);
 	    console.log("    - " + cssClass + " : " + (on ? "1" : "0"));
 	    if (on) {
 		$body.addClass(cssClass);
@@ -326,7 +330,7 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 		$body.removeClass(cssClass);
 	    }
 	    if (callbacks[cssClass]) {
-		callbacks[cssClass](on);
+		callbacks[cssClass](on, previous);
 	    }
 	});
     }
@@ -840,6 +844,13 @@ function Autocomplete(lunchere_autocomplete, foursquare_autocomplete) {
 		$("#typehere").val("");
 	    }
 	    $("#typehere").autocomplete("search");
+
+	    that.focusing = true;
+	});
+
+	$("#typehere").blur(function () {
+	    that.focusing = false;
+
 	});
 
 	$("#typehere").autocomplete({
@@ -847,7 +858,22 @@ function Autocomplete(lunchere_autocomplete, foursquare_autocomplete) {
 	    delay: 200,
 	    minLength: 0,
 	    select: that.on_select,
+	    position: {
+		"my": "left bottom",
+		"at": "left bottom",
+		"of": "#typehere-autocomplete-container",
+		"collision": "none",
+	    },
 	});
+    }
+
+    var try_focus = this.try_focus = function(on, previous) {
+	if (on) {
+	    $("#typehere").focus();
+	}
+	else {
+	    //
+	}
     }
 
     this.on_select = function() { console.log("on_select"); }
@@ -1358,6 +1384,20 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    body_class.refresh();
 	}
     }
+    var set_ids = this.set_ids = function (canteen_id, foursquare_id) {
+	hashurl.set_hash({
+	    "name": canteen_id,
+	    "foursquare_id": foursquare_id,
+	});
+	$("#title-text").text(canteen_id);
+	$("#title-source").text(" (unknown)");
+	that.canteen_id = canteen_id;
+	that.foursquare_id = foursquare_id;
+	that.confirmed = false;
+
+	body_class.refresh();
+	lunchereCache.fetch(canteen_id, foursquare_id, format_venue);
+    }
     var loading_title = this.loading_title = function () {
 	if (that.canteen_id == "" || !lunchereCache.has_title(that.canteen_id)) {
 	    console.log("loading_title = true");
@@ -1441,8 +1481,51 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    }
 	    );
     }
-    this.yes_clicked = yes_clicked;
-    this.no_clicked = no_clicked;
+    this.refreshing_previous_info_map_height = "200px";
+    this.refreshing_previous_extra_container_height = "200px";
+    var refreshing = this.refreshing = function (on, previous) {
+	console.log("REFRESHING from " + previous + " to " + on);
+	if (on && !previous) {
+	    // animate it to zero height
+	    that.refreshing_previous_info_map_height = $("#info-map").height();
+	    that.refreshing_previous_extra_container_height = $("#extra-container").height();
+	    $("#extra-container").css({"overflow": "hidden"});
+	    $("#info-map").css({"overflow": "hidden"});
+	    $("#extra-container").stop().animate({
+		"height": "0px",
+	    }, {
+		"duration": 400
+	    });
+	    $("#info-map").stop().animate({
+		"height": "0px",
+	    }, {
+		"duration": 800
+	    });
+	}
+	else if (!on && previous) {
+	    // animate it to full height
+	    $("#extra-container").stop().animate({
+		"height": that.refreshing_previous_extra_container_height,
+	    }, {
+		"done": function() {
+		    $("#extra-container").css({
+			"overflow": "",
+			"height": "",
+		    });
+		}
+	    });
+	    $("#info-map").stop().animate({
+		"height": that.refreshing_previous_info_map_height,
+	    }, {
+		"done": function() {
+		    $("#info-map").css({
+			"overflow": "",
+			"height": "",
+		    });
+		}
+	    });
+	}
+    }
     return this;
 }
 
@@ -1479,6 +1562,25 @@ current_view.on_status_change = function() {
 }
 current_view.on_hashchange_callback = function() {
     body_class.refresh();
+}
+autocomplete.on_select = function(_event, ui) {
+    if (ui.item.type == "foursquare") {
+	console.log("on_select with item =");
+	console.log(ui.item);
+	$("#typehere").val(ui.item.obj.name);
+	current_view.set_ids(ui.item.obj.name, ui.item.obj.id);
+	_event.preventDefault();
+    }
+    else if (ui.item.type == "lunchere") {
+	console.log("on_select with item =");
+	console.log(ui.item);
+	$("#typehere").val(ui.item.value);
+	current_view.set_ids(ui.item.obj.name, ui.item.obj.foursquareId);
+	_event.preventDefault();
+    }
+    else {
+	_event.preventDefault();
+    }
 }
 
 $(document).ready(function() {

@@ -104,6 +104,10 @@
     display: none;
 }
 
+#old-container, #root-others {
+    float: left;
+}
+
 .old #old-container {
     display: block;
 }
@@ -121,14 +125,20 @@
     display: block;
 }
 
+.no-map #map {
+    display: none;
+}
+
 .api-loading #api-loading-text:after {
     content: "(API loading...)";
 }
 
+/*
 .refreshing #info-map,
 .refreshing #extra-container {
     display: none;
 }
+*/
 
 .loading #options,
 .loading #title-text,

@@ -55,10 +55,11 @@ body {
 #root-container {
     margin: auto;
     width: @icon_width + @main_width + @icon_width;
+    margin-top: 90px;
 }
 
 #root-others {
-    .float;
+    display: none;
 }
 
 #main-icon {
@@ -167,6 +168,9 @@ body {
     background-image: url(map.png);
     background-position-x: -210px;
     background-position-y: -110px;
+}
+
+#info-map {
     border-bottom-width: @map_border_bottom_width;
 }
 
@@ -214,7 +218,13 @@ body {
 
 #extra-options {
     .float;
-    height: 480px;
+}
+
+@autocomplete_max_height: 400px;
+#typehere-autocomplete-container {
+    width: 0px;
+    height: 0px;
+    margin-top: -0px;
 }
 
 #typehere {
