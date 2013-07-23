@@ -179,13 +179,14 @@ body {
     width: @grid_column * 4 + @grid_gutter * 5 - @grid_half_gutter * 2;
     padding-left: @grid_half_gutter;
     padding-right: @grid_half_gutter;
-    height: 4 * @grid_baseline;
+    height: 3.5 * @grid_baseline;
+    margin-top: @grid_half_baseline;
 }
 
 #options-captions {
-    padding-top: @grid_baseline;
+    padding-top: @grid_half_baseline;
     padding-bottom: @grid_baseline;
-    line-height: @grid_baseline * 2;
+    line-height: @grid_baseline;
     width: @grid_column + @grid_gutter + @grid_column + @grid_half_gutter;
 }
 #options-captions, #options-yes-container, #options-no-container {
@@ -197,22 +198,22 @@ body {
     width: @grid_column;
     height: 4 * @grid_baseline;
     margin-left: @grid_gutter;
+    margin-top: -@grid_half_baseline - @options_circle_border;
 }
 
 @options_circle_border: 4px;
 #options-yes, #options-no {
-    width: @grid_column - @options_circle_border;
-    height: @grid_column - @options_circle_border;
+    width: @grid_column - @options_circle_border * 2;
+    height: @grid_column - @options_circle_border * 2;
     text-align: center;
     margin-left: auto;
     margin-right: auto;
-    margin-top: (4 * @grid_baseline - @grid_column) /2 ;
     border-width: @options_circle_border;
 }
 
 #options-yes > i, #options-no > i {
     font-size: 5 / 3 * @grid_baseline;
-    line-height: @grid_column;
+    line-height: @grid_column - @options_circle_border * 2;
     vertical-align: top;
 }
 
@@ -321,7 +322,8 @@ body {
 .footnotes_position {
     width: @main_width - @grid_gutter;
     font-size: @footnote_font_size;
-    line-height: 2 * @grid_baseline;
+    margin-bottom: @grid_half_baseline;
+    line-height: 1.5 * @grid_baseline;
 }
 #footnote {
     .tight_float;
@@ -331,6 +333,14 @@ body {
 #confirmed-footnote {
     .tight_float;
     .footnotes_position;
+}
+
+#magic-tag, #selected-tag {
+    .tight_float;
+    width: @grid_column;
+    padding-left: @grid_half_gutter;
+    padding-right: @grid_half_gutter;
+    margin-right: @grid_half_gutter;
 }
 
 #review {

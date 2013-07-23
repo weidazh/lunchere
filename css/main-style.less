@@ -124,7 +124,7 @@ body {
 }
 
 [id^="buttons-"]:hover {
-    color: green;
+    color: @color_green;
 }
 
 [id^="buttons-"].clicked {
@@ -137,17 +137,29 @@ body {
 }
 
 #extra-toggle:hover {
-    color: green;
+    color: @color_green;
 }
 
 .footnotes_style {
     text-align: left;
-    background: @color_bggray;
+    background: @color_bgwhite;
     color: @color_gray;
 }
 
 #confirmed-footnote {
     .footnotes_style;
+}
+
+#magic-tag, #selected-tag {
+    color: white;
+    font-weight: bold;
+    .narrow;
+}
+#magic-tag {
+    background: @color_blue;
+}
+#selected-tag {
+    background: @color_green;
 }
 
 #cancel-button {
@@ -169,13 +181,13 @@ body {
     background: @color_bgbluegray2;
     .circle;
     border-style: solid;
-    border-color: white;
+    border-color: @color_bggray;
 }
 
 #options-yes:hover {
-    background: green;
+    background: @color_green;
 }
 
 #options-no:hover {
-    background: red;
+    background: @color_red;
 }
