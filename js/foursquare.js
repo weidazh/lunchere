@@ -145,7 +145,6 @@ function get_details_from_foursquare(foursquare_id, callback) {
     $.ajax({
 	url: "https://api.foursquare.com/v2/venues/" + foursquare_id + "?" + NOLOGIN_SUFFIX
     }).done(function (data) {
-        console.log(data);
         var venue = data.response.venue;
 	callback(venue);
     }).fail(function() {

@@ -1,4 +1,4 @@
-
+/*
 window.addEventListener("load", function load() {
     disable_all();
 
@@ -36,199 +36,12 @@ window.addEventListener("load", function load() {
 	confirm_today(document.getElementById("newplace").value, "");
     });
 }, false);
+*/
 
-
-$(document).ready(function() {
-    return;
-    set_default_LL();
-
-    var lunchere_autocomplete = [];
-    function reload_autocomplete_from_lunchere(callback) {
-        if (lunchere_autocomplete && ! autocomplete_should_reload ||
-            ! today_recommendation || !today_recommendation.historyId || !today_recommendation.timeslot) {
-
-            callback(lunchere_autocomplete);
-            return;
-        }
-        gapi.client.lunchere.choices({
-            'historyId': today_recommendation.historyId,
-            'timeslot': today_recommendation.timeslot
-        }).execute(function (resp) {
-            if (! resp.choices)
-                resp.choices = [];
-            lunchere_autocomplete = resp.choices;
-            console.log("resp");
-            console.log(resp);
-
-            callback(resp.choices);
-        });
-    }
-
-    var cached_source = {};
-    function dynamic_source(request, response) {
-        var q0 = request.term;
-        var q = encodeURI(q0);
-        var a_lunchere;
-        var a_foursquare;
-	if (q0 == cached_source.q0) {
-	    response(cached_source.source);
-	}
-        function callback_both() {
-            if (a_lunchere && a_foursquare) {
-		var source = a_lunchere.concat([{
-                    "label": "-----------",
-                    "value": "-----------",
-                    "type": "separator",
-                }]).concat(a_foursquare);
-                response(source);
-		if (cached_source.q0 != q0) {
-		    cached_source.q0 = q0;
-		    cached_source.source = source;
-		}
-            }
-        }
-        function callback_lunchere(data) {
-            function escape(q0) {
-                var x = "";
-                for (var i = 0; i < q0.length; i++) {
-                    var ch = $.ui.autocomplete.escapeRegex(q0.charAt(i));
-                    x += ch + ".*";
-                }
-                return x;
-            }
-            console.log("querystring = " + escape(q0));
-            var q0exp = RegExp(escape(q0), "i");
-            a_lunchere = [];
-            console.log(data);
-            for(var i = 0; i < data.length; i++) {
-                if (q0exp.test(data[i].canteenId)) {
-                    a_lunchere.push({
-                        "label": data[i].canteenId,
-                        "value": data[i].canteenId,
-                        "type": "lunchere",
-                        "obj": data[i]
-                    });
-                }
-            }
-
-            callback_both();
-        }
-        var suggestcompletion = "search"; // instead of suggestCompletion, because the latter failed to restrict in radius
-        var minivenues = "venues"; // instead of "minivenues";
-        var AND_FOOD_ID = "&categoryId=" + FOOD_ID; // instead of ""
-        function callback_foursquare(data) {
-            console.log(data);
-            console.log(data.response);
-            console.log(data.response[minivenues].length + " suggestions for q0=" + q0);
-            a_foursquare = [];
-            $.each(data.response[minivenues], function(i, minivenue) {
-                var name = minivenue.name + " @ " + minivenue.location.address;
-                var name_addr = minivenue.name + " @ " + minivenue.location.address + " (" + minivenue.location.distance + "m)";
-                console.log(name_addr);
-                var is_food = false;
-                $.each(minivenue.categories, function(j, category) {
-                    var prefix = category.icon.prefix;
-                    if (! prefix)
-                        prefix = category.icon;
-                    if (/\/food\//.test(prefix)) {
-                        is_food = true;
-                    }
-                    else {
-                        console.log(name + " is not food");
-                    }
-                });
-                if (is_food && a_foursquare.indexOf(name) < 0)
-                    a_foursquare.push({
-                        "label": name,
-                        "value": name,
-                        "type": "foursquare",
-                        "obj": minivenue
-                    });
-            });
-            callback_both();
-        }
-        var empty_foursquare = {'response': {  } };
-        empty_foursquare.response[minivenues] = [];
-        if (q0.length >= 1) {
-            $.ajax({
-                url: "https://api.foursquare.com/v2/venues/" + suggestcompletion + "?" + LL + AND_FOOD_ID + "&radius=1000&limit=10&query=" + q + "&" + NOLOGIN_SUFFIX
-            }).done(callback_foursquare).fail(function() {
-                console.log("ERROR");
-                callback_foursquare(empty_foursquare);
-            });
-        }
-        else {
-            callback_foursquare(empty_foursquare);
-        }
-        reload_autocomplete_from_lunchere(callback_lunchere);
-    }
-
-    function dynamic_source_select(_event, ui) {
-        if (ui.item.type == "foursquare") {
-            console.log("foursquare");
-            $("#typehere").val(ui.item.obj.name);
-            $("#newplace").val(ui.item.obj.name);
-            $("#addr").val(ui.item.obj.location.address);
-            _event.preventDefault();
-        }
-        else if (ui.item.type == "lunchere") {
-            console.log("lunchere");
-            $("#typehere").val(ui.item.value);
-            $("#newplace").val(ui.item.value);
-            $("#addr").val("");
-            _event.preventDefault();
-        }
-        else {
-            _event.preventDefault();
-        }
-    }
-
-    function dynamic_source_select_new_UI(_event, ui) {
-	dynamic_source_select(_event, ui);
-	if (ui.item.type == "foursquare") {
-	    console.log(ui.item.obj);
-	    if (!today_recommendation || ui.item.obj.id != today_recommendation.foursquare_id) {
-		foursquareCache.fetch(ui.item.obj.id, function(venue) {
-		    backend.foursquare_received(today_recommendation, ui.item.obj.name, venue);
-		});
-	    }
-	}
-	else if (ui.item.type == "lunchere") {
-	    console.log(ui.item.obj);
-	    if (!today_recommendation ||
-		     ui.item.obj.foursquareId != today_recommendation.foursquare_id ||
-		     ui.item.value != today_recommendation.name) {
-		lunchereCache.fetch(ui.item.value, ui.item.obj.foursquareId, function(resp, venue) {
-		    today_recommendation_received(resp, venue);
-		});
-	    }
-	}
-    }
-
-    $("#newplace").focus(function() {
-        $("#newplace").autocomplete("search");
-    });
-
-    $("#newplace").autocomplete({
-        source: dynamic_source,
-        minLength: 0,
-        select: dynamic_source_select,
-    });
-
-    $("#typehere").focus(function() {
-	if ($("#typehere").val() == "type here" && $("#typehere").attr("valuesource") == "type here") {
-	    $("#typehere").val("");
-	}
-        $("#typehere").autocomplete("search");
-    });
-
-    $("#typehere").autocomplete({
-        source: dynamic_source,
-	delay: 200,
-        minLength: 0,
-        select: dynamic_source_select_new_UI,
-    });
-});
+function debug_obj(prefix, obj) {
+    // console.log(prefix);
+    // console.log(obj);
+}
 
 function LoadingSpinners() {
     var that = this;
@@ -311,19 +124,18 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 	    "typehere-focusing": function () { return autocomplete.focusing; },
 	    "debugging": function () { return hashurl.get_flag("debug"); },
 	};
-	console.log("BodyClass.refresh with mapping = ");
-	console.log(mapping);
+	debug_obj("BodyClass.refresh with mapping = ", mapping);
 	var callbacks = {
 	    "loading": loading_spinners.loading_callback,
 	    "refreshing": current_view.refreshing,
 	    "typehere-focusing": autocomplete.try_focus,
 	};
 	var $body = $("body");
-	var debug_obj = {};
+	var temp = {};
 	$.each(mapping, function (cssClass, bool_func) {
 	    var on = bool_func();
 	    var previous = $body.hasClass(cssClass);
-	    debug_obj[cssClass] = on ? 1 : 0;
+	    temp[cssClass] = on ? 1 : 0;
 	    if (on) {
 		$body.addClass(cssClass);
 	    }
@@ -334,8 +146,7 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 		callbacks[cssClass](on, previous);
 	    }
 	});
-	console.log("                       debug_obj = ");
-	console.log(debug_obj);
+	debug_obj("                         temp = ", temp);
     }
     return this;
 }
@@ -436,6 +247,7 @@ function HashURL() {
 	});
 	return new_flags;
     }
+    /*
     var goes_to_loading = this.goes_to_loading = function (canteen_id, foursquare_id) {
 	// do not change the url, only set the classes
 	console.log("goes_to_loading " + canteen_id + " " + foursquare_id);
@@ -466,6 +278,7 @@ function HashURL() {
 	document.location.hash = that.hash = _encode_hash();
 	recognize_new_hash();
     }
+    */
     var set_hash = this.set_hash = function (resp) {
 	that.flags["id"] = resp.name ? resp.name : "";
 	that.flags["4sq"] = resp.foursquare_id ? resp.foursquare_id : "";
@@ -532,12 +345,12 @@ function MainUI() {
     var goto_hash = this.goto_hash = function () {
 	var hash_changed = hashurl.recognize_new_hash();
 	if (hash_changed) {
-	    console.log("hash_changed by user");
+	    console.log("[HASHURL] hash_changed by user");
 	    lunchereCache.fetch(
 	        hashurl.get_flag("id"),
 	        hashurl.get_flag("4sq"),
 		function(resp, venue) {
-		    console.log("goto_hash calling new_backend.receive");
+		    console.log("[MainUI] goto_hash calling new_backend.receive");
 
                     new_backend.receive(resp, venue);
 		    // today_recommendation_received(resp, venue);
@@ -630,12 +443,9 @@ function FoursquareFormatted(venue) {
 	}
     }
     var apply = this.apply = function (mapping) {
-	console.log("FoursquareFormatted.apply with mapping =");
-	console.log(mapping);
-	console.log("                               this =");
-	console.log(that);
+	debug_obj("FoursquareFormatted.apply with mapping =", mapping);
+	debug_obj("                                  this =", that);
 	function debug(element_id) {
-	    return;
 	    $(element_id).addClass("debug");
 	    setTimeout(function() {
 		$(element_id).removeClass("debug");
@@ -921,12 +731,12 @@ function LunchereAPI() {
 	init(function() {
 	    that.lunchere = that.gapi.client.lunchere;
 	    that.loaded = true;
-	    console.log("LunchereAPI loaded");
+	    console.log("[LunchereAPI] LunchereAPI loaded");
 
 	    body_class.refresh();
 	    that.on_load();
 	}, function() {
-	    console.log("failed");
+	    console.log("[LunchereAPI] LunchereAPI load failed!");
 	});
     }
     var init = this.init = function (loaded_done, loaded_fail) {
@@ -943,7 +753,7 @@ function LunchereAPI() {
 	    }
 	}
 	var callback = function() {
-	    console.log("LunchereAPI.init - " + (apisToLoad - 1) + " APIs to load");
+	    console.log("[LunchereAPI] LunchereAPI.init - " + (apisToLoad - 1) + " APIs to load");
 	    if (--apisToLoad == 0) {
 		if (! that.gapi.client.lunchere)
 		    loaded_fail();
@@ -1097,10 +907,8 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
 	});
     }
     var receive = this.receive = function (resp, venue) {
-	console.log("NewBackend.receive with resp =");
-	console.log(resp);
-	console.log("                        venue =");
-	console.log(venue);
+	debug_obj("NewBackend.receive with resp =", resp);
+	debug_obj("                       venue =", venue);
 	if ((!resp || !resp.name) && venue) {
 	    resp = generate_resp_from_venue(venue);
 	}
@@ -1118,129 +926,14 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
     }
 }
 
-function Backend() {
-    // var historyId;
-    // var today_recommendation;
-    // var autocomplete_should_reload;
-    var foursquare_details_received = this.foursquare_details_received = function (resp, venue) {
-	if (venue.id != resp.foursquare_id) {
-	    console.log("WARNING venue.id != resp.foursquare_id")
-	    return;
-	}
-
-	resp.foursquare_venue = venue;
-
-	var formatted = new FoursquareFormatted(venue);
-	var view = {
-	    // "name": "#title-text", // name could be customized
-	    "addr": "#title-addr",
-	    "distance": "#distance",
-	    "detailed_addr": "#details-addr",
-	    "contact": "#details-phonenumber",
-	    "icon": function(icon_url) {
-		console.log(icon_url);
-		$("#main-icon > img").attr("src", icon_url);
-		return "main-icon";
-	    },
-	    "canonicalUrl": function(link_url) {
-		$("#external-link > a").attr("href", link_url);
-		return "#external-link";
-	    },
-	    "timeslotFriendly": "#confirmed-info-date",
-	};
-	formatted.apply(view);
-    }
-    var foursquare_received = this.foursquare_received = function (resp, name, venue) {
-	/* venue is defined in https://developer.foursquare.com/docs/responses/venue
-	 * as compact venue,
-	 * more detailed information could be fetched by calling the single venue request
-	 */
-	resp.name = name;                // today_recommendation would be the same object.
-	resp.has_other_recommend = true; // via foursquare
-	resp.foursquare_id = venue.id;
-	resp.source = " (4sq)";
-
-	$("#title-text").text(name);
-	$("#title-source").text(resp.source);
-	foursquare_details_received(resp, venue);
-	hashurl.goes_to_normal(name, venue.id);
-    }
-    var today_recommendation_received_new_ui = this.today_recommendation_received_new_ui = function (resp, venue) {
-	console.log("new UI");
-	console.log(resp);
-
-	if (resp.historyId && resp.historyId != current_view.get_history_id()) {
-	    current_view.set_history_id(resp.historyId);
-	}
-	if (! resp.name) {
-	    hashurl.goes_to_loading("", "");
-	    if (resp && resp.hints && resp.hints.ll)
-		console.log("resp.hints.ll = " + resp.hints.ll);
-	    if (! venue && resp.hints && (resp.hints.ll || resp.hints.near)) {
-		foursquareCache.fetch_recommendation(resp.hints.ll, resp.hints.near,
-		    function(name, venue) {
-			foursquare_received(resp, name, venue);
-		    });
-	    }
-	    else {
-		hashurl.goes_to_loading("", "");
-		if (navigator && navigator.geolocation) {
-		    navigator.geolocation.getCurrentPosition(function(position) {
-			resp.hints = {}
-			resp.hints.ll = position.coords.latitude + "," + position.coords.longitude;
-			today_recommendation_received(resp);
-			return;
-		    },
-		    function () {
-			hashurl.goes_to_failed();
-		    });
-		}
-	    }
-	}
-	else {
-	    $("#title-source").text(" (lunchere)");
-	    $("#title-text").text(resp.name);
-	    var foursquare_id = resp.foursquare_id;
-	    if (!foursquare_id && venue)
-		foursquare_id = venue.id;
-	    if (!foursquare_id)
-		foursquare_id = "";
-	    if (resp.confirmed) {
-		hashurl.goes_to_confirmed(resp.name, foursquare_id);
-	    }
-	    else {
-		hashurl.goes_to_normal(resp.name, foursquare_id);
-	    }
-	}
-	if (venue) {
-	    foursquare_details_received(resp, venue);
-	    hashurl.goes_to_normal(resp.name, venue.id);
-	}
-	if (resp && resp.foursquare_id &&
-		(!today_recommendation || resp.foursquare_id != today_recommendation.foursquare_id) &&
-		!resp.foursquare_venue && ! venue) {
-	    foursquareCache.fetch(resp.foursquare_id, function(venue) {
-		foursquare_details_received(resp, venue);
-		hashurl.goes_to_normal(resp.name, venue.id);
-	    });
-	}
-	today_recommendation = resp;
-	autocomplete_should_reload = true;
-    }
-
-    this.foursquare_received = foursquare_received;
-    this.today_recommendation_received_new_ui = today_recommendation_received_new_ui;
-    return this;
-}
-
 function FoursquareCache() {
     var that = this;
     this.cache = {};
     var fetch = this.fetch = function (id, callback) {
 	get_details_from_foursquare(id, function(venue) {
-	    console.log("foursquare returns, I hope the title is updated");
+	    console.log("[FoursquareCache] foursquare returns, I hope the title is updated");
 	    setTimeout(function() {
-		console.log("foursquare returns");
+		console.log("[FoursquareCache] foursquare returns");
 		that.cache[id] = venue;
 		callback(venue);
 	    }, 0);
@@ -1371,8 +1064,9 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    "detailed_addr": "#details-addr",
 	    "contact": "#details-phonenumber",
 	    "icon": function(icon_url) {
+		console.log("[APPLY] apply " + icon_url + " to #main-icon's background-image");
 		console.log(icon_url);
-		$("#main-icon > img").attr("src", icon_url);
+		$("#main-icon").css({ "background-image": "url(" + icon_url + ")" });
 		return "main-icon";
 	    },
 	    "canonicalUrl": function(link_url) {
@@ -1514,7 +1208,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
     this.refreshing_previous_info_map_height = "200px";
     this.refreshing_previous_extra_container_height = "200px";
     var refreshing = this.refreshing = function (on, previous) {
-	console.log("REFRESHING from " + previous + " to " + on);
+	console.log("[REFRESHING] refreshing from " + previous + " to " + on);
 	if (on && !previous) {
 	    // animate it to zero height
 	    that.refreshing_previous_info_map_height = $("#info-map").height();
@@ -1568,11 +1262,6 @@ var geo_api = new GeoAPI();
 var lunchere_api = new LunchereAPI();
 var mainUI = new MainUI();
 var hashurl = new HashURL();
-var backend = new Backend();
-var today_recommendation_received_new_ui = function() {
-    // backend.today_recommendation_received_new_ui;
-    alert("ERROR today_recommendation_received_new_ui is called");
-}
 var loading_spinners = new LoadingSpinners();
 
 var foursquareCache = new FoursquareCache();

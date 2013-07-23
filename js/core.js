@@ -5,6 +5,7 @@ var CLIENT_ID = initObj["CLIENT_ID"];
 var API_VERSION = initObj["API_VERSION"];
 var autocomplete_should_reload = false;
 
+/*
 function lunchere_api_init(callback) {
     var apisToLoad;
     var callback = function(msg) {
@@ -95,7 +96,7 @@ function user_authed_no_retry(token) {
     }
     // first_call();
 }
-
+*/
 function first_call(authed) {
     if (1 /* NO TEST */) {
 	second_call(authed);
@@ -108,6 +109,7 @@ function first_call(authed) {
     });
 }
 
+/*
 function today_recommendation_received(resp, venue) {
     if (hashurl.new_mode()) {
 	return today_recommendation_received_new_ui(resp, venue);
@@ -271,3 +273,4 @@ function cancel_today() {
     send_request("cancel", true, gapi.client.lunchere.noUnauth, ["historyId", "timeslot", "name", "foursquare_id"], get_today_recommendation_name());
     hashurl.goes_to_loading("", "");
 }
+*/
