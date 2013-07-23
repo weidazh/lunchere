@@ -18,7 +18,7 @@
     &.enabled:hover {
 	color: @hover_color;
 	background-color: @hover_bgcolor;
-	@hover_bgcolor; cursor: pointer;
+	cursor: pointer;
     }
     &.disabled {
 	color: @disabled_color;
@@ -30,7 +30,16 @@
 	cursor: default;
     }
 }
-
+.clickable_border_top_down_color(@bordercolor, @hover_color) {
+    &.enabled:hover {
+	border-top-color: @hover_color;
+	border-bottom-color: @hover_color;
+    }
+    &.disabled:hover {
+	border-top-color: @bordercolor;
+	border-bottom-color: @bordercolor;
+    }
+}
 body {
     background: @color_bggray;
     font-size: @normal_font_size;
@@ -92,20 +101,6 @@ body {
 
 #footnote {
     .footnotes_style;
-}
-
-#options {
-    background: @color_bgbluegray;
-}
-
-#options-captions {
-}
-
-#options-captions > i {
-}
-
-#options-captions > #askfriends {
-    margin-left: 17px;
 }
 
 #extra-container {
@@ -181,18 +176,8 @@ body {
     .clickable(@color_white, @color_green, @color_green, @color_white, @color_white);
 }
 
-#cancel-button {
-    outline: 2px solid black;
-}
-
-#review-info {
-    border-right-style: dashed;
-    border-right-color: gray;
-    text-align: right;
-}
-
 #options {
-    background: @color_bgbluegray;
+    background: @color_bgbluegray3;
     color: @color_bgwhite;
 }
 
@@ -235,3 +220,51 @@ body {
 #delete-this-meal {
     .clickable(@color_white, @color_red, @color_white, @color_bgbluegray2, @color_white);
 }
+
+#confirmed-info {
+    background: @color_bgbluegray4;
+    color: white;
+}
+
+#review-reselect {
+    .clickable(@color_white, @color_brown, @color_white, @color_red, @color_white);
+}
+#review-thumbs-up {
+    .clickable(@color_white, @color_bgbluegray3, @color_white, @color_green, @color_white);
+    .clickable_border_top_down_color(@color_bgbluegray3, @color_green);
+}
+#review-thumbs-down {
+    .clickable(@color_bgbluegray1, @color_bgbluegray3, @color_white, @color_brown, @color_bgbluegray1);
+    .clickable_border_top_down_color(@color_bgbluegray3, @color_brown);
+}
+#review-delete-meal {
+    .clickable(@color_white, @color_red, @color_white, @color_bgbluegray2, @color_white);
+}
+
+#review-thumbs-up, #review-thumbs-down {
+    border-top-style: solid;
+    border-top-color: @color_bgbluegray3;
+    border-bottom-style: solid;
+    border-bottom-color: @color_bgbluegray3;
+}
+
+#review-thumbs-up {
+    border-right-style: solid;
+    border-right-color: white;
+}
+
+#review-thumbs-down {
+    border-left-style: solid;
+    border-left-color: white;
+}
+
+#cancel-button {
+    outline: 2px solid black;
+}
+
+#review-info {
+    border-right-style: dashed;
+    border-right-color: gray;
+    text-align: right;
+}
+

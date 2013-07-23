@@ -56,6 +56,7 @@ body {
     margin: auto;
     width: @icon_width + @main_width + @icon_width;
     margin-top: 90px;
+    margin-bottom: 90px;
 }
 
 #root-others {
@@ -386,6 +387,74 @@ body {
     margin-right: @grid_half_gutter;
 }
 
+#confirmed-info {
+    .tight_float;
+    margin-top: @grid_half_baseline;
+    height: 3.5 * @grid_baseline - 2px;
+    width: @main_width;
+    text-align: center;
+    margin-bottom: 2px;
+}
+
+#confirmed-info-name {
+    font-weight: bolder;
+    margin-top: 12px; /* hard coded */
+}
+
+#confirmed-info-date {
+    font-size: @footnote_font_size;
+}
+
+@review_options_margin_top: 0px;
+@review_options_height: 2 * @grid_baseline;
+#review-options {
+    .tight_float;
+    height: @review_options_height;
+    margin-left: @grid_half_gutter;
+    margin-right: @grid_half_gutter;
+    width: @main_width - @grid_gutter;
+}
+
+#review-reselect, #review-thumbs-up, #review-thumbs-down, #review-delete-meal {
+    .tight_float;
+    clear: none;
+    width: @grid_column;
+    padding-left: @grid_half_gutter;
+    padding-right: @grid_half_gutter;
+    line-height: 2 * @grid_baseline - 1px;
+    text-align: center;
+}
+
+@thumbs_icon_size: 22px;
+#review-thumbs-up, #review-thumbs-down {
+    font-size: @thumbs_icon_size;
+}
+
+@thumbs_separator_length: 18px; /* L */
+@thumbs_height: (@thumbs_separator_length * 4 - @review_options_height) / 3;                /* y */
+@thumbs_border_width: 2 * (@thumbs_separator_length - @thumbs_height);          /* x */
+/* y + x / 2 = L */
+/* y + 2 * x = @review_options_height */
+/* y = (4L - @review_options_height) / 3 */
+#review-thumbs-up, #review-thumbs-down {
+    height: @thumbs_height;
+    border-top-width: @thumbs_border_width;
+    border-bottom-width: @thumbs_border_width;
+}
+#review-thumbs-up {
+    width: @grid_column - 1px;
+    border-right-width: 1px;
+}
+#review-thumbs-down {
+    border-left-width: 0px;
+}
+
+#review-thumbs-up-floater, #review-thumbs-down-floater {
+    margin-top: -@thumbs_border_width;
+    height: @review_options_height;
+    line-height: @review_options_height;
+}
+
 #review {
     .tight_float;
     margin-top: 12px;
@@ -502,5 +571,3 @@ body {
     text-align: right;
     margin-right: 40px;
 }
-
-
