@@ -56,7 +56,6 @@ body {
     margin: auto;
     width: @icon_width + @main_width + @icon_width;
     margin-top: 90px;
-    margin-bottom: 90px;
 }
 
 #root-others {
@@ -455,119 +454,90 @@ body {
     line-height: @review_options_height;
 }
 
-#review {
-    .tight_float;
-    margin-top: 12px;
-    height: 50px;
-}
-
-#review-info, #review-edit, #review-fav {
-    float: left;
-    height: 50px;
-}
-
-#review-info {
-    width: 50%;
-    padding-right: 10px;
-    border-right-width: 1px;
-}
-
-#review-edit {
-    width: 24%;
-    margin-left: 10px;
-}
-
-#review-fav {
-    margin-left: 10px;
-}
-
 #footer-container {
-    .float;
-    margin-top: 20px;
-    float: clear;
-    margin-bottom: 20px;
+    .tight_float;
+    width: 100%;
 }
 
-#timeline {
-    display: block;
-    margin-left: 50%;
-    margin-bottom: -14px;
+@timeline_width: 2 * 5 * @timeline_block_width + @timeline_center_block_width;
+@timeline_height: 5.5 * @grid_baseline;
+#timeline-container {
+    height: @timeline_height;
+    width: 100%;
 }
 
-#timeline-border0 {
+#timeline-floater {
+    width: @timeline_width;
+    height: @timeline_center_block_height;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-#timeline-border-left {
-    float: left;
-    clear: left;
-    width: 50%;
-    border-top: 5px solid @lightgray;
+.timeline-block {
+    outline: 1px solid;
+    outline-offset: -2px;
 }
 
-#timeline-border-right {
-    float: left;
+@timeline_block_width: 40px;
+@timeline_block_height: 3 * @grid_baseline;
+@timeline_center_block_width: 120px;
+@timeline_center_block_height: 4 * @grid_baseline;
+.timeline-block.left {
+    .tight_float;
     clear: none;
-    width: @timeline_div0_width;
-    border-top: 5px solid @lightgray;
+    width: @timeline_block_width;
+    height: @timeline_block_height;
+    outline-color: blue;
 }
 
-#timeline-ul {
-    width: @timeline_div0_width
+.timeline-block.center {
+    .tight_float;
+    clear: none;
+    width: @timeline_center_block_width;
+    height: 72px;
+    outline-color: red;
 }
 
-#timeline-border {
+.timeline-block.right {
+    .tight_float;
+    clear: none;
+    width: @timeline_block_width;
+    height: @timeline_block_height;
+    outline-color: green;
 }
 
-.timeline-div {
-    display: inline-block;
-    width: @timeline_icon_width;
-}
-
-#timeline-div0 {
-    display: inline-block;
-    width: @timeline_div0_width;
-    margin-right: -@timeline_div0_width - @skip_current;
-}
-
-.timeline-div.current {
-    margin-right: @skip_current - @timeline_icon_width;
-}
-
-.timeline-div.before {
-    margin-right: -@skip_other - @timeline_icon_width;
-}
-
-.timeline-div.after {
-    margin-right: @skip_other - @timeline_icon_width;
-}
-
-.timeline-div.plus {
-    margin-right: -@timeline_icon_width;
+#timeline-title {
+    .tight_float;
+    margin-top: -@grid_baseline;
+    margin-left: 20px;
 }
 
 #about {
-    margin-top: 20px;
-    height: 40px;
-}
-#about-timeline {
-    float: left;
+    height: 4 * @grid_baseline;
 }
 
-#about-sharing {
-    margin-left: 40px;
-    float: left;
-}
-
-#about-lunchere-container  {
+#logo {
+    margin-right: 20px;
     float: right;
-    margin-right: 40px;
+    margin-top: @grid_half_baseline;
+    line-height: @grid_baseline * 2;
 }
 
-#about-lunchere  {
+#logo-lunch {
+    .tight_float;
+    margin-right: -2px;
+    z-index: 2;
+    position: relative;
+    font-size: 26px;
 }
 
-#power {
-    border-top: 2px dashed gray;
-    text-align: right;
-    margin-right: 40px;
+#logo-here  {
+    .tight_float;
+    clear: none;
+    margin-left: -10px;
+    font-size: 27px;
+}
+
+#logo-here:before {
+    content: "h";
 }
