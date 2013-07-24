@@ -39,8 +39,8 @@ window.addEventListener("load", function load() {
 */
 
 function debug_obj(prefix, obj) {
-    // console.log(prefix);
-    // console.log(obj);
+    console.log(prefix);
+    console.log(obj);
 }
 
 function LoadingSpinners() {
@@ -127,7 +127,7 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 	    "debugging": function () { return hashurl.get_flag("debug"); },
 	    "initialize": function () { return !(lunchere_api.is_ready() && hashurl.is_initialized()); },
 	};
-	debug_obj("BodyClass.refresh with mapping = ", mapping);
+	// debug_obj("BodyClass.refresh with mapping = ", mapping);
 	var callbacks = {
 	    "loading": loading_spinners.loading_callback,
 	    "refreshing": current_view.refreshing,
@@ -149,7 +149,7 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 		callbacks[cssClass](on, previous);
 	    }
 	});
-	debug_obj("                         temp = ", temp);
+	// debug_obj("                         temp = ", temp);
     }
     return this;
 }
@@ -191,6 +191,7 @@ function HashURL() {
 	    that.flags = new_flags;
 	    that.hash = document.location.hash;
 	    changed = true;
+	    console.log("recognize new hash " + that.hash);
 	}
 	_set_body_class(new_flags);
 	return changed;
@@ -288,7 +289,9 @@ function HashURL() {
     var set_hash = this.set_hash = function (resp) {
 	that.flags["id"] = resp.name ? resp.name : "";
 	that.flags["4sq"] = resp.foursquare_id ? resp.foursquare_id : "";
-	document.location.hash = that.hash = _encode_hash();
+	var encoded_hash = _encode_hash();
+	console.log("set_hash to " + encoded_hash);
+	document.location.hash = that.hash = encoded_hash;
 	recognize_new_hash();
     }
 
@@ -452,8 +455,8 @@ function FoursquareFormatted(venue) {
 	}
     }
     var apply = this.apply = function (mapping) {
-	debug_obj("FoursquareFormatted.apply with mapping =", mapping);
-	debug_obj("                                  this =", that);
+	// debug_obj("FoursquareFormatted.apply with mapping =", mapping);
+	// debug_obj("                                  this =", that);
 	function debug(element_id) {
 	    return;
 	    $(element_id).addClass("debug");
@@ -917,8 +920,8 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
 	});
     }
     var receive = this.receive = function (resp, venue) {
-	debug_obj("NewBackend.receive with resp =", resp);
-	debug_obj("                       venue =", venue);
+	// debug_obj("NewBackend.receive with resp =", resp);
+	// debug_obj("                       venue =", venue);
 	if ((!resp || !resp.name) && venue) {
 	    resp = generate_resp_from_venue(venue);
 	}
@@ -964,6 +967,20 @@ function FoursquareCache() {
 function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
     var that = this;
     this.cache = {};
+    var fetch_4sq = this.fetch_4sq = function (resp, callback_resp_venue) {
+	var lunch = resp;
+	var canteen_id = resp.name;
+	var foursquare_id = resp.foursquare_id;
+	that.cache[canteen_id] = lunch;
+	if (foursquare_id) {
+	    foursquareCache.fetch(foursquare_id, function(venue) {
+		callback_resp_venue(lunch, venue);
+	    });
+	}
+	else {
+	    callback_resp_venue(lunch, null);
+	}
+    }
     var fetch = this.fetch = function (canteen_id, foursquare_id, callback_resp_venue) {
 	var lunch = {
 	    "historyId": get_history_id(),
@@ -997,13 +1014,7 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 	return false;
     }
     var add = this.add = function (canteen_id, resp) {
-	var lunch = {
-	    "historyId": resp.historyId,
-	    "timeslot": resp.timeslot,
-	    "name": resp.name,
-	    "foursquare_id": resp.foursquare_id,
-	};
-	that.cache[canteen_id] = lunch;
+	that.cache[canteen_id] = resp;
 	if (resp.foursquare_id) {
 	    foursquareCache.fetch(resp.foursquare_id, function(venue) { });
 	}
@@ -1088,6 +1099,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	body_class.refresh();
     }
     var set_view = this.set_view = function (resp) {
+	// debug_obj("this.set_view with resp = ", resp);
+	that.resp_cache = resp;
 	// it should contains historyId, timeslot, name, and foursquare_id
 	hashurl.set_hash(resp);
 	$("#title-text").text(resp.name);
@@ -1100,10 +1113,13 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	that.canteen_id = resp.name;
 	that.foursquare_id = resp.foursquare_id;
 	that.confirmed = resp.confirmed;
+	lunchereCache.add(resp.name, resp);
 
 	if (resp.foursquare_id) {
 	    body_class.refresh();
-	    lunchereCache.fetch(resp.name, resp.foursquare_id, format_venue);
+	    foursquareCache.fetch(resp.foursquare_id, function (venue) {
+		format_venue(resp, venue);
+	    });
 	}
 	else {
 	    body_class.refresh();
@@ -1159,11 +1175,18 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	//
 	// TODO
     }
+    var normalize = this.normalize = function (s) {
+	if (!s)
+	    return "";
+	else
+	    return s;
+    }
     var on_hashchange = this.on_hashchange = function () {
 	// detech what is changed.
 	hashurl.recognize_new_hash();
-	if (hashurl.get_flag("id") != this.canteen_id ||
-	    hashurl.get_flag("4sq") != this.foursquare_id) {
+	// hashurl has already normalized them.
+	if (hashurl.get_flag("id") != normalize(this.canteen_id) ||
+	    hashurl.get_flag("4sq") != normalize(this.foursquare_id)) {
 
             // changed.
 	    that.on_hashchange_callback();
@@ -1257,8 +1280,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
     this.refreshing_previous_info_map_height = "200px";
     this.refreshing_previous_extra_container_height = "200px";
     var refreshing = this.refreshing = function (on, previous) {
-	console.log("[REFRESHING] refreshing from " + previous + " to " + on);
 	if (on && !previous) {
+	    console.log("[REFRESHING] refreshing from " + previous + " to " + on);
 	    // animate it to zero height
 	    that.refreshing_previous_info_map_height = $("#info-map").height();
 	    that.refreshing_previous_extra_container_height = $("#extra-container").height();
@@ -1279,6 +1302,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    });
 	}
 	else if (!on && previous) {
+	    console.log("[REFRESHING] refreshing from " + previous + " to " + on);
 	    // animate it to full height
 	    $("#extra-container").stop().animate({
 		"height": that.refreshing_previous_extra_container_height,
