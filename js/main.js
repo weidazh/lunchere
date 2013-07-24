@@ -119,6 +119,8 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 	    "old": function() { return ! hashurl.new_mode(); },
 	    "loading": current_view.loading_title,
 	    "failed": is_failed,
+	    "no-foursquare": current_view.not_has_foursquare_details,
+	    "no-refreshing": function () { return ! current_view.loading_details(); },
 	    "refreshing": current_view.loading_details,
 	    "api-loading": lunchere_api.api_loading,
 	    "typehere-focusing": function () { return autocomplete.focusing; },
@@ -1129,8 +1131,16 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    return false;
 	}
     }
-    var loading_details = this.loading_details = function () {
+    var not_has_foursquare_details = this.not_has_foursquare_details = function() {
 	return (that.foursquare_id == "" || !foursquareCache.has(that.foursquare_id));
+    }
+    var loading_details = this.loading_details = function () {
+	if (that.canteen_id && ! that.foursquare_id) {
+	    // in this case, we did not map canteen with foursquare,
+	    // so this is not refreshing
+	    return false;
+	}
+	return that.not_has_foursquare_details();
     }
     var on_lunchere_received = this.on_lunchere_received = function (resp) {
 	if (that.canteen_id == resp.name) {
