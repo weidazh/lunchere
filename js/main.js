@@ -191,7 +191,7 @@ function HashURL() {
 	    that.flags = new_flags;
 	    that.hash = document.location.hash;
 	    changed = true;
-	    console.log("recognize new hash " + that.hash);
+	    console.log("[HASH] recognize new hash " + that.hash);
 	}
 	_set_body_class(new_flags);
 	return changed;
@@ -290,7 +290,7 @@ function HashURL() {
 	that.flags["id"] = resp.name ? resp.name : "";
 	that.flags["4sq"] = resp.foursquare_id ? resp.foursquare_id : "";
 	var encoded_hash = _encode_hash();
-	console.log("set_hash to " + encoded_hash);
+	console.log("[HASH] set_hash to " + encoded_hash);
 	document.location.hash = that.hash = encoded_hash;
 	recognize_new_hash();
     }
@@ -351,9 +351,10 @@ function MainUI() {
 	}).removeClass("disabled").addClass("enabled");
 
 	$(window).on("hashchange", function() {
-	    current_view.on_hashchange();
+	    current_view.on_hashchange(/* initialize */ false);
 	});
     }
+    /*
     var goto_hash = this.goto_hash = function () {
 	var hash_changed = hashurl.recognize_new_hash();
 	if (hash_changed) {
@@ -370,6 +371,7 @@ function MainUI() {
 		});
 	}
     }
+    */
     return this;
 }
 
@@ -816,6 +818,13 @@ function LunchereAPI() {
 	});
     }
 
+    var today = this.today = function (history_id, callback) {
+	that.should_reset = true;
+	_send_request("today", that.gapi.client.lunchere.todayUnauth, {
+	    "historyId": history_id,
+	}, callback);
+    }
+
     var delete_meal = this.delete_meal = function (history_id, timeslot, callback) {
 	that.should_reset = true;
 	_send_request("delete_meal", that.gapi.client.lunchere.deletemealUnauth, {
@@ -1181,23 +1190,38 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	else
 	    return s;
     }
-    var on_hashchange = this.on_hashchange = function () {
+    var on_hashchange = this.on_hashchange = function (initialize) {
 	// detech what is changed.
 	hashurl.recognize_new_hash();
 	// hashurl has already normalized them.
-	if (hashurl.get_flag("id") != normalize(this.canteen_id) ||
+	if (initialize ||
+	    hashurl.get_flag("id") != normalize(this.canteen_id) ||
 	    hashurl.get_flag("4sq") != normalize(this.foursquare_id)) {
 
             // changed.
+	    console.log("[HASH] hash changed from "
+		    + hashurl.get_flag("id") + "/" + hashurl.get_flag("4sq") + " to "
+		    + normalize(this.canteen_id) + "/" + normalize(this.foursquare_id));
 	    that.on_hashchange_callback();
 
 	    this.canteen_id = hashurl.get_flag("id");
 	    this.foursquare_id = hashurl.get_flag("4sq");
 
-	    lunchereCache.fetch(hashurl.get_flag("id"), hashurl.get_flag("4sq"), new_backend.receive);
+	    if (this.canteen_id == "" && this.foursquare_id == "") {
+		console.log("[HASH] both id empty, calls the lunchere today api");
+		lunchere_api.today(historyId, /* global historyId */
+		    new_backend.receive);
+	    }
+	    else {
+		console.log("[HASH] either id not empty, ask the use yes/no");
+		lunchereCache.fetch(hashurl.get_flag("id"),
+		    hashurl.get_flag("4sq"),
+		    new_backend.receive);
+	    }
 	}
 	else {
 	    // no changes
+	    console.log("[HASH] no changes");
 	}
     }
     this.on_hashchange_callback = function() { console.log("this.on_hashchange_callback"); };
@@ -1383,8 +1407,8 @@ autocomplete.on_select = function(_event, ui) {
 var main_ui_to_load = false;
 lunchere_api.on_load = function () {
     if (main_ui_to_load) {
-	console.log("[PROGRESS] mainUI goto_hash (from LunchereAPI.on_load)");
-	mainUI.goto_hash();
+	console.log("[PROGRESS] current_view.on_hashchange() (from LunchereAPI.on_load)");
+	current_view.on_hashchange(/* initialize */ true);
     }
 }
 
@@ -1395,11 +1419,11 @@ $(document).ready(function() {
     console.log("[PROGRESS] mainUI init");
     mainUI.init();
     if (lunchere_api.is_ready()) {
-	console.log("[PROGRESS] mainUI goto_hash");
-	mainUI.goto_hash();
+	console.log("[PROGRESS] current_view.on_hashchange() (from document ready)");
+	current_view.on_hashchange(/* initialize */ true);
     }
     else {
-	console.log("[PROGRESS] mainUI goto_hash delayed");
+	console.log("[PROGRESS] current_view.on_hashchange() delayed because lunchere_api is not ready");
 	main_ui_to_load = true;
     }
 });
