@@ -428,7 +428,7 @@ class Timeslot:
         if timeslot0 is None:
             if not fallback:
                 return None
-            return Timeslot.most_recent(history_id, fallback=fallback, create=create)
+            return Timeslot.most_recent(history_id, fallback=create, create=create) # only create when create
         prev_timeslot = HistoryEvent.get_prev_timeslot(history_id, timeslot0)
         if prev_timeslot is None and fallback:
             return timeslot0
