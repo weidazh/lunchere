@@ -101,7 +101,41 @@ function LoadingSpinners() {
     return this;
 }
 
-function BodyClass(current_view, hashurl, loading_spinners) {
+function ClassToggler(descriptor) {
+    // I just assume there is only one element selected.
+    var that = this;
+    var apply = this.apply = function() {
+	$.each(descriptor, function (selector, obj) {
+	    var mapping = obj.mapping;
+	    var callbacks = obj.callbacks;
+	    var $elements = $(selector);
+	    var temp = {};
+	    $.each(mapping, function (cssClass, bool_func) {
+		var on;
+		if (typeof bool_func === "function") {
+		    on = bool_func();
+		}
+		else {
+		    on = !! bool_func;
+		}
+		var previous = $elements.hasClass(cssClass);
+		temp[cssClass] = on ? 1 : 0
+		if (on) {
+		    $elements.addClass(cssClass);
+		}
+		else {
+		    $elements.removeClass(cssClass);
+		}
+		if (callbacks && callbacks[cssClass]) {
+		    callbacks[cssClass](on, previous);
+		}
+	    });
+	});
+    }
+    return this;
+}
+
+function BodyClass(current_view, hashurl, loading_spinners, autocomplete) {
     var that = this;
     var confirmed = this.confirmed = function () {
 	return current_view.get_confirmed();
@@ -109,47 +143,70 @@ function BodyClass(current_view, hashurl, loading_spinners) {
     var not_confirmed = this.not_confirmed = function () {
 	return ! confirmed();
     }
+    var old_mode = this.old_mode = function () {
+	return ! hashurl.new_mode();
+    }
     var is_failed = this.is_failed = function () {
 	return hashurl.get_flag("failed");
     }
+    var loading = this.loading = function () {
+	return current_view.loading_title();
+    }
+    var no_fousquare = this.no_fousquare = function () {
+	return current_view.not_has_foursquare_details();
+    }
+    var refreshing = this.refreshing = function () {
+	return current_view.loading_details();
+    }
+    var no_refreshing = this.no_refreshing = function () {
+	return ! that.refreshing();
+    }
+    var api_loading = this.api_loading = function () {
+	return lunchere_api.api_loading();
+    }
+    var typehere_focusing = this.typehere_focusing = function () {
+	return autocomplete.focusing;
+    }
+    var debugging = this.debugging = function () {
+	return hashurl.get_flag("debug");
+    }
+    var initialize = this.initialize = function () {
+	return !(lunchere_api.is_ready() && hashurl.is_initialized());
+    }
+    var loading_callback = this.loading_callback = function (on, previous) {
+	loading_spinners.loading_callback(on, previous);
+    }
+    var refreshing_callback = this.refreshing_callback = function (on, previous) {
+	current_view.refreshing(on, previous);
+    }
+    var typehere_focusing_callback = this.typehere_focusing_callback = function (on, previous) {
+	autocomplete.try_focus(on, previous);
+    }
+    var bodyClassToggler = this.bodyClassToggler = new ClassToggler({
+	"body": {
+	    "mapping": {
+		"yes-confirmed": this.confirmed,
+		"no-confirmed": this.not_confirmed,
+		"old": this.old_mode,
+		"loading": this.loading,
+		"failed": this.is_failed,
+		"no-foursquare": this.no_fousquare,
+		"no-refreshing": this.no_refreshing,
+		"refreshing": this.refreshing,
+		"api-loading": this.api_loading,
+		"typehere-focusing": this.typehere_focusing,
+		"debugging": this.debugging,
+		"initialize": this.iniitialize,
+	    },
+	    "callbacks": {
+		"loading": this.loading_callback,
+		"refreshing": this.refreshing_callback,
+		"typehere-focusing": this.typehere_focusing_callback,
+	    }
+	}
+    });
     var refresh = this.refresh = function () {
-	var mapping = {
-	    "yes-confirmed": confirmed,
-	    "no-confirmed": not_confirmed,
-	    "old": function() { return ! hashurl.new_mode(); },
-	    "loading": current_view.loading_title,
-	    "failed": is_failed,
-	    "no-foursquare": current_view.not_has_foursquare_details,
-	    "no-refreshing": function () { return ! current_view.loading_details(); },
-	    "refreshing": current_view.loading_details,
-	    "api-loading": lunchere_api.api_loading,
-	    "typehere-focusing": function () { return autocomplete.focusing; },
-	    "debugging": function () { return hashurl.get_flag("debug"); },
-	    "initialize": function () { return !(lunchere_api.is_ready() && hashurl.is_initialized()); },
-	};
-	// debug_obj("BodyClass.refresh with mapping = ", mapping);
-	var callbacks = {
-	    "loading": loading_spinners.loading_callback,
-	    "refreshing": current_view.refreshing,
-	    "typehere-focusing": autocomplete.try_focus,
-	};
-	var $body = $("body");
-	var temp = {};
-	$.each(mapping, function (cssClass, bool_func) {
-	    var on = bool_func();
-	    var previous = $body.hasClass(cssClass);
-	    temp[cssClass] = on ? 1 : 0;
-	    if (on) {
-		$body.addClass(cssClass);
-	    }
-	    else {
-		$body.removeClass(cssClass);
-	    }
-	    if (callbacks[cssClass]) {
-		callbacks[cssClass](on, previous);
-	    }
-	});
-	// debug_obj("                         temp = ", temp);
+	that.bodyClassToggler.apply();
     }
     return this;
 }
@@ -307,71 +364,60 @@ function HashURL() {
 
 
 function MainUI() {
+    var that = this;
+    var enabled_only = this.enabled_only = function(callback) {
+	return function (_event) {
+	    console.log(_event);
+	    if ($(_event.delegateTarget).hasClass("disabled")) {
+		debug_obj("_event.delegateTarget is disabled", $(_event.delegateTarget));
+		return false;
+	    }
+	    if (! $(_event.delegateTarget).hasClass("enabled")) {
+		debug_obj("_event.delegateTarget is not enabled", $(_event.delegateTarget));
+		return false;
+	    }
+	    return callback(_event);
+	}
+    }
+    var toggle_class = this.toggle_class = function (selector, cssClass) {
+	return function (_event) {
+	    if ($(selector).hasClass(cssClass)) {
+		$(selector).removeClass(cssClass);
+	    }
+	    else {
+		$(selector).addClass(cssClass);
+	    }
+	}
+    }
+    var register_enabled_only = this.register_enabled_only = function (selector, func) {
+	return $(selector).click(enabled_only(func)).removeClass("disabled").addClass("enabled");
+    }
     var init = this.init = function () {
-	$("#toggle-info-map").click(function() {
-	    // make this into hashurl!!
-	    if ($("#main-container").hasClass("no-info-map")) {
-		$("#main-container").removeClass("no-info-map");
-	    }
-	    else {
-		$("#main-container").addClass("no-info-map");
-	    }
-	}).removeClass("disabled").addClass("enabled");
+	register_enabled_only("#toggle-info-map", toggle_class("#main-container", "no-info-map"));
+	register_enabled_only("#extra-toggle", toggle_class("#main-container", "no-details-buttons"));
 
-	$("#extra-toggle").click(function() {
-	    if ($("#main-container").hasClass("no-details-buttons")) {
-		$("#main-container").removeClass("no-details-buttons");
-	    }
-	    else {
-		$("#main-container").addClass("no-details-buttons");
-	    }
-	}).removeClass("disabled").addClass("enabled");
+	register_enabled_only("#options-yes", current_view.yes_clicked);
+	register_enabled_only("#options-no", current_view.no_clicked);
+	register_enabled_only("#review-reselect", current_view.no_clicked);
+	register_enabled_only("#delete-this-meal", current_view.delete_clicked);
+	register_enabled_only("#review-delete-meal", current_view.delete_clicked);
+	register_enabled_only("#timeline-button-left",  current_view.left_clicked);
+	register_enabled_only("#timeline-button-right", current_view.right_clicked);
 
-	$("#options-yes").click(current_view.yes_clicked).removeClass("disabled").addClass("enabled");
-
-	$("#options-no").click(current_view.no_clicked).removeClass("disabled").addClass("enabled");
-
-	$("#review-reselect").click(current_view.no_clicked).removeClass("disabled").addClass("enabled");
-
-	$("#delete-this-meal").click(current_view.delete_clicked).removeClass("disabled").addClass("enabled");
-
-	$("#review-delete-meal").click(current_view.delete_clicked).removeClass("disabled").addClass("enabled");
-
-	$("#timeline-button-left").click(current_view.left_clicked).removeClass("disabled").addClass("enabled");
-	$("#timeline-button-right").click(current_view.right_clicked).removeClass("disabled").addClass("enabled");
-
-	$(".timeline-div.plus").click(function() {
+	register_enabled_only(".timeline-div.plus", function() {
 	    createmeal();
-	    // use current_view
-	}).removeClass("disabled").addClass("enabled");
+	    // TODO: use current_view
+	});
 
-	$("#review-delete").click(function() {
+	register_enabled_only("#review-delete", function() {
 	    deletemeal();
-	    // use current_view
-	}).removeClass("disabled").addClass("enabled");
+	    // TODO: use current_view
+	});
 
 	$(window).on("hashchange", function() {
 	    current_view.on_hashchange(/* initialize */ false);
 	});
     }
-    /*
-    var goto_hash = this.goto_hash = function () {
-	var hash_changed = hashurl.recognize_new_hash();
-	if (hash_changed) {
-	    console.log("[HASHURL] hash_changed by user");
-	    lunchereCache.fetch(
-	        hashurl.get_flag("id"),
-	        hashurl.get_flag("4sq"),
-		function(resp, venue) {
-		    console.log("[MainUI] goto_hash calling new_backend.receive");
-
-                    new_backend.receive(resp, venue);
-		    // today_recommendation_received(resp, venue);
-		    // TODO
-		});
-	}
-    }
-    */
     return this;
 }
 
@@ -1107,6 +1153,41 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	formatted.apply(view);
 	body_class.refresh();
     }
+    var set_prev_button = this.set_prev_button = function (has_prevmeal) {
+	var toggler = new ClassToggler({
+	    "#timeline-button-left": {
+		"mapping": {
+		    "disabled": ! has_prevmeal,
+		    "enabled": has_prevmeal,
+		}
+	    },
+	    "#timeline-button-left > i": {
+		"mapping": {
+		    "icon-arrow-left": has_prevmeal,
+		}
+	    }
+	});
+	toggler.apply();
+    }
+    var set_next_button = this.set_next_button = function (has_nextmeal, has_createmeal) {
+	// FIXME: Currently the server will return has_createmeal = false when a meal is
+	//        newly confirmed, this could be temporarily solved by refreshing the page...
+	var toggler = new ClassToggler({
+	    "#timeline-button-right": {
+		"mapping": {
+		    "disabled": ! (has_nextmeal || has_createmeal),
+		    "enabled": has_nextmeal || has_createmeal,
+		}
+	    },
+	    "#timeline-button-right > i": {
+		"mapping": {
+		    "icon-arrow-right": has_nextmeal,
+		    "icon-plus": has_createmeal && !has_nextmeal,
+		}
+	    }
+	});
+	toggler.apply();
+    }
     var set_view = this.set_view = function (resp) {
 	// debug_obj("this.set_view with resp = ", resp);
 	that.resp_cache = resp;
@@ -1117,6 +1198,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	$("#confirmed-info-name").text("...");
 	$("#confirmed-info-date").text(resp.timeslotFriendly);
 	$("#no-confirmed-info-date").text(resp.timeslotFriendly);
+	that.set_prev_button(resp.has_prevmeal);
+	that.set_next_button(resp.has_nextmeal, resp.has_createmeal);
 	that.history_id = resp.historyId;
 	that.timeslot = resp.timeslot;
 	that.canteen_id = resp.name;
@@ -1371,11 +1454,11 @@ var lunchereCache = new LunchereCache(
 	return current_view.get_timeslot();
     });
 var current_view = new CurrentView(historyId, lunchereCache, foursquareCache);
-var body_class = new BodyClass(current_view, hashurl, loading_spinners);
 var lunchere_autocomplete = new LunchereAutocomplete(current_view, lunchere_api);
 var foursquare_api = new FoursquareAPI(NOLOGIN_SUFFIX, LL);
 var foursquare_autocomplete = new FoursquareAutocomplete(foursquare_api);
 var autocomplete = new Autocomplete(lunchere_autocomplete, foursquare_autocomplete);
+var body_class = new BodyClass(current_view, hashurl, loading_spinners, autocomplete);
 var new_backend = new NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, lunchere_autocomplete);
 
 current_view.on_status_change = function() {
