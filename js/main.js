@@ -123,6 +123,7 @@ function BodyClass(current_view, hashurl, loading_spinners) {
 	    "api-loading": lunchere_api.api_loading,
 	    "typehere-focusing": function () { return autocomplete.focusing; },
 	    "debugging": function () { return hashurl.get_flag("debug"); },
+	    "initialize": function () { return !(lunchere_api.is_ready() && hashurl.is_initialized()); },
 	};
 	debug_obj("BodyClass.refresh with mapping = ", mapping);
 	var callbacks = {
@@ -159,6 +160,9 @@ function HashURL() {
     var that = this;
     this.flags = {};
     this.initialized = false;
+    var is_initialized = this.is_initialized = function () {
+	return that.initialized;
+    }
     var _get_flag = this._get_flag = function (flags, key) {
 	return flags.hasOwnProperty(key) ? flags[key] : that.default_flags[key];
     }
@@ -328,6 +332,9 @@ function MainUI() {
 
 	$("#review-delete-meal").click(current_view.delete_clicked).removeClass("disabled").addClass("enabled");
 
+	$("#timeline-button-left").click(current_view.left_clicked).removeClass("disabled").addClass("enabled");
+	$("#timeline-button-right").click(current_view.right_clicked).removeClass("disabled").addClass("enabled");
+
 	$(".timeline-div.plus").click(function() {
 	    createmeal();
 	    // use current_view
@@ -446,6 +453,7 @@ function FoursquareFormatted(venue) {
 	debug_obj("FoursquareFormatted.apply with mapping =", mapping);
 	debug_obj("                                  this =", that);
 	function debug(element_id) {
+	    return;
 	    $(element_id).addClass("debug");
 	    setTimeout(function() {
 		$(element_id).removeClass("debug");
@@ -533,10 +541,10 @@ function LunchereAutocomplete(current_view, lunchere_api) {
             var q0exp = RegExp(regex_escape(q0), "i");
 	    var a = [];
 	    $.each(data, function (i, obj) {
-                if (q0exp.test(obj.canteenId)) {
+                if (q0exp.test(obj.canteen_id)) {
                     a.push({
-                        "label": obj.canteenId,
-                        "value": obj.canteenId,
+                        "label": obj.canteen_id,
+                        "value": obj.canteen_id,
                         "type": "lunchere",
                         "obj": obj,
                     });
@@ -1082,6 +1090,9 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	hashurl.set_hash(resp);
 	$("#title-text").text(resp.name);
 	$("#title-source").text(get_resp_source(resp));
+	$("#confirmed-info-name").text("...");
+	$("#confirmed-info-date").text(resp.timeslotFriendly);
+	$("#no-confirmed-info-date").text(resp.timeslotFriendly);
 	that.history_id = resp.historyId;
 	that.timeslot = resp.timeslot;
 	that.canteen_id = resp.name;
@@ -1205,6 +1216,34 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		new_backend.receive(resp, null);
 	    });
     }
+    var left_clicked = this.left_clicked = function (){
+	body_class.refresh();
+	that.canteen_id = "";
+	that.foursquare_id = "";
+	lunchere_api.prev_meal(
+	    get_history_id(),
+	    get_timeslot(),
+	    function (resp) {
+		that.timeslot = resp.timeslot;
+		that.canteen_id = resp.name;
+		that.foursquare_id = resp.foursquare_id;
+		new_backend.receive(resp, null);
+	    });
+    }
+    var right_clicked = this.right_clicked = function () {
+	body_class.refresh();
+	that.canteen_id = "";
+	that.foursquare_id = "";
+	lunchere_api.next_meal( /* TODO if next_meal != create_meal */
+	    get_history_id(),
+	    get_timeslot(),
+	    function (resp) {
+		that.timeslot = resp.timeslot;
+		that.canteen_id = resp.name;
+		that.foursquare_id = resp.foursquare_id;
+		new_backend.receive(resp, null);
+	    });
+    }
     this.refreshing_previous_info_map_height = "200px";
     this.refreshing_previous_extra_container_height = "200px";
     var refreshing = this.refreshing = function (on, previous) {
@@ -1299,7 +1338,7 @@ autocomplete.on_select = function(_event, ui) {
 	console.log("on_select with item =");
 	console.log(ui.item);
 	$("#typehere").val(ui.item.value);
-	current_view.set_ids(ui.item.obj.name, ui.item.obj.foursquareId);
+	current_view.set_ids(ui.item.obj.name, ui.item.obj.foursquare_id);
 	_event.preventDefault();
     }
     else {

@@ -48,9 +48,9 @@ class TodayRecommendation(messages.Message):
     foursquare_id = messages.StringField(13, required=False)
 
 class OneChoice(messages.Message):
-    canteenId = messages.StringField(1, required=True)
+    canteen_id = messages.StringField(1, required=True)
     freq = messages.FloatField(2, required=True)
-    foursquareId = messages.StringField(3, required=False)
+    foursquare_id = messages.StringField(3, required=False)
 
 class TodayChoices(messages.Message):
     "Return to client for recommendation"
@@ -95,7 +95,7 @@ class RecommendationChoices:
         self.choices.append((canteen_id, freq))
 
     def to_rpc(self):
-        choices = [OneChoice(canteenId=c, freq=f, foursquareId=FoursquareVenue.get_4qr_id(self.history_id, c)) for c, f in self.choices]
+        choices = [OneChoice(canteen_id=c, freq=f, foursquare_id=FoursquareVenue.get_4qr_id(self.history_id, c)) for c, f in self.choices]
         logging.debug("choices.len = %d " % len(choices))
         return TodayChoices(historyId=self.history_id, timeslot=self.timeslot, choices=choices)
 
@@ -394,15 +394,15 @@ class Timeslot:
         #        to the datastore, so that it could be confirmed, so the delete button is not available.
         #        refresh the page and this is OK.
         hist_ev = HistoryEvent.get_confirmed(history_id, timeslot0)
-        if hist_ev is not None:
-            logging.warn("Cannot delete a confirmed meal")
-            "FIXME: report error"
-            if fallback: # assume deleted and move back to current timeslot0
-                logging.debug("timeslot0 is confirmed, fallback, nothing deleted")
-                return timeslot0
-            else:
-                logging.debug("timeslot0 is confirmed, no fallback, nothing deleted")
-                return None
+        # if hist_ev is not None:
+        #     logging.warn("Cannot delete a confirmed meal")
+        #     "FIXME: report error"
+        #     if fallback: # assume deleted and move back to current timeslot0
+        #         logging.debug("timeslot0 is confirmed, fallback, nothing deleted")
+        #         return timeslot0
+        #     else:
+        #         logging.debug("timeslot0 is confirmed, no fallback, nothing deleted")
+        #         return None
         if not dry_run:
             logging.warn("deleting")
             for hist_ev in HistoryEvent.foreach_hist_ev(history_id, timeslot0):

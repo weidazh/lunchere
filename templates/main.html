@@ -26,7 +26,7 @@ function initClientIdHistoryId() {
 <script src="https://apis.google.com/js/client.js?onload=gapi_ready"></script>
 <!-- script src="/js/client.js?onload=lunchere_api_init"></script -->
 </head>
-<body class="no-confirmed loading no-map">
+<body class="no-confirmed loading initialize no-map">
 
 <div id="old-container">
     <a href="#new">Try new version</a>
@@ -113,7 +113,9 @@ function initClientIdHistoryId() {
     </div>
     <div id="options">
 	<div id="options-captions">
-	    <i>Lunch here today?</i><!-- <br/>
+	    <i>Lunch here today?</i>
+	    <span id="no-confirmed-info-date"></span>
+	    <!-- <br/>
 	    or <input id="typehere" value="type here" valuesource="type here" ></input><br/>
 	       <u id="askfriends">ask friends</u>
 	       -->
@@ -154,7 +156,7 @@ function initClientIdHistoryId() {
         <div id="timeline-floater" class="container">
 	    <div class="timeline-block left">
 		<div class="timeline-label"></div>
-		<div class="timeline-button disabled"><i class="icon-arrow-left"></i></div>
+		<div id="timeline-button-left" class="timeline-button disabled"><i class="icon-arrow-left"></i></div>
 	    </div>
 	    <div class="timeline-block left">
 		<div class="timeline-label">SUN-1</div>
@@ -194,7 +196,7 @@ function initClientIdHistoryId() {
 	    </div>
 	    <div class="timeline-block right">
 		<div class="timeline-label"></div>
-		<div class="timeline-button disabled"><i class="icon-plus"></i></div>
+		<div id="timeline-button-right" class="timeline-button disabled"><i class="icon-plus"></i></div>
 	    </div>
 	</div>
 	<div id="timeline-title"><span id="timeline-title-text">ThursdayWireless</span>'s Timeline</div>
