@@ -1,5 +1,7 @@
 #!/bin/sh
 
+make
+
 if git diff --exit-code >/dev/null && git diff --cached --exit-code >/dev/null; then
     if [ "$1" = "product" ]; then
 	git log -1 > product.deploy.log
