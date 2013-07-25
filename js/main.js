@@ -424,6 +424,16 @@ function MainUI() {
 function FoursquareFormatted(venue) {
     var that = this;
     var _format_hours = this._format_hours = function () {
+	// e.g.
+	// https://developer.foursquare.com/docs/explore#req=venues/4b6f9f3ef964a52036f82ce3
+
+	if (venue.hours && venue.hours.status) {
+	    return venue.hours.status;
+	}
+	else {
+	    return "";
+	}
+
     }
     var _format_icon = this._format_icon = function () {
 	var icon_backup;
@@ -467,12 +477,22 @@ function FoursquareFormatted(venue) {
 	});
 	return cat + at + addr;
     }
+    var _format_ll = this._format_ll = function () {
+	// Category in Location
+	if (venue.location && venue.location.lat && venue.location.lng) {
+	    // FIXME: this would bug when lat == 0 or lng == 0
+	    return venue.location;
+	}
+	else {
+	    return null;
+	}
+    }
     var _format_distance = this._format_distance = function () {
 	if (venue.location.distance) {
 	    return Math.ceil(venue.location.distance / 100) + " min walk"
 	}
 	else {
-	    return "nearby";
+	    return "";
 	}
     }
     var _show_map = this._show_map = function () {
@@ -501,6 +521,13 @@ function FoursquareFormatted(venue) {
 	else {
 	    return "";
 	}
+    }
+    var _format_price = this._format_price = function () {
+	if (venue.price) {
+	    return ""; // TODO  I have not found a venue that has such field. to test on.
+	}
+	else
+	    return "";
     }
     var apply = this.apply = function (mapping) {
 	// debug_obj("FoursquareFormatted.apply with mapping =", mapping);
@@ -531,11 +558,13 @@ function FoursquareFormatted(venue) {
     this.hours = _format_hours();
     this.addr = _format_addr();
     this.distance = _format_distance();
+    this.ll = _format_ll();
     this.map = _show_map();
     this.detailed_addr = _format_detailed_addr();
     this.contact = _format_contact();
     this.apply = apply;
     this.canonicalUrl = _format_canonical_url();
+    this.price = _format_price();
     return this;
 }
 
@@ -1152,6 +1181,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	var view = {
 	    // "name": "#title-text", // name could be customized
 	    "addr": "#title-addr",
+	    "price": "#costs",
 	    "distance": "#distance",
 	    "detailed_addr": "#details-addr",
 	    "contact": "#details-phonenumber",
@@ -1165,8 +1195,30 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		$("#external-link > a").attr("href", link_url);
 		return "#external-link";
 	    },
+	    "hours": "#details-hours",
+	    "ll": function (ll) {
+		// TODO: call google maps to draw the map.
+	    }
 	};
 	formatted.apply(view);
+
+	var toggler = new ClassToggler({
+	    "#main-container": {
+		"mapping": {
+		    "f4sq-no-icon":     ! formatted.icon,
+		    "f4sq-no-ratings":  true,
+		    "f4sq-no-addr":     ! formatted.addr,
+		    "f4sq-no-price":    ! formatted.price,
+		    "f4sq-no-distance": ! formatted.distance,
+		    "f4sq-no-ll":	! formatted.ll,
+		    "f4sq-no-contact":  ! formatted.contact,
+		    "f4sq-no-hours":    ! formatted.hours,
+		    "f4sq-no-url":      ! formatted.canonicalUrl,
+		}
+	    }
+	});
+	toggler.apply();
+
 	body_class.refresh();
     }
     var set_prev_button = this.set_prev_button = function (has_prevmeal) {

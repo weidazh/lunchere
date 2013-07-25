@@ -117,18 +117,23 @@ body {
     clear: left;
 }
 
+@info_lrmargin: @grid_gutter;
+@info_child_lrmargin: 0px;
 #info {
     .tight_float;
-    margin-left: @grid_half_gutter;
-    margin-right: @grid_half_gutter;
+    margin-left: @grid_gutter;
+    margin-right: @grid_gutter;
+}
+
+#info {
+    border-top-width: @ratings_container_top_border;
 }
 
 #ratings-container {
-    .float;
+    .tight_float;
     width: @main_width - @grid_gutter * 2;
     margin-top: 0px;
     padding-top: @grid_baseline - @ratings_container_top_border;
-    border-top-width: @ratings_container_top_border;
     margin-bottom: @grid_baseline;
 }
 
@@ -143,8 +148,10 @@ body {
 }
 
 #title-addr, #costs-container, #distance-container {
-    .float;
+    .tight_float;
     width: @main_width - @grid_gutter * 2;
+    margin-top: @grid_half_baseline;
+    margin-bottom: @grid_half_baseline;
 }
 
 #distance-container {
