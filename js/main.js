@@ -1289,13 +1289,20 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	else
 	    return s;
     }
+    var initialized = false;
     var on_hashchange = this.on_hashchange = function (initialize) {
+	if (!initialized && !initialize) {
+	    console.log("[HASH] do not proceed on_hashchange until initialzied");
+	    return;
+	}
 	// detech what is changed.
 	hashurl.recognize_new_hash();
 	// hashurl has already normalized them.
-	if (initialize ||
+	if ((initialize && !initialized) ||
 	    hashurl.get_flag("id") != normalize(this.canteen_id) ||
 	    hashurl.get_flag("4sq") != normalize(this.foursquare_id)) {
+
+	    initialized = true;
 
             // changed.
 	    console.log("[HASH] hash changed from "
