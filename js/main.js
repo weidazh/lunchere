@@ -1101,8 +1101,24 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
     var get_canteen_id = this.get_canteen_id = function () {
 	return that.canteen_id;
     }
+    var set_canteen_id = this.set_canteen_id = function (new_canteen_id) {
+	return that.canteen_id = new_canteen_id;
+    }
+    var pop_canteen_id = this.pop_canteen_id = function (){
+	var old_canteen_id = get_canteen_id();
+	set_canteen_id("");
+	return old_canteen_id;
+    }
     var get_foursquare_id = this.get_foursquare_id = function () {
 	return that.foursquare_id;
+    }
+    var set_foursquare_id = this.set_foursquare_id = function (new_foursquare_id) {
+	return that.foursquare_id = new_foursquare_id;
+    }
+    var pop_foursquare_id = this.pop_foursquare_id = function (){
+	var old_foursquare_id = get_foursquare_id();
+	set_foursquare_id("");
+	return old_foursquare_id;
     }
     var get_confirmed = this.get_confirmed = function () {
 	return that.confirmed;
@@ -1202,8 +1218,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	that.set_next_button(resp.has_nextmeal, resp.has_createmeal);
 	that.history_id = resp.historyId;
 	that.timeslot = resp.timeslot;
-	that.canteen_id = resp.name;
-	that.foursquare_id = resp.foursquare_id;
+	that.set_canteen_id(resp.name);
+	that.set_foursquare_id(resp.foursquare_id);
 	that.confirmed = resp.confirmed;
 	lunchereCache.add(resp.name, resp);
 
@@ -1224,8 +1240,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	});
 	$("#title-text").text(canteen_id);
 	$("#title-source").text(" (unknown)");
-	that.canteen_id = canteen_id;
-	that.foursquare_id = foursquare_id;
+	that.set_canteen_id(canteen_id);
+	that.set_foursquare_id(foursquare_id);
 	that.confirmed = false;
 
 	body_class.refresh();
@@ -1287,8 +1303,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		    + normalize(this.canteen_id) + "/" + normalize(this.foursquare_id));
 	    that.on_hashchange_callback();
 
-	    this.canteen_id = hashurl.get_flag("id");
-	    this.foursquare_id = hashurl.get_flag("4sq");
+	    this.set_canteen_id(hashurl.get_flag("id"));
+	    this.set_foursquare_id(hashurl.get_flag("4sq"));
 
 	    if (this.canteen_id == "" && this.foursquare_id == "") {
 		console.log("[HASH] both id empty, calls the lunchere today api");
@@ -1329,57 +1345,55 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
     }
     var no_clicked = this.no_clicked = function () {
 	body_class.refresh();
-	that.canteen_id = "";
-	that.foursquare_id = "";
 	lunchere_api.cancel_meal(
 	    get_history_id(),
 	    get_timeslot(),
-	    get_canteen_id(),
-	    get_foursquare_id(),
+	    pop_canteen_id(),
+	    pop_foursquare_id(),
 	    function (resp) {
-		that.canteen_id = resp.name;
+		that.set_canteen_id(resp.name);
 		new_backend.receive(resp, null);
 	    }
 	    );
     }
     var delete_clicked = this.delete_clicked = function () {
 	body_class.refresh();
-	that.canteen_id = "";
-	that.foursquare_id = "";
+	pop_canteen_id();
+	pop_foursquare_id();
 	lunchere_api.delete_meal(
 	    get_history_id(),
 	    get_timeslot(),
 	    function (resp) {
 		that.timeslot = resp.timeslot;
-		that.canteen_id = resp.name;
+		that.set_canteen_id(resp.name);
 		that.foursquare_id = resp.foursquare_id;
 		new_backend.receive(resp, null);
 	    });
     }
     var left_clicked = this.left_clicked = function (){
 	body_class.refresh();
-	that.canteen_id = "";
-	that.foursquare_id = "";
+	pop_canteen_id();
+	pop_foursquare_id();
 	lunchere_api.prev_meal(
 	    get_history_id(),
 	    get_timeslot(),
 	    function (resp) {
 		that.timeslot = resp.timeslot;
-		that.canteen_id = resp.name;
+		that.set_canteen_id(resp.name);
 		that.foursquare_id = resp.foursquare_id;
 		new_backend.receive(resp, null);
 	    });
     }
     var right_clicked = this.right_clicked = function () {
 	body_class.refresh();
-	that.canteen_id = "";
-	that.foursquare_id = "";
+	pop_canteen_id();
+	pop_foursquare_id();
 	lunchere_api.next_meal( /* TODO if next_meal != create_meal */
 	    get_history_id(),
 	    get_timeslot(),
 	    function (resp) {
 		that.timeslot = resp.timeslot;
-		that.canteen_id = resp.name;
+		that.set_canteen_id(resp.name);
 		that.foursquare_id = resp.foursquare_id;
 		new_backend.receive(resp, null);
 	    });

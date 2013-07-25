@@ -515,6 +515,8 @@ class FoursquareVenue(db.Model):
     def set_4qr_id(cls, historyId, canteenId, foursquareId):
         if historyId is None or canteenId is None or foursquareId is None:
             return
+        if historyId == u"" or canteenId == u"" or foursquareId == u"":
+            return;
         foursquare_venue = db.GqlQuery("SELECT * FROM FoursquareVenue WHERE " +
                                 "historyId = :1 AND canteenId = :2", historyId, canteenId).get()
         if foursquare_venue is None:
@@ -734,6 +736,7 @@ class LuncHereAPI(remote.Service):
     def no_unauth(self, request):
         "cancel/reject"
         self.counter += 1
+        logging.debug("request.name = %s; request.foursquare_id = %s" % (repr(request.name), repr(request.foursquare_id)));
         FoursquareVenue.set_4qr_id(request.historyId, request.name, request.foursquare_id)
         recommendation = History.recommend_from(request.historyId, request.timeslot, cancel=request.name)
         return recommendation.to_rpc()
