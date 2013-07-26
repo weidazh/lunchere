@@ -130,7 +130,7 @@ function initClientIdHistoryId() {
         <div id="typehere-container" class="container">
 	    <div id="typehere-autocomplete-container"></div>
 	    <div id="typehere-text">type here: </div>
-	    <input id="typehere" value="type here" valuesource="type here" ></input>
+	    <input id="typehere" value="" placeholder="type here" valuesource="type here" ></input>
 	    <div id="typehere-search"><i class="icon-search"></i></div>
 	</div>
 	<div id="delete-this-meal" class="disabled">
