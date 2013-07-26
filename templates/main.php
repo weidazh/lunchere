@@ -142,10 +142,10 @@ function initClientIdHistoryId() {
 	<div id="confirmed-info-date">1st meal of 17 Jul 2013</div>
     </div>
     <div id="review-options">
-        <div id="review-reselect" class="disabled"><i class="icon-rotate-left"></i></div>
         <div id="review-thumbs-up" class="disabled"><div id="review-thumbs-up-floater"><i class="icon-thumbs-up"></i></div></div>
-        <div id="review-thumbs-down" class="disabled"><div id="review-thumbs-down-floater"><i class="icon-thumbs-down-alt"></i></div></div>
+        <div id="review-reselect" class="disabled"><i class="icon-rotate-left"></i></div>
         <div id="review-delete-meal" class="disabled"><i class="icon-trash"></i></div>
+        <div id="review-thumbs-down" class="disabled"><div id="review-thumbs-down-floater"><i class="icon-thumbs-down-alt"></i></div></div>
     </div>
 </div>
 </div>

@@ -815,6 +815,17 @@ class MainPage(webapp2.RequestHandler):
         history_id_in_cookie = self._cookie_to_history_id(request)
         logging.debug("history_id from URL %s; history_id from cookie %s" % (repr(history_id), repr(history_id_in_cookie)))
         if history_id is not None:
+            if Hints.get_hint(history_id, "blacklisted", None):
+                path = os.path.join(os.path.dirname(__file__),
+                                              'templates/blacklisted.html')
+                params = {
+                    'BLACKLISTED': Hints.get_hint(history_id, "blacklisted", ""),
+                }
+                self.response.set_status(503)
+                response.headers['Content-Type'] = 'text/html'
+                response.write(template.render(path, params))
+                return
+
             response.headers['Content-Type'] = 'text/html'
             # response.headers['Cache-Control'] = 'no-cache'
 
