@@ -845,8 +845,8 @@ function LunchereAPI() {
 		loaded_fail();
 	    }
 	}
-	var callback = function() {
-	    console.log("[LunchereAPI] LunchereAPI.init - " + (apisToLoad - 1) + " APIs to load");
+	var callback = function(json_obj) {
+	    debug_obj("[LunchereAPI] LunchereAPI.init - " + (apisToLoad - 1) + " APIs to load; with json=", json_obj);
 	    if (--apisToLoad == 0) {
 		if (! that.gapi.client.lunchere)
 		    loaded_fail();
@@ -1172,6 +1172,12 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	else
 	    return " (unknown)";
     }
+    var button_4sq_clicked = function (_event) {
+	var target = _event.delegateTarget;
+	if ($(target).hasClass("enabled")) {
+	    window.open($(target).attr("href"));
+	}
+    }
     var format_venue = this.format_venue = function (resp, venue) {
 	if (venue.id != resp.foursquare_id) {
 	    console.log("WARNING venue.id != resp.foursquare_id")
@@ -1195,7 +1201,12 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		return "main-icon";
 	    },
 	    "canonicalUrl": function(link_url) {
-		$("#external-link > a").attr("href", link_url);
+		if (link_url) {
+		    $("#buttons-3").attr("href", link_url).addClass("enabled").removeClass("disabled").click(button_4sq_clicked);
+		}
+		else {
+		    $("#buttons-3").attr("href", link_url).removeClass("enabled").addClass("disabled");
+		}
 		return "#external-link";
 	    },
 	    "hours": "#details-hours",

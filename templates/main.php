@@ -43,7 +43,6 @@ function initClientIdHistoryId() {
 <div id="root-others">
     <a href="#old">Go back old version</a>
     <button id="toggle-info-map"><i class="icon-caret-down"></i></button>
-    <div id="external-link"><a target="_blank" class="icon-external-link" href="#"></a></div>
     <div id="api-loading-text"></div>
 </div>
 <div id="root-container" class="container">

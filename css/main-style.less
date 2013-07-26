@@ -10,6 +10,10 @@
     font-family: "PT Sans Narrow", "Helvetica Narrow", "Arial Narrow", "Heiti";
 }
 
+.disabled { opacity: 0; }
+.enabled:hover { cursor: pointer; }
+.disabled:hover { cursor: default; }
+
 .clickable (@color, @bgcolor, @hover_color, @hover_bgcolor, @disabled_color) {
     &.enabled {
 	color: @color;
@@ -18,7 +22,6 @@
     &.enabled:hover {
 	color: @hover_color;
 	background-color: @hover_bgcolor;
-	cursor: pointer;
     }
     &.disabled {
 	color: @disabled_color;
@@ -27,7 +30,6 @@
     &.disabled:hover {
 	color: @disabled_color;
 	background-color: @bgcolor;
-	cursor: default;
     }
 }
 .clickable_border_top_down_color(@bordercolor, @hover_color) {
@@ -90,10 +92,6 @@ body {
     color: @color_blue;
 }
 
-#external-link > a[href="#"] {
-    display: none;
-}
-
 #info-map {
     border-bottom-style: solid;
     border-bottom-color: @color_bgbluegray2;
@@ -126,10 +124,6 @@ body {
 
 #buttons {
     background: @color_bgwhite;
-}
-
-[id^="buttons-"].disabled {
-    color: inherit;
 }
 
 #buttons-last {
