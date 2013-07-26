@@ -701,12 +701,16 @@ class LuncHereAPI(remote.Service):
 
     @endpoints.method(HistoryIdMsg, TodayChoices, name="choices", http_method="GET")
     def choices_unauth(self, request):
+        if Hints.get_hint(request.historyId, "blacklisted", None):
+            return None
         choices = History.choices_from(request.historyId, request.timeslot)
         return choices.to_rpc()
 
     @endpoints.method(HistoryIdMsg, TodayRecommendation, name="prevmealUnauth", http_method="GET")
     def prevmeal_unauth(self, request):
         "previous meal"
+        if Hints.get_hint(request.historyId, "blacklisted", None):
+            return None
         self.counter += 1
         recommendation =  History.recommend_from(request.historyId, request.timeslot, prevmeal=True)
         return recommendation.to_rpc()
@@ -714,6 +718,8 @@ class LuncHereAPI(remote.Service):
     @endpoints.method(HistoryIdMsg, TodayRecommendation, name="nextmealUnauth", http_method="GET")
     def nextmeal_unauth(self, request):
         "next meal"
+        if Hints.get_hint(request.historyId, "blacklisted", None):
+            return None
         self.counter += 1
         recommendation =  History.recommend_from(request.historyId, request.timeslot, nextmeal=True)
         return recommendation.to_rpc()
@@ -721,6 +727,8 @@ class LuncHereAPI(remote.Service):
     @endpoints.method(HistoryIdMsg, TodayRecommendation, name="deletemealUnauth", http_method="GET")
     def deletemeal_unauth(self, request):
         "delete meal, only when all the meals are not confirmed"
+        if Hints.get_hint(request.historyId, "blacklisted", None):
+            return None
         self.counter += 1
         recommendation = History.recommend_from(request.historyId, request.timeslot, deletemeal=True)
         return recommendation.to_rpc()
@@ -728,6 +736,8 @@ class LuncHereAPI(remote.Service):
     @endpoints.method(HistoryIdMsg, TodayRecommendation, name="todayUnauth", http_method="GET")
     def today_unauth(self, request):
         "default call"
+        if Hints.get_hint(request.historyId, "blacklisted", None):
+            return None
         self.counter += 1
         recommendation = History.recommend_from(request.historyId, request.timeslot)
         return recommendation.to_rpc()
@@ -735,6 +745,8 @@ class LuncHereAPI(remote.Service):
     @endpoints.method(TodayRecommendation, TodayRecommendation, name="noUnauth", http_method="GET")
     def no_unauth(self, request):
         "cancel/reject"
+        if Hints.get_hint(request.historyId, "blacklisted", None):
+            return None
         self.counter += 1
         logging.debug("request.name = %s; request.foursquare_id = %s" % (repr(request.name), repr(request.foursquare_id)));
         FoursquareVenue.set_4qr_id(request.historyId, request.name, request.foursquare_id)
@@ -744,6 +756,8 @@ class LuncHereAPI(remote.Service):
     @endpoints.method(TodayRecommendation, TodayRecommendation, name="yesUnauth", http_method="GET")
     def yes_unauth(self, request):
         "confirm"
+        if Hints.get_hint(request.historyId, "blacklisted", None):
+            return None
         self.counter += 1
         FoursquareVenue.set_4qr_id(request.historyId, request.name, request.foursquare_id)
         recommendation = History.recommend_from(request.historyId, request.timeslot, confirm=request.name)
