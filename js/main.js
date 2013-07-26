@@ -589,7 +589,8 @@ function LunchereAutocomplete(current_view, lunchere_api) {
     }
     var _reload = this._reload = function (callback) {
 	if (that.context.history_id == current_view.get_history_id() &&
-	    that.context.timeslot == current_view.get_timeslot())
+	    (that.context.timeslot == current_view.get_timeslot() ||
+	    current_view.get_timeslot() == null))
 	{
 	    callback(that.choices);
 	}
@@ -644,7 +645,7 @@ function FoursquareAPI(NOLOGIN_SUFFIX, LL) {
     var auth = NOLOGIN_SUFFIX; // TODO use this.auth
     var ll = LL; // TODO  use this.ll
     var url_field = this.url_field = function (k, v) {
-	return escape(k) + "=" + escape(v);
+	return encodeURI(k) + "=" + encodeURI(v);
     }
     var category_food_id = this.category_food_id = function () {
 	return "categoryId=" + FOOD_ID;
@@ -685,27 +686,29 @@ function FoursquareAutocomplete(foursquare_api) {
 	if (q0.length >= 1) {
 	    var minivenues = "venues"; // instead of "minivenues";
 	    foursquare_api.search_food(q0,
-	    function(data) {
-		var a = [];
-		$.each(data.response[minivenues], function(i, minivenue) {
-		    // because this is minivenue, do not cache?
-		    var name = minivenue.name + " @ " + minivenue.location.address;
-		    var name_addr = minivenue.name + " @ " + minivenue.location.address + " (" + minivenue.location.distance + "m)";
-		    console.log(name_addr);
-		    var is_food = minivenue_is_food(minivenue);
-		    if (is_food && a.indexOf(name) < 0)
-			a.push({
-			    "label": name,
-			    "value": name,
-			    "type": "foursquare",
-			    "obj": minivenue
-			});
+		function(data) {
+		    var a = [];
+		    $.each(data.response[minivenues], function(i, minivenue) {
+			// because this is minivenue, do not cache?
+			var name = minivenue.name + " @ " + minivenue.location.address;
+			var name_addr = minivenue.name + " @ " + minivenue.location.address + " (" + minivenue.location.distance + "m)";
+			console.log(name_addr);
+			var is_food = minivenue_is_food(minivenue);
+			if (is_food && a.indexOf(name) < 0)
+			    a.push({
+				"label": name,
+				"value": name,
+				"type": "foursquare",
+				"obj": minivenue
+			    });
+		    });
+		    cache[q0] = a;
+		    response_callback(a);
+		}, function(jqXHR) {
+		    debug_obj("[4SQAutocomple] ERROR " + jqXHR.status
+		            + " " + jqXHR.statusText + "; with", jqXHR.responseJSON);
+		    response_callback([]);
 		});
-		cache[q0] = a;
-		response_callback(a);
-	    }, function() {
-		response_callback([]);
-	    });
 	}
     }
     return this;
