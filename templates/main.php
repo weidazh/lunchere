@@ -102,12 +102,12 @@ function initClientIdHistoryId() {
 	    </div>
 	</div>
 	<div id="confirmed-footnote">
-	    <div id="selected-tag" class="disabled"><i class="icon-ok"></i>SELECTED</div>
-	    You selected this place 3 minutes ago.
+	    <div id="selected-tag" ><i class="icon-ok"></i>SELECTED</div>
+	    You selected this meal.
 	</div>
 	<div id="footnote">
-	    <div id="magic-tag" class="disabled"><i class="icon-magic"></i>MAGIC</div>
-	    You haven't been to this place for 21 days.
+	    <div id="magic-tag" ><i class="icon-magic"></i>MAGIC</div>
+	    This meal is recommended by <span id="recommendation-source">Lunchere</span>
 	</div>
     </div>
     <div id="options">

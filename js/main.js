@@ -895,6 +895,9 @@ function LunchereAPI() {
 	func(req).execute(function(resp) {
 	    console.log("RECV RESP " + loginfo + " with resp=");
 	    console.log(resp);
+	    if (! resp.source ){
+		resp.source = "Lunchere";
+	    }
 	    callback(resp);
 	});
     }
@@ -1005,6 +1008,9 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
 	get_ll_near_from_resp_hints(resp, function (ll_near) {
 	    both_cached_from_ll_near(ll_near, function(resp, venue) {
 		// TODO
+		if (! resp.source) {
+		    resp.source = "Foursquare";
+		}
 		that.receive(resp, venue);
 	    });
 	});
@@ -1173,7 +1179,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	if (resp.source)
 	    return resp.source;
 	else
-	    return " (unknown)";
+	    return "you";
     }
     var button_4sq_clicked = function (_event) {
 	var target = _event.delegateTarget;
@@ -1254,7 +1260,12 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	});
 	toggler.apply();
     }
-    var set_next_button = this.set_next_button = function (has_nextmeal, has_createmeal) {
+    var set_next_button = this.set_next_button = function (has_nextmeal, has_createmeal, confirmed) {
+	if (! has_nextmeal && !has_createmeal && confirmed) {
+	    // FIXME: this should be fixed in the server
+	    console.log("BUG: ! has_nextmeal && !has_createmeal && confirmed; fixed in js but should be fixed in the server");
+	    has_createmeal = true;
+	}
 	// FIXME: Currently the server will return has_createmeal = false when a meal is
 	//        newly confirmed, this could be temporarily solved by refreshing the page...
 	var toggler = new ClassToggler({
@@ -1280,12 +1291,13 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	hashurl.set_hash(resp);
 	$("#title-text").text(resp.name);
 	$("#title-source").text(get_resp_source(resp));
+	$("#recommendation-source").text(get_resp_source(resp));
 	$("#typehere").val(resp.name);
 	$("#confirmed-info-name").text("...");
 	$("#confirmed-info-date").text(resp.timeslotFriendly);
 	$("#no-confirmed-info-date").text(resp.timeslotFriendly);
 	that.set_prev_button(resp.has_prevmeal);
-	that.set_next_button(resp.has_nextmeal, resp.has_createmeal);
+	that.set_next_button(resp.has_nextmeal, resp.has_createmeal, resp.confirmed);
 	that.history_id = resp.historyId;
 	that.timeslot = resp.timeslot;
 	that.set_canteen_id(resp.name);
@@ -1309,7 +1321,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    "foursquare_id": foursquare_id,
 	});
 	$("#title-text").text(canteen_id);
-	$("#title-source").text(" (unknown)");
+	$("#title-source").text("you");
+	$("#recommendation-source").text("you");
 	that.set_canteen_id(canteen_id);
 	that.set_foursquare_id(foursquare_id);
 	that.confirmed = false;
