@@ -997,6 +997,10 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
 	    callback_ll_near(ll_near);
 	}
 	else {
+	    console.log("[ERROR] We do not know your ll!");
+	}
+	/*
+	else {
 	    if (navigator && navigator.geolocation) {
 		navigator.geolocation.getCurrentPosition(function(position) {
 		    ll_near = resp.hints = resp.hints = {}
@@ -1006,6 +1010,7 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
 	    }
 
 	}
+	*/
     }
     var both_cached_from_ll_near = this.both_cached_from_ll_near = function (ll_near, callback) {
 	foursquareCache.fetch_recommendation(ll_near.ll, ll_near.near,
@@ -1591,6 +1596,8 @@ autocomplete.on_select = function(_event, ui) {
 	console.log("on_select with item =");
 	console.log(ui.item);
 	$("#typehere").val(ui.item.obj.name).blur();
+	debug_obj("set_ids with name =", ui.item.obj.name);
+	debug_obj("set_ids with 4sq_id =", ui.item.obj.id);
 	current_view.set_ids(ui.item.obj.name, ui.item.obj.id);
 	_event.preventDefault();
     }
@@ -1598,7 +1605,9 @@ autocomplete.on_select = function(_event, ui) {
 	console.log("on_select with item =");
 	console.log(ui.item);
 	$("#typehere").val(ui.item.value).blur();
-	current_view.set_ids(ui.item.obj.name, ui.item.obj.foursquare_id);
+	debug_obj("set_ids with name =", ui.item.obj.canteen_id);
+	debug_obj("set_ids with 4sq_id =", ui.item.obj.foursquare_id);
+	current_view.set_ids(ui.item.obj.canteen_id, ui.item.obj.foursquare_id);
 	_event.preventDefault();
     }
     else {

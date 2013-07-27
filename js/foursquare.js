@@ -1,6 +1,7 @@
 var LL; // in private.js
 var NOLOGIN_SUFFIX; // in private.js
 
+/*
 function set_default_LL() {
     console.log(navigator);
     if (navigator && navigator.geolocation) {
@@ -12,12 +13,16 @@ function set_default_LL() {
         console.log("cannot get your location");
     }
 }
+*/
+/*
 function position_callback(position) {
     LL = "ll=" + position.coords.latitude + "," + position.coords.longitude;
     console.log("location is changed to " + LL);
 }
+*/
 
 var FOOD_ID = "4d4b7105d754a06374d81259";
+/*
 function parse_food_id(obj, prefix) {
     var new_prefix = "";
     // console.log(obj);
@@ -43,7 +48,9 @@ function parse_food_id(obj, prefix) {
         });
     }
 }
+*/
 
+/*
 function reload_food_id() {
     $.ajax({
         url: "https://api.foursquare.com/v2/venues/categories?" + NOLOGIN_SUFFIX,
@@ -51,7 +58,9 @@ function reload_food_id() {
         parse_food_id(data.response, "");
     });
 }
+*/
 
+/*
 function search_foursquare_name_by_ll(ll, callback) {
     $.ajax({
         url: "https://api.foursquare.com/v2/venues/search?ll=" + ll + "&" + NOLOGIN_SUFFIX,
@@ -67,12 +76,14 @@ function search_foursquare_name_by_ll(ll, callback) {
                 best_venue.location.state = venue.location.state;
             }
         });
-        callback(best_venue.name/* + " @ " + best_venue.location.address */);
+        callback(best_venue.name);// + " @ " + best_venue.location.address );
     }).fail(function() {
         // fail
     });
 }
+*/
 
+/*
 function search_foursquare_name_by_query(query, callback) {
     $.ajax({
         url: "https://api.foursquare.com/v2/venues/search?ll=" + ll + "&" + NOLOGIN_SUFFIX,
@@ -93,7 +104,9 @@ function search_foursquare_name_by_query(query, callback) {
         // fail
     });
 }
+*/
 
+/*
 function search_ll_from_address(addr, callback, callback_fail) {
     $.ajax({
         url: "https://api.foursquare.com/v2/venues/explore?near=" + encodeURI(addr) + "&intent=explore&limit=1&" + NOLOGIN_SUFFIX
@@ -109,6 +122,7 @@ function search_ll_from_address(addr, callback, callback_fail) {
         callback_fail();
     });
 }
+*/
 
 var foursquare_recommendation_offset = 1;
 function get_recommendation_from_foursquare(ll, near, callback) {
