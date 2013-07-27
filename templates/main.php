@@ -84,7 +84,7 @@ function initClientIdHistoryId() {
 			<i class="icon-phone details-logo"></i><span id="details-phonenumber">2819 5568</span>
 		    </li>
 		    <li id="details-hours-li">
-			<i class="icon-globe details-logo"></i><span id="details-hours">open until 15:00</span>
+			<i class="icon-time details-logo"></i><span id="details-hours">open until 15:00</span>
 		    </li>
 		</ul>
 	    </div>
@@ -102,17 +102,17 @@ function initClientIdHistoryId() {
 	    </div>
 	</div>
 	<div id="confirmed-footnote">
-	    <div id="selected-tag" ><i class="icon-ok"></i>SELECTED</div>
+	    <div id="selected-tag" ><i class="icon-ok"></i> SELECTED</div>
 	    You selected this meal.
 	</div>
 	<div id="footnote">
-	    <div id="magic-tag" ><i class="icon-magic"></i>MAGIC</div>
+	    <div id="magic-tag" ><i class="icon-magic"></i> MAGIC</div>
 	    This meal is recommended by <span id="recommendation-source">Lunchere</span>
 	</div>
     </div>
     <div id="options">
 	<div id="options-captions">
-	    <i>Lunch here today?</i>
+	    Lunch here today?
 	    <span id="no-confirmed-info-date"></span>
 	    <!-- <br/>
 	    or <input id="typehere" value="type here" valuesource="type here" ></input><br/>
