@@ -462,7 +462,7 @@ function FoursquareFormatted(venue) {
 	    }
 	});
 	var addr;
-	var at = " at ";
+	var at = " in ";
 	$.each(["city", "state", "country", "cc", "postalCode", "lat-lng", "address", "crossStreet"], function(i, key) {
 	    if (!addr) {
 		if (key == "lat-lng")
