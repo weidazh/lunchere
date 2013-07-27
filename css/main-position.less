@@ -430,6 +430,22 @@ body {
     line-height: 2 * @grid_baseline - 1px;
     text-align: center;
 }
+/* TODO: when thumbs up down are disabled, fix me when they are back */
+#review-reselect {
+    width: @grid_column * 2 + @grid_gutter - 1px;
+    border-right: 1px solid @color_bggray;
+    font-size: 14px;
+}
+#review-reselect:after {
+    content: " reselect";
+}
+#review-delete-meal {
+    width: @grid_column * 2 + @grid_gutter;
+    font-size: 14px;
+}
+#review-delete-meal:after {
+    content: " delete";
+}
 
 @thumbs_icon_size: 22px;
 #review-thumbs-up, #review-thumbs-down {
@@ -506,11 +522,11 @@ body {
 }
 
 .timeline-label {
-    height: 2 * @grid_baseline; 
-    line-height: 2 * @grid_baseline; 
+    height: 2 * @grid_baseline;
+    line-height: 2 * @grid_baseline;
     width: 100%;
     text-align: center;
-    color: @color_bgbluegray;
+    color: @color_timeline_label_fg;
     font-size: 12px;
     font-weight: bold;
     .narrow;
@@ -528,7 +544,7 @@ body {
     border-width: @timeline_button_border;
     margin-left: auto;
     margin-right: auto;
-    background: @color_bgbluegray3;
+    background: @color_timeline_button_bg;
     color: @color_bggray;
     font-size: 10px;
     line-height: @timeline_button_size;

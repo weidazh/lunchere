@@ -89,7 +89,7 @@ function initClientIdHistoryId() {
 		</ul>
 	    </div>
 	    <div id="buttons">
-		<div id="buttons-1" class="disabled"><i class="icon-chevron-up"></i></div>
+		<div id="buttons-1" class="disabled"><i class="icon-angle-up"></i></div>
 		<div id="buttons-2" class="disabled"><i class="icon-share-alt"></i></div>
 		<div id="buttons-3" class="disabled"><i class="icon-foursquare"></i></div>
 		<div id="buttons-last" class="disabled">...</div>
@@ -97,8 +97,8 @@ function initClientIdHistoryId() {
 	</div>
 	<div id="extra-toggle" class="disabled">
 	    <div id="extra-toggle-button">
-	        <i id="extra-toggle-button-up" class="icon-chevron-up"></i>
-	        <i id="extra-toggle-button-down" class="icon-chevron-down"></i>
+	        <i id="extra-toggle-button-up" class="icon-angle-up"></i>
+	        <i id="extra-toggle-button-down" class="icon-angle-down"></i>
 	    </div>
 	</div>
 	<div id="confirmed-footnote">
