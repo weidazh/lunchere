@@ -1,4 +1,4 @@
-var LL; // in private.js
+// var LL; // in private.js
 var NOLOGIN_SUFFIX; // in private.js
 
 /*

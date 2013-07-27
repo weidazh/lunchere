@@ -4,6 +4,7 @@ var historyId = initObj["historyId"];
 var CLIENT_ID = initObj["CLIENT_ID"];
 var API_VERSION = initObj["API_VERSION"];
 var autocomplete_should_reload = false;
+var LL = initObj["LL"];
 
 /*
 function lunchere_api_init(callback) {

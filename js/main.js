@@ -404,6 +404,8 @@ function MainUI() {
 	register_enabled_only("#timeline-button-left",  current_view.left_clicked);
 	register_enabled_only("#timeline-button-right", current_view.right_clicked);
 
+	register_enabled_only("#typehere-search", current_view.typehere_search_clicked);
+
 	register_enabled_only(".timeline-div.plus", function() {
 	    createmeal();
 	    // TODO: use current_view
@@ -653,10 +655,10 @@ function LunchereAutocomplete(current_view, lunchere_api) {
 }
 
 function FoursquareAPI(NOLOGIN_SUFFIX, LL) {
+    var that = this;
     var FOOD_ID = "4d4b7105d754a06374d81259";
     var that = this;
     var auth = NOLOGIN_SUFFIX; // TODO use this.auth
-    var ll = LL; // TODO  use this.ll
     var url_field = this.url_field = function (k, v) {
 	return encodeURI(k) + "=" + encodeURI(v);
     }
@@ -664,9 +666,16 @@ function FoursquareAPI(NOLOGIN_SUFFIX, LL) {
 	return "categoryId=" + FOOD_ID;
     }
     var search_food = this.search_food = function (q0, done, fail) {
+	if (!LL) {
+	    console.log("[FoursquareAPI] !LL call fail({}) directly");
+	    fail({});
+	    return;
+	}
+	debug_obj("[FoursquareAPI] LL = ", LL);
+	var ll = LL;
 	var suggestcompletion = "search";
 	var url = "https://api.foursquare.com/v2/venues/" + suggestcompletion
-	    + "?" + ll
+	    + "?ll=" + ll
 	    + "&" + category_food_id()
 	    + "&" + url_field("radius", "1000")
 	    + "&" + url_field("limit", "10")
@@ -830,7 +839,7 @@ function LunchereAPI() {
 	that.old_init();
     }
     var is_ready = this.is_ready = function() {
-	return !! that.gapi;
+	return !! that.gapi && that.loaded && that.gapi.client && that.gapi.client.lunchere;
     }
     var api_loading = this.api_loading = function () {
 	return ! that.loaded;
@@ -985,33 +994,12 @@ function LunchereAPI() {
     return this;
 }
 
-function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, lunchere_autocomplete) {
+function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, lunchere_autocomplete, LL) {
     var that = this;
     var generate_resp_from_venue = this.generate_resp_from_venue = function (venue) {
 	// TODO
     }
-    var get_ll_near_from_resp_hints = this.get_ll_near_from_resp_hints = function (resp, callback_ll_near) {
-	var ll_near;
-	if (resp && resp.hints && (resp.hints.ll || resp.hints.near)) {
-	    ll_near = resp.hints;
-	    callback_ll_near(ll_near);
-	}
-	else {
-	    console.log("[ERROR] We do not know your ll!");
-	}
-	/*
-	else {
-	    if (navigator && navigator.geolocation) {
-		navigator.geolocation.getCurrentPosition(function(position) {
-		    ll_near = resp.hints = resp.hints = {}
-		    resp.hints.ll = position.coords.latitude + "," + position.coords.longitude;
-		    callback_ll_near(ll_near);
-		});
-	    }
-
-	}
-	*/
-    }
+    /*
     var both_cached_from_ll_near = this.both_cached_from_ll_near = function (ll_near, callback) {
 	foursquareCache.fetch_recommendation(ll_near.ll, ll_near.near,
 	    function (name, venue) {
@@ -1019,18 +1007,27 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
 		lunchereCache.fetch(name, venue.id, callback);
 	    });
     }
-    var empty_lunch_received = this.empty_lunch_received = function (resp, venue) {
-	// though empty, resp contains hints which include ll
+    */
+    var empty_lunch_received = this.empty_lunch_received = function () {
 	body_class.refresh();
-	get_ll_near_from_resp_hints(resp, function (ll_near) {
-	    both_cached_from_ll_near(ll_near, function(resp, venue) {
-		// TODO
-		if (! resp.source) {
-		    resp.source = "Foursquare";
-		}
-		that.receive(resp, venue);
-	    });
-	});
+
+        console.log("[NewBackend] empty lunch received");
+	// two cases come here:
+	//     ! resp && !venue
+	//     ! resp.name && !venue
+	var ll = LL;
+	if (ll) {
+	    foursquareCache.fetch_recommendation(ll, null,
+	        function (name, venue) {
+		    lunchereCache.fetch(name, venue.id, function (resp, venue) {
+			resp.source = "Foursquare";
+			that.receive(resp, venue);
+		    });
+		});
+	}
+	else {
+	    console.log("[NewBackend] ERROR ll is empty");
+	}
     }
     var receive = this.receive = function (resp, venue) {
 	// debug_obj("NewBackend.receive with resp =", resp);
@@ -1042,7 +1039,7 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
 	    current_view.set_history_id(resp.historyId);
 	}
 	if ((! resp || ! resp.name) && ! venue) {
-	    empty_lunch_received(resp, venue);
+	    empty_lunch_received();
 	}
 	else if (resp) {
 	    current_view.set_view(resp);
@@ -1312,7 +1309,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	$("#title-text").text(resp.name);
 	$("#title-source").text(get_resp_source(resp));
 	$("#recommendation-source").text(get_resp_source(resp));
-	$("#typehere").val(resp.name);
+	$("#typehere").val("");
 	$("#confirmed-info-name").text("...");
 	$("#confirmed-info-date").text(resp.timeslotFriendly);
 	$("#no-confirmed-info-date").text(resp.timeslotFriendly);
@@ -1508,6 +1505,12 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		new_backend.receive(resp, null);
 	    });
     }
+    var typehere_search_clicked = this.typehere_search_clicked = function() {
+	var obj = $("#typehere")[0].hidden_field;
+	if (obj) {
+	    that.set_ids(obj.canteen_id, obj.foursquare_id);
+	}
+    }
     this.refreshing_previous_info_map_height = "200px";
     this.refreshing_previous_extra_container_height = "200px";
     var refreshing = this.refreshing = function (on, previous) {
@@ -1583,7 +1586,7 @@ var foursquare_api = new FoursquareAPI(NOLOGIN_SUFFIX, LL);
 var foursquare_autocomplete = new FoursquareAutocomplete(foursquare_api);
 var autocomplete = new Autocomplete(lunchere_autocomplete, foursquare_autocomplete);
 var body_class = new BodyClass(current_view, hashurl, loading_spinners, autocomplete);
-var new_backend = new NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, lunchere_autocomplete);
+var new_backend = new NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, lunchere_autocomplete, LL);
 
 current_view.on_status_change = function() {
     body_class.refresh();
@@ -1592,6 +1595,22 @@ current_view.on_hashchange_callback = function() {
     body_class.refresh();
 }
 autocomplete.on_select = function(_event, ui) {
+    if (ui.item.type == "foursquare") {
+	$("#typehere")[0].hidden_field = {
+	    "canteen_id": ui.item.obj.name,
+	    "foursquare_id": ui.item.obj.id,
+	};
+    }
+    else if (ui.item.type == "lunchere") {
+	$("#typehere")[0].hidden_field = {
+	    "canteen_id": ui.item.obj.canteen_id,
+	    "foursquare_id": ui.item.obj.foursquare_id,
+	};
+    }
+    else {
+	_event.preventDefault();
+    }
+    /*
     if (ui.item.type == "foursquare") {
 	console.log("on_select with item =");
 	console.log(ui.item);
@@ -1613,6 +1632,7 @@ autocomplete.on_select = function(_event, ui) {
     else {
 	_event.preventDefault();
     }
+    */
 }
 
 var main_ui_to_load = false;

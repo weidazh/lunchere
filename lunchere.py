@@ -850,7 +850,8 @@ class MainPage(webapp2.RequestHandler):
             params = {
                 'CLIENT_ID': CLIENT_ID_ALL_JS,
                 'HISTORY_ID': history_id,
-                'API_VERSION': LUNCHERE_API_VERSION
+                'API_VERSION': LUNCHERE_API_VERSION,
+                'LL': Hints.get_hint(history_id, "ll", ""), # FIXME: sometimes the datastore just cannot retrive the data that has been just put in
             }
             response.write(template.render(path, params))
         elif request.path == "/new":
