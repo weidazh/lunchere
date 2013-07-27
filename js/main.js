@@ -463,7 +463,7 @@ function FoursquareFormatted(venue) {
 	});
 	var addr;
 	var at = " at ";
-	$.each(["address", "crossStreet", "city", "state", "country", "cc", "postalCode", "lat-lng"], function(i, key) {
+	$.each(["city", "state", "country", "cc", "postalCode", "lat-lng", "address", "crossStreet"], function(i, key) {
 	    if (!addr) {
 		if (key == "lat-lng")
 		    addr = venue.location.lat + "," + venue.location.lng;
@@ -499,12 +499,23 @@ function FoursquareFormatted(venue) {
 	// Use Google Maps API to show the location.
     }
     var _format_detailed_addr = this._format_detailed_addr = function () {
+	return venue.location.address;
+    }
+    var _format_detailed_town = this._format_detailed_town = function () {
+	var town = "";
 	if (venue.location.crossStreet) {
-	    return venue.location.address + "("  + venue.location.crossStreet + ")";
+	    town += "("  + venue.location.crossStreet + ") "
 	}
-	else {
-	    return venue.location.address;
+	if (venue.location.city) {
+	    town += venue.location.city;
 	}
+	if (venue.location.state) {
+	    town += ", " + venue.location.state;
+	}
+	else if (venue.location.country) {
+	    town += ", " + venue.location.country;
+	}
+	return town;
     }
     var _format_contact = this._format_contact = function () {
 	if (venue.contact) {
@@ -561,6 +572,7 @@ function FoursquareFormatted(venue) {
     this.ll = _format_ll();
     this.map = _show_map();
     this.detailed_addr = _format_detailed_addr();
+    this.detailed_town = _format_detailed_town();
     this.contact = _format_contact();
     this.apply = apply;
     this.canonicalUrl = _format_canonical_url();
@@ -1202,6 +1214,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    "price": "#costs",
 	    "distance": "#distance",
 	    "detailed_addr": "#details-addr",
+	    "detailed_town": "#details-town",
 	    "contact": "#details-phonenumber",
 	    "icon": function(icon_url) {
 		console.log("[APPLY] apply " + icon_url + " to #main-icon's background-image");
@@ -1223,6 +1236,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		// TODO: call google maps to draw the map.
 	    }
 	};
+	that.view_cached = view;
+	that.formatted_cached = formatted;
 	formatted.apply(view);
 
 	var toggler = new ClassToggler({
