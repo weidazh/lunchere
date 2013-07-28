@@ -215,8 +215,9 @@ class HistoryEvent(db.Model):
         hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id, "Timeslot", str(timeslot)))\
                                         .filter("cancelled =", False).get()
         if hist_ev is None:
-            hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
-                        "historyId = :1 AND timeslot = :2 AND cancelled = False", history_id, timeslot).get()
+            # hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+            #             "historyId = :1 AND timeslot = :2 AND cancelled = False", history_id, timeslot).get()
+            pass
         else:
             logging.debug("RETURN from strong consistency! %s" % (repr(hist_ev.key().to_path())))
         return hist_ev
@@ -225,15 +226,17 @@ class HistoryEvent(db.Model):
     def foreach_no_cancelled(cls, history_id, timeslot):
         """Yield each HistoryEvent which is not cancelled"""
         # FIXME: temporarily cannot use ancestor until I decide to migrate the database
-        for hist_ev in db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
-                        "historyId = :1 AND timeslot = :2 AND cancelled = False", history_id, timeslot).run():
+        # for hist_ev in db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+        #                 "historyId = :1 AND timeslot = :2 AND cancelled = False", history_id, timeslot).run():
+        #     yield hist_ev
+        for hist_ev in db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id, "Timeslot", str(timeslot)))\
+                                             .filter("cancelled =", False).run():
             yield hist_ev
 
     @classmethod
     def foreach_hist_ev(cls, history_id, timeslot):
         """Yield each HistoryEvent, no condition"""
-        for hist_ev in db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
-                       "historyId = :1 AND timeslot = :2", history_id, timeslot).run():
+        for hist_ev in db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id, "Timeslot", str(timeslot))).run():
             yield hist_ev
 
     @classmethod
@@ -699,9 +702,12 @@ class History:
 
     def fetch(self, canteen_id):
         logging.debug("FETCH %s" % (repr(canteen_id),));
-        self.next_recommend = canteen_id
-        hist_ev = HistoryEvent.get_canteen(self.history_id, self.timeslot, canteen_id)
-        self.confirmed = hist_ev and hist_ev.confirmed and not hist_ev.cancelled
+        if self.next_recommend is not None and self.confirmed:
+            pass
+        else:
+            self.next_recommend = canteen_id
+            hist_ev = HistoryEvent.get_canteen(self.history_id, self.timeslot, canteen_id)
+            self.confirmed = hist_ev and hist_ev.confirmed and not hist_ev.cancelled
 
     def get_choices(self, exclude=()):
         if not isinstance(exclude, tuple):

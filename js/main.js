@@ -1081,6 +1081,8 @@ function FoursquareCache() {
 	});
     }
     var has = this.has = function (id) {
+	if (! that.cache_enabled)
+	    return false;
 	return that.cache.hasOwnProperty(id);
     }
     return this;
@@ -1122,9 +1124,11 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 	var foursquare_called = false;
 	function either_callback() {
 	    console.log("either_callback");
-	    if (!foursquare_id && lunchere_venue && lunchere_venue.foursquare_id) {
+	    if (lunchere_venue && lunchere_venue.foursquare_id &&
+		(!foursquare_id || foursquare_called && lunchere_venue.foursquare_id != foursquare_venue.id) ) {
 		// new foursquare_id is got
 		foursquare_id = lunchere_venue.foursquare_id;
+		foursquare_called = false;
 		console.log("foursquare_id changed from zero to " + foursquare_id);
 		foursquareCache.fetch(foursquare_id, function(venue) {
 		    foursquare_venue = venue;
@@ -1136,8 +1140,6 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 		console.log("lunch and foursquare both received: ");
 		console.log(lunchere_venue);
 		console.log(foursquare_venue);
-		console.log("callback_resp_venue =");
-		console.log(callback_resp_venue);
 		callback_resp_venue(lunchere_venue, foursquare_venue);
 	    }
 	    else {
