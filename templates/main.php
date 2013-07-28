@@ -29,6 +29,7 @@ function initClientIdHistoryId() {
 </head>
 <body class="no-confirmed loading initialize no-map no-foursquare no-refreshing">
 
+<div id="above-container">
 <div id="old-container">
     <a href="#new">Try new version</a>
     <button id="logout">Log out</button>
@@ -148,6 +149,7 @@ function initClientIdHistoryId() {
         <div id="review-delete-meal" class="disabled"><i class="icon-trash"></i></div>
         <div id="review-thumbs-down" class="disabled"><div id="review-thumbs-down-floater"><i class="icon-thumbs-down-alt"></i></div></div>
     </div>
+</div>
 </div>
 </div>
 

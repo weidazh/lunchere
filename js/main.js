@@ -1517,56 +1517,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    that.set_ids(obj.canteen_id, obj.foursquare_id);
 	}
     }
-    this.refreshing_previous_info_map_height = "200px";
-    this.refreshing_previous_extra_container_height = "200px";
     var refreshing = this.refreshing = function (on, previous) {
-	if (on && !previous) {
-	    console.log("[REFRESHING] refreshing from " + previous + " to " + on);
-	    // animate it to zero height
-	    that.refreshing_previous_info_map_height = $("#info-map").height();
-	    that.refreshing_previous_extra_container_height = $("#extra-container").height();
-	    $("#extra-container").css({"overflow": "hidden"});
-	    $("#info-map").css({"overflow": "hidden"});
-	    $("#extra-container").stop().animate({
-		"height": "0px",
-	    }, {
-		"duration": 400,
-	    });
-	    $("#info-map").stop().animate({
-		"height": "0px",
-	    }, {
-		"duration": 800,
-		"done": function () {
-		    $("#info-map").css({ "border-bottom-width": "0px" });
-		}
-	    });
-	}
-	else if (!on && previous) {
-	    console.log("[REFRESHING] refreshing from " + previous + " to " + on);
-	    // animate it to full height
-	    $("#extra-container").stop().animate({
-		"height": that.refreshing_previous_extra_container_height,
-	    }, {
-		"done": function() {
-		    $("#extra-container").css({
-			"overflow": "",
-			"height": "",
-		    });
-		}
-	    });
-	    $("#info-map").stop().css({
-		"border-bottom-width": "",
-	    }).animate({
-		"height": that.refreshing_previous_info_map_height,
-	    }, {
-		"done": function() {
-		    $("#info-map").css({
-			"overflow": "",
-			"height": "",
-		    });
-		}
-	    });
-	}
+	// do nothing, move the css to hide the info-map and details back
     }
     return this;
 }
