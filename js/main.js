@@ -536,8 +536,12 @@ function FoursquareFormatted(venue) {
 	}
     }
     var _format_price = this._format_price = function () {
-	if (venue.price) {
-	    return ""; // TODO  I have not found a venue that has such field. to test on.
+	if (venue.price && venue.price.tier) {
+	    var dollars = ["$", "$", "$", "$"];
+	    var tier = venue.price.tier;
+	    return "<span class=\"darken\">" + dollars.slice(-tier).join(" ") + "</span> <span class=\"lighten\">" + dollars.slice(tier).join(" ") + "</span>";
+	    // e.g.
+	    // https://foursquare.com/v/vietnam-village/4a89ad3cf964a520aa0820e3
 	}
 	else
 	    return "";
@@ -1281,7 +1285,9 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	var view = {
 	    // "name": "#title-text", // name could be customized
 	    "addr": "#title-addr",
-	    "price": "#costs",
+	    "price": function (price_html) {
+		$("#costs").html(price_html);
+	    },
 	    "distance": "#distance",
 	    "detailed_addr": "#details-addr",
 	    "detailed_town": "#details-town",
