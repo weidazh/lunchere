@@ -215,7 +215,7 @@ function HashURL() {
     // status could be toload, loading, confirmed
     // noload could be noload or !noload
     // old could be old or !old
-    var DEFAULT_HASH = "#!confirmed,!noload,!old,!failed,id=,4sq=,!debug";
+    var DEFAULT_HASH = "#!confirmed,!noload,!old,!failed,id=,d=,!debug";
     var that = this;
     this.flags = {};
     this.initialized = false;
@@ -345,7 +345,8 @@ function HashURL() {
     */
     var set_hash = this.set_hash = function (resp) {
 	that.flags["id"] = resp.name ? resp.name : "";
-	that.flags["4sq"] = resp.foursquare_id ? resp.foursquare_id : "";
+	that.flags["d"] = resp.timeslot ? resp.timeslot : "";
+	// that.flags["4sq"] = resp.foursquare_id ? resp.foursquare_id : "";
 	var encoded_hash = _encode_hash();
 	console.log("[HASH] set_hash to " + encoded_hash);
 	document.location.hash = that.hash = encoded_hash;
@@ -1179,7 +1180,7 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 	}
 	else {
 	    console.log("zero foursquare");
-	    both_callback();
+	    either_callback();
 	}
     }
     var has_title = this.has_title = function (canteen_id) {
@@ -1416,6 +1417,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
     }
     var set_ids = this.set_ids = function (canteen_id, foursquare_id) {
 	hashurl.set_hash({
+	    "timeslot": that.get_timeslot(),
 	    "name": canteen_id,
 	    "foursquare_id": foursquare_id,
 	});
