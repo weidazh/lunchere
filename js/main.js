@@ -1090,12 +1090,12 @@ function FoursquareCache() {
 
 function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
     var that = this;
-    this.cache = {};
+    this.cache = null;
     var fetch_4sq = this.fetch_4sq = function (resp, callback_resp_venue) {
 	var lunch = resp;
 	var canteen_id = resp.name;
 	var foursquare_id = resp.foursquare_id;
-	that.cache[canteen_id] = lunch;
+	that.cache = lunch;
 	if (foursquare_id) {
 	    foursquareCache.fetch(foursquare_id, function(venue) {
 		callback_resp_venue(lunch, venue);
@@ -1148,8 +1148,8 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 		console.log("foursquare_called = " + foursquare_called);
 	    }
 	}
-	if (that.cache.hasOwnProperty(canteen_id)) {
-	    lunchere_venue = that.cache[canteen_id];
+	if (that.cache && that.cache.name == canteen_id) {
+	    lunchere_venue = that.cache;
 	    console.log("canteen found in cache");
 	    if (lunchere_venue.name != canteen_id) {
 		console.log("[CACHE] BUG! lunchere_venue.name != canteen_id");
@@ -1160,9 +1160,9 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 	    lunchere_api.fetch(get_history_id(), get_timeslot(), canteen_id, foursquare_id, function(venue) {
 		console.log("fetched lunch");
 		if (venue.name == canteen_id)
-		    that.cache[canteen_id] = venue;
+		    that.cache = venue;
 		else {
-		    console.log("[CACHE] BUG canteen_id(" + canteen_id + ") != fetched venue.name (" + venue.name + ")");
+		    console.log("[CACHE] maybe confirmed? BUG canteen_id(" + canteen_id + ") != fetched venue.name (" + venue.name + ")");
 		}
 		lunchere_venue = venue;
 		either_callback();
@@ -1183,14 +1183,14 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 	}
     }
     var has_title = this.has_title = function (canteen_id) {
-	if (that.cache.hasOwnProperty(canteen_id)) {
+	if (that.cache && that.cache.name == canteen_id) {
 	    return true;
 	}
 	return false;
     }
     var has = this.has = function (canteen_id, foursquare_id) {
-	if (that.cache.hasOwnProperty(canteen_id) && !foursquare_id) {
-	    foursquare_id = that.cache[canteen_id];
+	if (that.cache && that.cache.name == canteen_id && !foursquare_id) {
+	    foursquare_id = that.cache.foursquare_id;
 	}
 	if (foursquareCache.has(foursquare_id)) {
 		return true;
@@ -1198,7 +1198,7 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 	return false;
     }
     var add = this.add = function (canteen_id, resp) {
-	that.cache[canteen_id] = resp;
+	that.cache = resp;
 	if (resp.foursquare_id) {
 	    foursquareCache.fetch(resp.foursquare_id, function(venue) { });
 	}

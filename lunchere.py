@@ -249,6 +249,8 @@ class HistoryEvent(db.Model):
             hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot = :2 AND " +
                         "confirmed = True AND cancelled = False", history_id, timeslot).get()
+            if hist_ev is not None:
+                logging.debug("RETURN from weak consistency! %s" % (repr(hist_ev.key().to_path())))
         else:
             logging.debug("RETURN from strong consistency! %s" % (repr(hist_ev.key().to_path())))
         return hist_ev
