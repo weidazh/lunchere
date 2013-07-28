@@ -182,9 +182,10 @@ class HistoryEvent(db.Model):
     @classmethod
     def get_prev_timeslot(cls, history_id, timeslot0):
         "max timeslot < timeslot0 of the specified history_id"
-        hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id))\
-                                        .filter("timeslot <", timeslot0)\
-                                        .order("-timeslot").get()
+        # hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id))\
+        #                                 .filter("timeslot <", timeslot0)\
+        #                                 .order("-timeslot").get()
+        hist_ev = None
         if hist_ev is None:
             hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot < :2 ORDER BY timeslot DESC", history_id, timeslot0).get()
@@ -195,9 +196,10 @@ class HistoryEvent(db.Model):
     @classmethod
     def get_next_timeslot(cls, history_id, timeslot0):
         "min timeslot > timeslot0 of the specified history_id"
-        hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id))\
-                                        .filter("timeslot >", timeslot0)\
-                                        .order("timeslot").get()
+        # hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id))\
+        #                                 .filter("timeslot >", timeslot0)\
+        #                                 .order("timeslot").get()
+        hist_ev = None
         if hist_ev is None:
             hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot > :2 ORDER BY timeslot ASC", history_id, timeslot0).get()
