@@ -695,6 +695,12 @@ class History:
         self.next_recommend = canteen_id
         self._datastore_append(canteen_id, True, False)
 
+    def fetch(self, canteen_id):
+        logging.debug("FETCH %s" % (repr(canteen_id),));
+        self.next_recommend = canteen_id
+        hist_ev = HistoryEvent.get_canteen(self.history_id, self.timeslot, canteen_id)
+        self.confirmed = hist_ev and hist_ev.confirmed and not hist_ev.cancelled
+
     def get_choices(self, exclude=()):
         if not isinstance(exclude, tuple):
             raise Exception("Programming error: input exclude is not tuple")
@@ -737,7 +743,7 @@ class History:
         return history.get_choices()
 
     @classmethod
-    def recommend_from(cls, history_id, timeslot, prevmeal=None, nextmeal=None, deletemeal=None, cancel=None, confirm=None):
+    def recommend_from(cls, history_id, timeslot, prevmeal=None, nextmeal=None, deletemeal=None, cancel=None, confirm=None, fetch=None):
         "this is what the user should call directly"
         exclude= ()
         if deletemeal:
@@ -752,6 +758,8 @@ class History:
             exclude += (cancel,)
         if confirm:
             history.confirm(confirm)
+        if fetch:
+            history.fetch(fetch)
         return history.recommend(exclude=exclude)
 
 @endpoints.api(name="lunchere", version=LUNCHERE_API_VERSION, description="Where to lunch", allowed_client_ids=ALLOWED_CLIENT_IDS)
@@ -829,6 +837,18 @@ class LuncHereAPI(remote.Service):
         recommendation = History.recommend_from(request.historyId, request.timeslot, confirm=request.name)
         return recommendation.to_rpc()
 
+    @endpoints.method(TodayRecommendation, TodayRecommendation, name="fetchUnauth", http_method="GET")
+    def fetch_unauth(self, request):
+        "fetch"
+        if Hints.get_hint(request.historyId, "blacklisted", None):
+            return None
+        self.counter += 1
+        FoursquareVenue.set_4qr_id(request.historyId, request.name, request.foursquare_id)
+        recommendation = History.recommend_from(request.historyId, request.timeslot, fetch=request.name)
+        return recommendation.to_rpc()
+
+
+
 
 # ==============
 ENDPOINTS_APPLICATION = endpoints.api_server([LuncHereAPI], restricted=False)
@@ -837,16 +857,16 @@ ENDPOINTS_APPLICATION = endpoints.api_server([LuncHereAPI], restricted=False)
 import webapp2
 from google.appengine.ext.webapp import template
 class MainPage(webapp2.RequestHandler):
-    """/ redirect to /history/RANDOM_STRING;
-       /history/.* and /user/.* generate a page with some variable set according to current history/user;
+    """/ redirect to /t/RANDOM_STRING;
+       /t/.* and /user/.* generate a page with some variable set according to current timeline/user;
        /logout clears cookie and redirect to /
        others redirect to /
 
        (maybe should change to:)
 
        / shows homepage
-       /new redirect to /history/RANDOM_STRING;
-       /history/.* and /user/.* generate a page with some variable set according to current history/user;
+       /new redirect to /t/RANDOM_STRING;
+       /t/.* and /user/.* generate a page with some variable set according to current timeline/user;
        /login requires user?
        /logout clears cookie and redirect to /
        others redirect to /
@@ -858,9 +878,9 @@ class MainPage(webapp2.RequestHandler):
             user = my_get_current_user(False)
             if user != None:
                 return History.from_user(user).history_id
-        elif path.startswith("/history/"):
+        elif path.startswith("/t/"):
             import re
-            return re.compile("^/history/").sub("history:", path)
+            return re.compile("^/t/").sub("history:", path)
         else:
             return None
 
@@ -886,6 +906,7 @@ class MainPage(webapp2.RequestHandler):
         # FIXME: maybe the http sometimes HTTP?
         if request.url.startswith("http://") and not request.url.startswith("http://localhost") :
             self.redirect(request.url.replace("http://", "https://")) # FIXME: this is wrong when the url itself contains http://
+            return
         use_cookie = True
         refresh_cookie = True # refresh the cookie each time it is logged in
         # but in the following call, do not use_cookie, so that
@@ -936,7 +957,7 @@ class MainPage(webapp2.RequestHandler):
                     Hints.set_hint(history_id, "ll", hints["ll"])
                 if hints.get("near", None):
                     Hints.set_hint(history_id, "near", hints["near"])
-                self.redirect(str(history_id).replace("history:", "/history/"))
+                self.redirect(str(history_id).replace("history:", "/t/"))
         else:
             if request.path == "/" or request.path == "/logout":
                 if use_cookie:
@@ -954,6 +975,7 @@ class LandingPage(webapp2.RequestHandler):
         request, response = self.request, self.response
         if request.url.startswith("http://") and not request.url.startswith("http://localhost") :
             self.redirect(request.url.replace("http://", "https://")) # FIXME: this is wrong when the url itself contains http://
+            return
         params = {}
         path = os.path.join(os.path.dirname(__file__), "templates/landing.html")
         response.write(template.render(path, params))

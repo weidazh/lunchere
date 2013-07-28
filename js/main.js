@@ -979,6 +979,14 @@ function LunchereAPI() {
 	    "foursquare_id": foursquare_id,
 	}, callback);
     }
+    var fetch = this.fetch = function (history_id, timeslot, canteen_id, foursquare_id, callback) {
+	_send_request("fetch_meal", that.gapi.client.lunchere.fetchUnauth, {
+	    "historyId": history_id,
+	    "timeslot": timeslot,
+	    "name": canteen_id,
+	    "foursquare_id": foursquare_id,
+	}, callback);
+    }
     var choices = this.choices = function (history_id, timeslot, callback) {
 	_send_request("choices", that.gapi.client.lunchere.choices, {
 	    "historyId": history_id,
@@ -1092,20 +1100,80 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 	}
     }
     var fetch = this.fetch = function (canteen_id, foursquare_id, callback_resp_venue) {
-	var lunch = {
-	    "historyId": get_history_id(),
-	    "timeslot": get_timeslot(),
-	    "name": canteen_id,
-	    "foursquare_id": foursquare_id,
-	};
-	that.cache[canteen_id] = lunch;
+	/*
+	else {
+	    lunch = {
+		"historyId": get_history_id(),
+		"timeslot": get_timeslot(),
+		"name": canteen_id,
+		"foursquare_id": foursquare_id,
+		"cached": false,
+	    };
+	    that.cache[canteen_id] = lunch;
+	}
+	*/
+	console.log("LunchereCache.fetch " + canteen_id + " " + foursquare_id);
+	var lunchere_venue = null;
+	var foursquare_venue = 0;
+	var foursquare_called = false;
+	function either_callback() {
+	    console.log("either_callback");
+	    if (!foursquare_id && lunchere_venue && lunchere_venue.foursquare_id) {
+		// new foursquare_id is got
+		foursquare_id = lunchere_venue.foursquare_id;
+		console.log("foursquare_id changed from zero to " + foursquare_id);
+		foursquareCache.fetch(foursquare_id, function(venue) {
+		    foursquare_venue = venue;
+		    foursquare_called = true;
+		    either_callback();
+		});
+	    }
+	    if (lunchere_venue && (!foursquare_id || foursquare_called)) {
+		console.log("lunch and foursquare both received: ");
+		console.log(lunchere_venue);
+		console.log(foursquare_venue);
+		console.log("callback_resp_venue =");
+		console.log(callback_resp_venue);
+		callback_resp_venue(lunchere_venue, foursquare_venue);
+	    }
+	    else {
+		console.log("lunchere_venue = " + lunchere_venue);
+		console.log("foursquare_id = " + foursquare_id);
+		console.log("foursquare_called = " + foursquare_called);
+	    }
+	}
+	if (that.cache.hasOwnProperty(canteen_id)) {
+	    lunchere_venue = that.cache[canteen_id];
+	    console.log("canteen found in cache");
+	    if (lunchere_venue.name != canteen_id) {
+		console.log("[CACHE] BUG! lunchere_venue.name != canteen_id");
+	    }
+	}
+	else {
+	    console.log("fetching lunch");
+	    lunchere_api.fetch(get_history_id(), get_timeslot(), canteen_id, foursquare_id, function(venue) {
+		console.log("fetched lunch");
+		if (venue.name == canteen_id)
+		    that.cache[canteen_id] = venue;
+		else {
+		    console.log("[CACHE] BUG canteen_id(" + canteen_id + ") != fetched venue.name (" + venue.name + ")");
+		}
+		lunchere_venue = venue;
+		either_callback();
+	    });
+	}
 	if (foursquare_id) {
+	    console.log("fetching foursquare");
 	    foursquareCache.fetch(foursquare_id, function(venue) {
-		callback_resp_venue(lunch, venue);
+		console.log("fetched foursquare");
+		foursquare_venue = venue;
+		foursquare_called = true;
+		either_callback();
 	    });
 	}
 	else {
-	    callback_resp_venue(lunch, null);
+	    console.log("zero foursquare");
+	    both_callback();
 	}
     }
     var has_title = this.has_title = function (canteen_id) {
