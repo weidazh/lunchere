@@ -482,9 +482,10 @@ function FoursquareFormatted(venue) {
     }
     var _format_ll = this._format_ll = function () {
 	// Category in Location
-	if (venue.location && venue.location.lat && venue.location.lng) {
-	    // FIXME: this would bug when lat == 0 or lng == 0
-	    return venue.location;
+	if (venue.location && typeof venue.location.lat === "number"
+	                   && typeof venue.location.lng === "number") {
+	    // return venue.location;
+	    return venue.location.lat + "," + venue.location.lng;
 	}
 	else {
 	    return null;
@@ -1209,6 +1210,48 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
     return this;
 }
 
+function GoogleDistance() {
+    var distance = this.distance = function (origins, destinations, done) {
+	// Use of the Distance Matrix API must relate to the display of information on
+	// a Google Map; for example, to determine origin-destination pairs that fall
+	// within a specific driving time from one another, before requesting and
+	// displaying those destinations on a map. Use of the service in an application
+	// that doesn't display a Google map is prohibited.
+	//
+	//
+	console.log("[GOOGLE_DISTANCE] " + origins + " to " + destinations);
+	var url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+	               + "?origins=" + origins
+		       + "&destinations=" + destinations
+		       + "&language=en-US"
+		       + "&sensor=false";
+	console.log("[GOOGLE_DISTANCE] url = " + url);
+	$.ajax({ "url": url }).done(function (obj) {
+	    if (obj.status == "OK") {
+		var element = obj.rows[0].elements[0];
+		if (element && element.duration && element.duration.text) {
+		    var d = element.duration.text + " walk"
+		    console.log("[GOOGLE_DISTANCE] distance = " + d);
+		    done(d);
+		}
+		else {
+		    console.log("[GOOGLE_DISTANCE] done, OK but coult not parse");
+		    console.log(element);
+		    done("");
+		}
+	    }
+	    else {
+		console.log("[GOOGLE_DISTANCE] done but not OK");
+		console.log(obj);
+		done("");
+	    }
+	}).fail(function () {
+	    console.log("[GOOGLE_DISTANCE] fail");
+	    done("");
+	});
+    }
+}
+
 function CurrentView(history_id, lunchereCache, foursquareCache) {
     var that = this;
     this.canteen_id = "";
@@ -1342,6 +1385,21 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    }
 	});
 	toggler.apply();
+
+
+	if (! formatted.distance && formatted.ll) {
+	    google_distance.distance(LL, formatted.ll, function (distance) {
+		    formatted.distance = distance;
+		    $("#distance").text(distance);
+		    new ClassToggler({
+			"#main-container": {
+			    "mapping": {
+				"f4sq-no-distance": ! formatted.distance,
+			    }
+			}
+		    }).apply();
+		});
+	}
 
 	body_class.refresh();
     }
@@ -1631,6 +1689,7 @@ var foursquare_autocomplete = new FoursquareAutocomplete(foursquare_api);
 var autocomplete = new Autocomplete(lunchere_autocomplete, foursquare_autocomplete);
 var body_class = new BodyClass(current_view, hashurl, loading_spinners, autocomplete);
 var new_backend = new NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, lunchere_autocomplete, LL);
+var google_distance = new GoogleDistance();
 
 current_view.on_status_change = function() {
     body_class.refresh();

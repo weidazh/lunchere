@@ -68,7 +68,8 @@ function initClientIdHistoryId() {
 		</div>
 	    </div>
 	    <div id="title-addr"></div>
-	    <div id="costs-container"><i class="icon-money info-icons"></i> <span id="costs"></span></div><div id="distance-container"><i class="icon-location-arrow info-icons"></i> <span id="distance"></span></div>
+	    <div id="distance-container"><i class="icon-location-arrow info-icons"></i> <span id="distance"></span></div>
+	    <div id="costs-container"><i class="icon-money info-icons"></i> <span id="costs"></span></div>
 	</div><!-- showed only when the small toggle button clicked -->
 	<div id="map"></div><!-- showed only when the small toggle button clicked -->
     </div>
