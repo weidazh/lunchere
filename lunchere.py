@@ -146,16 +146,17 @@ class Recommendation:
                                 api_version=LUNCHERE_API_VERSION, hints=hints,
                                 foursquare_id=foursquare_id)
 
+
 class HistoryEvent(db.Model):
     """A HistoryEvent is an record in History,
        all the records in the same History share the same History ID"""
-    historyId = db.StringProperty(required=True)
-    timeslot = db.IntegerProperty(required=True)
-    event_date = db.DateTimeProperty(required=True)
+    historyId = db.StringProperty()
+    timeslot = db.IntegerProperty()
+    event_date = db.DateTimeProperty()
     # 4 cases: initilized, confirmed, cancelled, confirmed and cancelled
     confirmed = db.BooleanProperty()
     cancelled = db.BooleanProperty()
-    canteenId = db.StringProperty(required=True)
+    canteenId = db.StringProperty()
 
     @classmethod
     def get_max_timeslot_or_none(cls, history_id):
@@ -163,23 +164,45 @@ class HistoryEvent(db.Model):
            FIXME: it should return TODAY01 for the History.__init__ caller
 
            Could return None! If you do not want None, use Timeslot.most_recent instead"""
-        hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+        # db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id))
+        # should use Hints
+
+        hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id))\
+                                        .order("-timeslot").get()
+        if hist_ev is None:
+            hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 ORDER BY timeslot DESC", history_id).get()
+        else:
+            logging.debug("RETURN from strong consistency! %s" % (repr(hist_ev.key().to_path())))
+        if hist_ev is None:
+            return None
         timeslot = getattr(hist_ev, "timeslot", None)
         return timeslot
 
     @classmethod
     def get_prev_timeslot(cls, history_id, timeslot0):
         "max timeslot < timeslot0 of the specified history_id"
-        hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+        hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id))\
+                                        .filter("timeslot <", timeslot0)\
+                                        .order("-timeslot").get()
+        if hist_ev is None:
+            hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot < :2 ORDER BY timeslot DESC", history_id, timeslot0).get()
+        else:
+            logging.debug("RETURN from strong consistency! %s" % (repr(hist_ev.key().to_path())))
         return getattr(hist_ev, "timeslot", None)
 
     @classmethod
     def get_next_timeslot(cls, history_id, timeslot0):
         "min timeslot > timeslot0 of the specified history_id"
-        hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+        hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id))\
+                                        .filter("timeslot >", timeslot0)\
+                                        .order("timeslot").get()
+        if hist_ev is None:
+            hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot > :2 ORDER BY timeslot ASC", history_id, timeslot0).get()
+        else:
+            logging.debug("RETURN from strong consistency! %s" % (repr(hist_ev.key().to_path())))
         return getattr(hist_ev, "timeslot", None)
 
     @classmethod
@@ -187,13 +210,19 @@ class HistoryEvent(db.Model):
         """There should be at most one HistoryEvent that is not cancelled:
            the one I just recommend and not yet confirmed, or,
            the one that has been confirmed"""
-        hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+        hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id, "Timeslot", str(timeslot)))\
+                                        .filter("cancelled =", False).get()
+        if hist_ev is None:
+            hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot = :2 AND cancelled = False", history_id, timeslot).get()
+        else:
+            logging.debug("RETURN from strong consistency! %s" % (repr(hist_ev.key().to_path())))
         return hist_ev
 
     @classmethod
     def foreach_no_cancelled(cls, history_id, timeslot):
         """Yield each HistoryEvent which is not cancelled"""
+        # FIXME: temporarily cannot use ancestor until I decide to migrate the database
         for hist_ev in db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot = :2 AND cancelled = False", history_id, timeslot).run():
             yield hist_ev
@@ -208,17 +237,27 @@ class HistoryEvent(db.Model):
     @classmethod
     def get_confirmed(cls, history_id, timeslot):
         """There should be at most one HistoryEvent that is confirmed and not cancelled"""
-        hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+        hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id, "Timeslot", str(timeslot)))\
+                                        .filter("confirmed =", True)\
+                                        .filter("cancelled =", False).get()
+        if hist_ev is None:
+            hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot = :2 AND " +
                         "confirmed = True AND cancelled = False", history_id, timeslot).get()
+        else:
+            logging.debug("RETURN from strong consistency! %s" % (repr(hist_ev.key().to_path())))
         return hist_ev
 
     @classmethod
     def get_canteen(cls, history_id, timeslot, canteen_id):
         "select the canteen by canteen_id"
-        hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
+        hist_ev = db.Query(HistoryEvent).ancestor(db.Key.from_path("Timeline", history_id, "Timeslot", str(timeslot), "HistoryEvent", canteen_id)).get()
+        if hist_ev is None:
+            hist_ev = db.GqlQuery("SELECT * FROM HistoryEvent WHERE " +
                         "historyId = :1 AND timeslot = :2 AND canteenId = :3",
                         history_id, timeslot, canteen_id).get()
+        else:
+            logging.debug("RETURN from strong consistency! %s" % (repr(hist_ev.key().to_path())))
         return hist_ev
 
 class Choice(db.Model):
@@ -297,6 +336,11 @@ class Hints(db.Model):
 
     @classmethod
     def get_hint(cls, history_id, key, def_value):
+        hint = db.Query(Hints).ancestor(db.Key.from_path("Timeline", history_id, "Hints", key)).get()
+        if hint is not None:
+            logging.debug("RETURN from strong consistency! Timeline %s Hints %s" % (repr(history_id), repr(key)))
+            return hint.hint_value
+
         hint = db.GqlQuery("SELECT * FROM Hints WHERE " +
                         "historyId = :1 AND hint_key = :2", history_id, key)
         value = hint.get()
@@ -307,11 +351,17 @@ class Hints(db.Model):
 
     @classmethod
     def set_hint(cls, history_id, key, value):
-        hint = db.GqlQuery("SELECT * FROM Hints WHERE " +
+        hint = db.Query(Hints).ancestor(db.Key.from_path("Timeline", history_id, "Hints", key)).get()
+        if hint is not None:
+            logging.debug("RETURN from strong consistency! Timeline %s Hints %s" % (repr(history_id), repr(key)))
+        else:
+            hint = db.GqlQuery("SELECT * FROM Hints WHERE " +
                         "historyId = :1 AND hint_key = :2", history_id, key)
-        hint = hint.get()
+            hint = hint.get()
         if hint is None:
-            hint = Hints(historyId=history_id, hint_key=key, hint_value=value)
+            hint = Hints(parent=db.Key.from_path("Timeline", history_id),
+                         key_name=key,
+                         historyId=history_id, hint_key=key, hint_value=value)
             hint.put()
         else:
             hint.hint_value = value
@@ -504,8 +554,15 @@ class FoursquareVenue(db.Model):
 
     @classmethod
     def get_4qr_id(cls, historyId, canteenId):
+        if not canteenId: # empty or None
+            return None
+        foursquare_venue = db.Query(FoursquareVenue).ancestor(db.Key.from_path("Timeline", historyId, "FoursquareVenue", canteenId)).get()
+        if foursquare_venue is not None:
+            logging.debug("RETURN from strong consistency! Timeline %s FoursquareVenue %s" % (repr(historyId), repr(canteenId)))
+            return foursquare_venue.foursquareId
+
         foursquare_venue = db.GqlQuery("SELECT * FROM FoursquareVenue WHERE " +
-                                "historyId = :1 AND canteenId = :2", historyId, canteenId).get()
+                            "historyId = :1 AND canteenId = :2", historyId, canteenId).get()
         if foursquare_venue is None:
             return None
         else:
@@ -516,11 +573,17 @@ class FoursquareVenue(db.Model):
         if historyId is None or canteenId is None or foursquareId is None:
             return
         if historyId == u"" or canteenId == u"" or foursquareId == u"":
-            return;
-        foursquare_venue = db.GqlQuery("SELECT * FROM FoursquareVenue WHERE " +
-                                "historyId = :1 AND canteenId = :2", historyId, canteenId).get()
+            return
+        foursquare_venue = db.Query(FoursquareVenue).ancestor(db.Key.from_path("Timeline", historyId, "FoursquareVenue", canteenId)).get()
         if foursquare_venue is None:
-            foursquare_venue = FoursquareVenue(historyId=historyId, canteenId=canteenId, foursquareId=foursquareId)
+            foursquare_venue = db.GqlQuery("SELECT * FROM FoursquareVenue WHERE " +
+                                "historyId = :1 AND canteenId = :2", historyId, canteenId).get()
+        else:
+            logging.debug("RETURN from strong consistency! Timeline %s FoursquareVenue %s" % (repr(historyId), repr(canteenId)))
+        if foursquare_venue is None:
+            foursquare_venue = FoursquareVenue(parent=db.Key.from_path("Timeline", historyId),
+                                               key_name=canteenId,
+                                               historyId=historyId, canteenId=canteenId, foursquareId=foursquareId)
             foursquare_venue.put()
         elif foursquare_venue.foursquareId != foursquareId:
             foursquare_venue.foursquareId = foursquareId
@@ -558,7 +621,10 @@ class History:
             # not found, create a new HistoryEvent
             if confirmed and cancelled:
                 logging.warn("The event is confirmed and cancelled but cannot be found in datastore")
-            hist_ev = HistoryEvent(historyId=self.history_id, timeslot=self.timeslot,
+            hist_ev = HistoryEvent(
+                        parent=db.Key.from_path("Timeline", self.history_id, "Timeslot", str(self.timeslot)),
+                        key_name=canteen_id,
+                        historyId=self.history_id, timeslot=self.timeslot,
                         event_date=datetime.datetime.utcnow(), confirmed=confirmed, cancelled=cancelled,
                         canteenId=canteen_id)
             hist_ev.put()
@@ -748,7 +814,7 @@ class LuncHereAPI(remote.Service):
         if Hints.get_hint(request.historyId, "blacklisted", None):
             return None
         self.counter += 1
-        logging.debug("request.name = %s; request.foursquare_id = %s" % (repr(request.name), repr(request.foursquare_id)));
+        logging.debug("request.name = %s; request.foursquare_id = %s" % (repr(request.name), repr(request.foursquare_id)))
         FoursquareVenue.set_4qr_id(request.historyId, request.name, request.foursquare_id)
         recommendation = History.recommend_from(request.historyId, request.timeslot, cancel=request.name)
         return recommendation.to_rpc()
@@ -799,7 +865,7 @@ class MainPage(webapp2.RequestHandler):
             return None
 
     def _cookie_to_history_id(self, request):
-        logging.debug("_cookie_to_history_id");
+        logging.debug("_cookie_to_history_id")
         history_id = request.cookies.get("historyId", None)
         logging.debug("history_id = " + repr(history_id) + " (from cookies)")
         if history_id is not None:
@@ -863,7 +929,7 @@ class MainPage(webapp2.RequestHandler):
             if len(hints) < 1:
                 self.response.write("Hints = " + repr(hints))
             else:
-                history_id = History.gen_new_history_id_from_hints(hints);
+                history_id = History.gen_new_history_id_from_hints(hints)
                 if use_cookie:
                     self.set_root_cookie(history_id)
                 if hints.get("ll", None):
