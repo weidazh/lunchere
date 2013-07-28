@@ -49,12 +49,9 @@ function initClientIdHistoryId() {
 </div>
 <div id="root-container" class="container">
 <div id="main-icon" ><div class="loading-placeholder"></div></div><!-- what icon to show ? -->
-<div id="main-container">
+<div id="main-container" class="f4sq-no-icon f4sq-no-ratings f4sq-no-addr f4sq-no-price f4sq-no-distance f4sq-no-ll f4sq-no-contact f4sq-no-hours f4sq-no-url no-details-buttons">
     <div id="title-container">
-	<span id="title-text">
-	    Tak Kee Chiu Chow<br/>
-	    德记海鲜酒家
-	</span>
+	<span id="title-text"></span>
 	<span id="title-source"></span>
 	<span id="title-loading"></span>
     </div>
@@ -70,8 +67,8 @@ function initClientIdHistoryId() {
 		    <i id="heart-5" class="icon-star-empty"></i>
 		</div>
 	    </div>
-	    <div id="title-addr">Chiu Chow restaurant in Sai Wan</div>
-	    <div id="costs-container"><i class="icon-money info-icons"></i> <span id="costs">$100-200</span></div><div id="distance-container"><i class="icon-location-arrow info-icons"></i> <span id="distance"> 15min walk</span></div>
+	    <div id="title-addr"></div>
+	    <div id="costs-container"><i class="icon-money info-icons"></i> <span id="costs"></span></div><div id="distance-container"><i class="icon-location-arrow info-icons"></i> <span id="distance"></span></div>
 	</div><!-- showed only when the small toggle button clicked -->
 	<div id="map"></div><!-- showed only when the small toggle button clicked -->
     </div>
@@ -80,13 +77,13 @@ function initClientIdHistoryId() {
         <div id="details-buttons">
 	    <div id="details">
 		<ul>
-		    <li id="details-addr-li"><i class="icon-map-marker details-logo"></i><span id="details-addr">G/F, No 3 Belcher's Street</span><span
-		    id="details-town">Kennedy Town, Western District</span></li>
+		    <li id="details-addr-li"><i class="icon-map-marker details-logo"></i><span id="details-addr"></span><span
+		    id="details-town"></span></li>
 		    <li id="details-phonenumber-li">
-			<i class="icon-phone details-logo"></i><span id="details-phonenumber">2819 5568</span>
+			<i class="icon-phone details-logo"></i><span id="details-phonenumber"></span>
 		    </li>
 		    <li id="details-hours-li">
-			<i class="icon-time details-logo"></i><span id="details-hours">open until 15:00</span>
+			<i class="icon-time details-logo"></i><span id="details-hours"></span>
 		    </li>
 		</ul>
 	    </div>
@@ -141,7 +138,7 @@ function initClientIdHistoryId() {
     </div>
     <div id="confirmed-info">
         <div id="confirmed-info-name">Today's Lunch</div>
-	<div id="confirmed-info-date">1st meal of 17 Jul 2013</div>
+	<div id="confirmed-info-date"></div>
     </div>
     <div id="review-options">
         <div id="review-thumbs-up" class="disabled"><div id="review-thumbs-up-floater"><i class="icon-thumbs-up"></i></div></div>
@@ -201,7 +198,7 @@ function initClientIdHistoryId() {
 		<div id="timeline-button-right" class="timeline-button disabled"><i class="icon-plus"></i></div>
 	    </div>
 	</div>
-	<div id="timeline-title"><span id="timeline-title-text">ThursdayWireless</span>'s Timeline</div>
+	<div id="timeline-title"><span id="timeline-title-text">Untitled</span> Timeline</div>
     </div>
     <div id="about">
         <div id="logo">

@@ -133,7 +133,10 @@ function LLGeocoder(spinner, submit_callback) {
 
         // geocode_ll(ll, ll_geocode_fetched, ll_geocode_failed);
 	p0 = { "lat": position.coords.latitude, "lng": position.coords.longitude };
-	$(location_input).autocomplete("search", "");
+	// $(location_input).autocomplete("search", "");
+	selected_ll = ll;
+	$(submit_button).attr("disabled", false).removeClass("disabled").addClass("enabled");
+	enable_input();
     }
     function location_pick_clicked() {
 	if (navigator && navigator.geolocation) {

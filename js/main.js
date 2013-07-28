@@ -1279,7 +1279,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
     }
     var set_next_button = this.set_next_button = function (has_nextmeal, has_createmeal, confirmed) {
 	if (! has_nextmeal && !has_createmeal && confirmed) {
-	    // FIXME: this should be fixed in the server
+	    // FIXME: this should be fixed in the server.
+	    //        It seems the server has already fixed this.
 	    console.log("BUG: ! has_nextmeal && !has_createmeal && confirmed; fixed in js but should be fixed in the server");
 	    has_createmeal = true;
 	}
