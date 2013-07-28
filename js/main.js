@@ -1066,15 +1066,23 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
 function FoursquareCache() {
     var that = this;
     this.cache = {};
+    that.cache_enabled = true;
     var fetch = this.fetch = function (id, callback) {
-	get_details_from_foursquare(id, function(venue) {
+	function callback_wrapper(venue) {
 	    console.log("[FoursquareCache] foursquare returns, I hope the title is updated");
 	    setTimeout(function() {
 		console.log("[FoursquareCache] foursquare returns");
 		that.cache[id] = venue;
 		callback(venue);
 	    }, 0);
-	});
+	}
+
+	if (that.cache_enabled && that.cache.hasOwnProperty(id)) {
+	    callback_wrapper(that.cache[id]);
+	}
+	else {
+	    get_details_from_foursquare(id, callback_wrapper);
+	}
     }
     var fetch_recommendation = this.fetch_recommendation = function (ll, near, callback) {
 	get_recommendation_from_foursquare(ll, near, function(name, venue) {
@@ -1376,7 +1384,6 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		    "f4sq-no-ratings":  true,
 		    "f4sq-no-addr":     ! formatted.addr,
 		    "f4sq-no-price":    ! formatted.price,
-		    "f4sq-no-distance": ! formatted.distance,
 		    "f4sq-no-ll":	! formatted.ll,
 		    "f4sq-no-contact":  ! formatted.contact,
 		    "f4sq-no-hours":    ! formatted.hours,
@@ -1399,6 +1406,15 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 			}
 		    }).apply();
 		});
+	}
+	else {
+	    new ClassToggler({
+		"#main-container": {
+		    "mapping": {
+			"f4sq-no-distance": ! formatted.distance,
+		    }
+		}
+	    }).apply();
 	}
 
 	body_class.refresh();
