@@ -1301,6 +1301,11 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	});
 	toggler.apply();
     }
+    var clear_typehere = this.clear_typehere = function () {
+	$("#typehere").val("");
+	$("#typehere")[0].hidden_field = null;
+	$("#typehere-search").addClass("disabled").removeClass("enabled");
+    }
     var set_view = this.set_view = function (resp) {
 	// debug_obj("this.set_view with resp = ", resp);
 	that.resp_cache = resp;
@@ -1309,7 +1314,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	$("#title-text").text(resp.name);
 	$("#title-source").text(get_resp_source(resp));
 	$("#recommendation-source").text(get_resp_source(resp));
-	$("#typehere").val("");
+	clear_typehere();
 	$("#confirmed-info-name").text("...");
 	$("#confirmed-info-date").text(resp.timeslotFriendly);
 	$("#no-confirmed-info-date").text(resp.timeslotFriendly);
@@ -1339,6 +1344,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	});
 	$("#title-text").text(canteen_id);
 	$("#title-source").text("you");
+	clear_typehere();
 	$("#recommendation-source").text("you");
 	that.set_canteen_id(canteen_id);
 	that.set_foursquare_id(foursquare_id);
@@ -1600,12 +1606,14 @@ autocomplete.on_select = function(_event, ui) {
 	    "canteen_id": ui.item.obj.name,
 	    "foursquare_id": ui.item.obj.id,
 	};
+	$("#typehere-search").addClass("enabled").removeClass("disabled");
     }
     else if (ui.item.type == "lunchere") {
 	$("#typehere")[0].hidden_field = {
 	    "canteen_id": ui.item.obj.canteen_id,
 	    "foursquare_id": ui.item.obj.foursquare_id,
 	};
+	$("#typehere-search").addClass("enabled").removeClass("disabled");
     }
     else {
 	_event.preventDefault();

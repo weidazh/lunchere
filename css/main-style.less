@@ -220,9 +220,9 @@ body {
 }
 
 #typehere-search {
-    color: @color_fgwhite;
-    background: @color_green;
     /* TODO: clickable */
+    .clickable(@color_fgwhite, @color_green, @color_fgwhite, @color_green_light, @color_fgwhite);
+    &.disabled { display: block; background-color: @color_silver; }
 }
 
 #delete-this-meal {
