@@ -926,6 +926,10 @@ class MainPage(webapp2.RequestHandler):
                 response.headers['Content-Type'] = 'text/html'
                 response.write(template.render(path, params))
                 return
+            if Hints.get_hint(history_id, "ll", None) is None:
+                self.response.set_status(404)
+                self.response.write("404 Not found")
+                return
 
             response.headers['Content-Type'] = 'text/html'
             # response.headers['Cache-Control'] = 'no-cache'
