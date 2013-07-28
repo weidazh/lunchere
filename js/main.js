@@ -1120,6 +1120,7 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 	}
 	*/
 	console.log("LunchereCache.fetch " + canteen_id + " " + foursquare_id);
+	var timeslot = get_timeslot();
 	var lunchere_venue = null;
 	var foursquare_venue = 0;
 	var foursquare_called = false;
@@ -1149,7 +1150,7 @@ function LunchereCache(foursquareCache, get_history_id, get_timeslot) {
 		console.log("foursquare_called = " + foursquare_called);
 	    }
 	}
-	if (that.cache && that.cache.name == canteen_id) {
+	if (that.cache && that.cache.name == canteen_id && that.timeslot == timeslot) {
 	    lunchere_venue = that.cache;
 	    console.log("canteen found in cache");
 	    if (lunchere_venue.name != canteen_id) {
@@ -1227,6 +1228,12 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
     }
     var get_timeslot = this.get_timeslot = function () {
 	return that.timeslot;
+    }
+    var set_timeslot = this.set_timeslot = function (timeslot) {
+	if (!timeslot)
+	    that.timeslot = null;
+	else
+	    that.timeslot = parseInt(timeslot);
     }
     var get_canteen_id = this.get_canteen_id = function () {
 	return that.canteen_id;
@@ -1485,20 +1492,20 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	// hashurl has already normalized them.
 	if ((initialize && !initialized) ||
 	    hashurl.get_flag("id") != normalize(this.canteen_id) ||
-	    hashurl.get_flag("4sq") != normalize(this.foursquare_id)) {
+	    hashurl.get_flag("d") != normalize(this.timeslot)) {
 
 	    initialized = true;
 
             // changed.
 	    console.log("[HASH] hash changed from "
-		    + hashurl.get_flag("id") + "/" + hashurl.get_flag("4sq") + " to "
-		    + normalize(this.canteen_id) + "/" + normalize(this.foursquare_id));
+		    + hashurl.get_flag("id") + "/" + hashurl.get_flag("d") + " to "
+		    + normalize(this.canteen_id) + "/" + normalize(this.timeslot));
 	    that.on_hashchange_callback();
 
 	    this.set_canteen_id(hashurl.get_flag("id"));
-	    this.set_foursquare_id(hashurl.get_flag("4sq"));
+	    this.set_timeslot(hashurl.get_flag("d"));
 
-	    if (this.canteen_id == "" && this.foursquare_id == "") {
+	    if (this.canteen_id == "") {
 		console.log("[HASH] both id empty, calls the lunchere today api");
 		lunchere_api.today(historyId, /* global historyId */
 		    new_backend.receive);
@@ -1506,7 +1513,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    else {
 		console.log("[HASH] either id not empty, ask the use yes/no");
 		lunchereCache.fetch(hashurl.get_flag("id"),
-		    hashurl.get_flag("4sq"),
+		    null,
 		    new_backend.receive);
 	    }
 	}
