@@ -46,6 +46,7 @@ class TodayRecommendation(messages.Message):
     api_version = messages.StringField(11, required=False)
     hints = messages.MessageField(HintsMessage, 12, required=False)
     foursquare_id = messages.StringField(13, required=False)
+    mealname = messages.StringField(14)
 
 class OneChoice(messages.Message):
     canteen_id = messages.StringField(1, required=True)
@@ -132,6 +133,7 @@ class Recommendation:
         has_createmeal = Timeslot.nextmeal(self.history_id, self.timeslot, fallback=False, create=True, create_only=True)
         logging.info("HAS_CREATEMEAL: " + repr(has_createmeal))
         has_createmeal = not not has_createmeal
+        mealname = TimeslotModel.get_mealname(self.history_id, self.timeslot)
         hints = HintsMessage()
         logging.debug(self.hints)
         for key in self.hints:
@@ -144,7 +146,8 @@ class Recommendation:
                                 could_delete=could_delete, has_nextmeal=has_nextmeal, has_prevmeal=has_prevmeal, has_createmeal=has_createmeal,
                                 has_other_recommend=self.has_other_recommend,
                                 api_version=LUNCHERE_API_VERSION, hints=hints,
-                                foursquare_id=foursquare_id)
+                                foursquare_id=foursquare_id,
+                                mealname=mealname)
 
 
 class HistoryEvent(db.Model):
@@ -393,6 +396,85 @@ class TZInfo(datetime.tzinfo):
         "currently has no dst"
         return TZInfo.ZERO
 
+class TimeslotModel(db.Model):
+    historyId = db.StringProperty()
+    timeslot = db.IntegerProperty()
+    createdt = db.DateTimeProperty()
+    mealname = db.StringProperty()
+
+    @classmethod
+    def guess_meal_name(cls, dt):
+        if dt.hour < 4 or dt.hour >= 22:
+            return "Night Snack"
+        elif dt.hour <= 10:
+            return "Breakfast"
+        elif dt.hour <= 13:
+            return "Lunch"
+        elif dt.hour <= 17:
+            return "Tea"
+        elif dt.hour <= 20:
+            return "Dinner"
+        else:
+            return "Supper"
+
+    @classmethod
+    def get_refdate(cls, timeslot):
+        yyyy = timeslot / 1000000
+        mm = timeslot / 10000 % 100
+        dd = timeslot / 100 % 100
+        ordinal = timeslot % 100
+        if ordinal == 1:
+            return datetime.datetime(yyyy, mm, dd, 12)
+        else:
+            return datetime.datetime(yyyy, mm, dd, 19)
+
+    @classmethod
+    def key_path(cls, history_id, timeslot):
+        return db.Key.from_path("Timeline", history_id, "Timeslot", str(timeslot))
+
+
+    @classmethod
+    def create(cls, history_id, timeslot, refmode="NOW"):
+        if refmode == "NOW":
+            "FIXME: consider the local time"
+            tzinfo = TZInfo(Hints.get_hint(history_id, "timezone", "HKT"))
+            utcnow = datetime.datetime.utcnow()
+            createdt = tzinfo.fromutc(utcnow.replace(tzinfo=tzinfo))
+        elif refmode == "TIMESLOT":
+            createdt = cls.get_refdate(timeslot)
+        else:
+            raise Exception("Unknown refmode %s" % (repr(refmode),))
+        mealname = cls.guess_meal_name(createdt)
+        logging.debug("CREATE MEALNAME %d, %s, %s = %s" % (timeslot, repr(refmode), repr(createdt), repr(mealname)))
+        tm  = TimeslotModel(parent=db.Key.from_path("Timeline", history_id),
+                     key_name=str(timeslot),
+                     historyId=history_id,
+                     timeslot=timeslot,
+                     createdt=createdt,
+                     mealname=mealname)
+        tm.put()
+        return tm
+
+    @classmethod
+    def get_or_create(cls, history_id, timeslot, refmode="NOW"):
+        tm = db.Query(TimeslotModel).ancestor(TimeslotModel.key_path(history_id, timeslot)).get()
+        if tm is None:
+            return cls.create(history_id, timeslot, refmode=refmode)
+        else:
+            return tm
+
+    @classmethod
+    def kind(cls):
+        return "Timeslot"
+
+    @classmethod
+    def get_mealname(cls, history_id, timeslot):
+        tm = cls.get_or_create(history_id, timeslot, refmode="TIMESLOT")
+        if tm is None:
+            raise Exception("Cannot get or create TimeslotModel for %s %d" % (history_id, timeslot))
+        else:
+            return tm.mealname
+
 class Timeslot:
     @classmethod
     def guess_local_timeslot_base(cls, history_id):
@@ -543,6 +625,8 @@ class Timeslot:
         # create new timeslot
         if create and new_timeslot is not None:
             logging.info("new_timeslot is not None and create")
+            """ Now create a new log in the datastore """
+            TimeslotModel.get_or_create(history_id, new_timeslot)
             return new_timeslot
         elif create_only:
             logging.info("new_timeslot is None and create_only")

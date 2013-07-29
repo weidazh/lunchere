@@ -1260,6 +1260,157 @@ function GoogleDistance() {
     }
 }
 
+function TimeslotView(timeslot, mealname) {
+    var that = this;
+    this.timeslot = timeslot;
+    if (typeof mealname === 'undefined') {
+	mealname = "Lunch";
+    }
+    this.mealname = mealname;
+    var month_name = this.month_name = [
+       "Jan", "Feb", "Mar", "Apr",
+       "May", "Jun", "Jul", "Aug",
+       "Sep", "Oct", "Nov", "Dec",
+    ];
+    var calc_days_diff = this.calc_days_diff = function () {
+	// I do not check the timeslot numbers here,
+	// the Date function could convert to some defined date
+	var now = new Date();
+	var date1 = new Date(now);
+	date1.setDate(1);
+	date1.setYear(that.yyyy);
+	date1.setMonth(that.mm);
+	date1.setDate(that.dd);
+	that.days_diff = (date1 - now) / 86400;
+    }
+    var format_ordinal=  this.format_ordinal = function (ord) {
+	if (ord % 10 == 1 && ord != 11)
+	    return "" + ord + "st meal";
+	else if (ord % 10 == 2 && ord != 12)
+	    return "" + ord + "nd meal";
+	else if (ord % 10 == 3 && ord != 13)
+	    return "" + ord + "rd meal";
+	else
+	    return "" + ord + "th meal";
+    }
+    var break_timeslot = this.break_timeslot = function () {
+	that.yyyy = Math.floor(that.timeslot / 1000000);
+	that.mm = Math.floor(that.timeslot / 10000) % 100 - 1;
+	that.dd = Math.floor(that.timeslot / 100) % 100;
+	that.ord = Math.floor(that.timeslot) % 100;
+	return that;
+    }
+    var is_today = this.is_today = function () {
+	return (that.days_diff == 0);
+    }
+    var always_date = this.always_date = function () {
+	return "" + that.dd + " " + month_name[that.mm] + " " + that.yyyy;
+    }
+    var always_humandate = this.always_humandate = function () {
+	switch (that.days_diff) {
+	    case -1: return "Yesterday";
+	    case 0: return "Today";
+	    case 1: return "Tomorrow";
+	    default: return null;
+	}
+    }
+    var date = this.date = function () {
+	var humandate = always_humandate();
+	if (! humandate)
+	    return always_date();
+    }
+    var confirmed_mealname = this.confirmed_mealname = function () {
+	var humandate = always_humandate();
+	if (humandate) {
+	    return humandate + "'s " + mealname;
+	}
+	else {
+	    return mealname;
+	}
+    }
+    var present_tense = this.present_tense = function () {
+	switch (that.mealname) {
+            case "Night Snack": return "Night snack";
+            case "Breakfast": return "Breakfast";
+            case "Lunch": return "Lunch";
+            case "Tea": return "Tea";
+	    case "Dinner": return "Dinner";
+	    case "Supper": return "Supper";
+	    default: "Have a meal";
+	}
+    }
+    var past_tense = this.past_tense = function () {
+	switch (that.mealname) {
+            case "Night Snack": return "Night-snacked";
+            case "Breakfast": return "Breakfasted";
+            case "Lunch": return "Lunched";
+            case "Tea": return "Teaed";
+	    case "Dinner": return "Dined";
+	    case "Supper": return "Had a supper";
+	    default: "Had a meal";
+	}
+    }
+    var question_date = this.question_date = function () {
+	switch (that.days_diff) {
+	    case -1: return "Yesterday";
+	    case 0: return "Today";
+	    case 1: return "Tomorrow";
+	    default: return "on " + that.dd + " " + month_name[that.mm] + " " + that.yyyy;
+	}
+    }
+    var question_meal = this.question_meal = function () {
+	if (that.days_diff >= 0) {
+	    var v1_base = "Have meal"; 
+	    if (that.ord == 1)
+		v1_base = "Lunch";
+	    else if (that.ord == 2)
+		v1_base = "Dinner";
+	}
+    }
+    var meal = this.meal = function () {
+	return format_ordinal(that.ord);
+    }
+    var apply = this.apply = function (s1, s2, s3, s4) {
+	// selectors: s1, s2, s3
+	// s1: // if Today or Future dates.
+	//     Lunch here Today?
+	//     Lunch here Tomorrow?
+	//     Lunch here 24 Jul?
+	//     Lunch here Wednesday?
+	//     Dinner here XXX?
+	//     Have a meal here YYY?
+	//     // or else
+	//     Have a meal here?
+	// s2: // Only the above does not show the info.
+	//     1st meal on 12 Jul 2013
+	// s3: // Confirmed
+	//     Wednesday's Lunch
+	//     Today's Dinner
+	// s4: // Only the above does not show the info.
+	//     1st meal on 12 Jul 2013
+	var v1, v2, v3;
+	if (that.days_diff >= 0) {
+	    v1 = present_tense() + " here " + question_date();
+	}
+	else {
+	    v1 = past_tense() + " here " + question_date();
+	}
+	v2 = format_ordinal(that.ord) + " on " + always_date();
+	v3 = confirmed_mealname();
+	v4 = format_ordinal(that.ord) + " on " + always_date();
+	console.log("[TimeslotView] v1 = " + v1);
+	console.log("[TimeslotView] v2 = " + v2);
+	console.log("[TimeslotView] v3 = " + v3);
+	console.log("[TimeslotView] v4 = " + v4);
+	$(s1).text(v1);
+	$(s2).text(v2);
+	$(s3).text(v3);
+	$(s4).text(v4);
+    }
+    break_timeslot();
+    calc_days_diff();
+}
+
 function CurrentView(history_id, lunchereCache, foursquareCache) {
     var that = this;
     this.canteen_id = "";
@@ -1475,8 +1626,15 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	$("#recommendation-source").text(get_resp_source(resp));
 	clear_typehere();
 	$("#confirmed-info-name").text("...");
-	$("#confirmed-info-date").text(resp.timeslotFriendly);
-	$("#no-confirmed-info-date").text(resp.timeslotFriendly);
+
+	// $("#confirmed-info-date").text(resp.timeslotFriendly);
+	// $("#no-confirmed-info-date").text(resp.timeslotFriendly);
+	var timeslotView = new TimeslotView(resp.timeslot, resp.mealname);
+	timeslotView.apply(
+	    "#no-confirmed-info-question",
+	    "#no-confirmed-info-date",
+	    "#confirmed-info-name",
+	    "#confirmed-info-date");
 	that.set_prev_button(resp.has_prevmeal);
 	that.set_next_button(resp.has_nextmeal, resp.has_createmeal, resp.confirmed);
 	that.history_id = resp.historyId;
