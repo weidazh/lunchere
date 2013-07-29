@@ -91,7 +91,7 @@ function initClientIdHistoryId() {
 	    <div id="buttons">
 		<div id="buttons-1" class="disabled"><i class="icon-angle-up"></i></div>
 		<div id="buttons-2" class="disabled"><i class="icon-share-alt"></i></div>
-		<div id="buttons-3" class="disabled"><i class="icon-foursquare"></i></div>
+		<a id="buttons-3" class="disabled" target="_blank"><i class="icon-foursquare"></i></a>
 		<div id="buttons-last" class="disabled">...</div>
 	    </div>
 	</div>

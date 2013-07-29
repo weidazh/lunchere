@@ -507,17 +507,19 @@ function FoursquareFormatted(venue) {
     }
     var _format_detailed_town = this._format_detailed_town = function () {
 	var town = "";
+	var empty_town = true;
 	if (venue.location.crossStreet) {
 	    town += "("  + venue.location.crossStreet + ") "
 	}
 	if (venue.location.city) {
 	    town += venue.location.city;
+	    empty_town = false;
 	}
 	if (venue.location.state) {
-	    town += ", " + venue.location.state;
+	    town += (empty_town ? "" : ", ") + venue.location.state;
 	}
 	else if (venue.location.country) {
-	    town += ", " + venue.location.country;
+	    town += (empty_town ? "" : ", ") + venue.location.country;
 	}
 	return town;
     }
@@ -533,9 +535,7 @@ function FoursquareFormatted(venue) {
 		return "@"  + venue.contact.twitter;
 	    }
 	}
-	else {
-	    return "";
-	}
+	return "";
     }
     var _format_price = this._format_price = function () {
 	if (venue.price && venue.price.tier) {
@@ -1482,7 +1482,10 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
     var button_4sq_clicked = function (_event) {
 	var target = _event.delegateTarget;
 	if ($(target).hasClass("enabled")) {
-	    window.open($(target).attr("href"));
+	    return true;
+	}
+	else {
+	    return false;
 	}
     }
     var format_venue = this.format_venue = function (resp, venue) {
@@ -1534,6 +1537,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		    "f4sq-no-icon":     ! formatted.icon,
 		    "f4sq-no-ratings":  true,
 		    "f4sq-no-addr":     ! formatted.addr,
+		    "f4sq-no-details-addr":     ! formatted.detailed_addr,
+		    "f4sq-no-details-town":     ! formatted.detailed_town,
 		    "f4sq-no-price":    ! formatted.price,
 		    "f4sq-no-ll":	! formatted.ll,
 		    "f4sq-no-contact":  ! formatted.contact,

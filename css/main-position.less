@@ -336,9 +336,6 @@ body {
 }
 
 
-#details-addr-li {
-}
-
 #details-addr {
     display: inline;
 }
@@ -363,6 +360,12 @@ body {
     width: @minor_main_width;
     border-bottom-width: 1px;
     height: @grid_baseline * 2 - 1;
+
+    text-decoration: none;
+}
+
+a[id^="buttons-"].enabled {
+    display: block;
 }
 
 #extra-toggle {
