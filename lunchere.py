@@ -1154,12 +1154,8 @@ class MainPage(webapp2.RequestHandler):
                 if key.name() is None:
                     if not hasattr(obj, "__dup__"):
                         raise Exception("obj does not have __dup__")
-                    if not hasattr(obj, "should_parent"):
-                        raise Exception("obj does not have should_parent")
-                    if not hasattr(obj, "should_key_name"):
-                        raise Exception("obj does not have should_key_name")
                     # new_key = obj.__dup__(obj.should_parent(), obj.should_key_name()).put()
-                    new_key = obj.__dup__(obj.should_parent(), obj.should_key_name()).key()
+                    new_key = obj.__dup__().key()
                     if new_key:
                         print >> self.response, "replace %s with %s" % (repr(key.to_path()), repr(new_key.to_path()))
                         obj.delete()
