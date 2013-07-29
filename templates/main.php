@@ -101,6 +101,7 @@ function initClientIdHistoryId() {
 	        <i id="extra-toggle-button-down" class="icon-angle-down"></i>
 	    </div>
 	</div>
+    </div>
 	<div id="confirmed-footnote">
 	    <div id="selected-tag" ><i class="icon-ok"></i> SELECTED</div>
 	    You selected this meal.
@@ -109,7 +110,6 @@ function initClientIdHistoryId() {
 	    <div id="magic-tag" ><i class="icon-magic"></i> MAGIC</div>
 	    This meal is recommended by <span id="recommendation-source">Lunchere</span>
 	</div>
-    </div>
     <div id="options">
 	<div id="options-captions">
 	    <div id="no-confirmed-info-question">Lunch here today?</div>
