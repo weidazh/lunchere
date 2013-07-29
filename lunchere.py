@@ -149,6 +149,9 @@ class Recommendation:
                                 foursquare_id=foursquare_id,
                                 mealname=mealname)
 
+def model_dup(cls, parent, key_name, obj):
+    return obj.__dup__(parent=parent, key_name=key_name)
+
 def model_repr(cls_name, self, d):
     path = self.key().to_path()
     v = "# path = [" + ", ".join([repr(x) for x in path]) + "]\n"
@@ -177,6 +180,22 @@ class HistoryEvent(db.Model):
     confirmed = db.BooleanProperty()
     cancelled = db.BooleanProperty()
     canteenId = db.StringProperty()
+
+    def __dup__(self):
+        return HistoryEvent(parent=self.should_parent(),
+                key_name=self.should_key_name(),
+                historyId=self.historyId,
+                timeslot=self.timeslot,
+                event_date=self.event_date,
+                confirmed=self.confirmed,
+                cancelled=self.cancelled,
+                canteenId=self.canteenId)
+
+    def should_key_name(self):
+        return self.canteenId
+
+    def should_parent(self):
+        return TimeslotModel.key_path(self.historyId, self.timeslot)
 
     def __repr__(self):
         return model_repr("HistoryEvent", self, {
@@ -371,6 +390,19 @@ class Hints(db.Model):
     hint_key = db.StringProperty(required=True)
     hint_value = db.StringProperty(required=False)
 
+    def __dup__(self):
+        return Hints(parent=self.should_parent(),
+                key_name=self.should_key_name(),
+                historyId=self.historyId,
+                hint_key=self.hint_key,
+                hint_value=self.hint_value)
+
+    def should_key_name(self):
+        return self.hint_key
+
+    def should_parent(self):
+        return db.Key.from_path("Timeline", self.historyId)
+
     def __repr__(self):
         return model_repr("Hints", self, {
             "historyId": self.historyId,
@@ -435,6 +467,20 @@ class TimeslotModel(db.Model):
     timeslot = db.IntegerProperty()
     createdt = db.DateTimeProperty()
     mealname = db.StringProperty()
+
+    def __dup__(self):
+        return TimeslotModel(parent=self.should_parent(),
+                key_name=self.should_key_name(),
+                historyId=self.historyId,
+                timeslot=self.timeslot,
+                createdt=self.createdt,
+                mealname=self.mealname)
+
+    def should_key_name(self):
+        return str(self.timeslot)
+
+    def should_parent(self):
+        return db.Key.from_path("Timeline", self.historyId)
 
     def __repr__(self):
         return model_repr("TimeslotModel", self, {
@@ -520,6 +566,18 @@ class TimeslotModel(db.Model):
 class Timeline(db.Model):
     timelineId = db.StringProperty()
     name = db.StringProperty()
+
+    def __dup__(self):
+        return Timeline(parent=self.should_parent(),
+                key_name=self.should_key_name(),
+                timelineId=self.timelineId,
+                name=self.name)
+
+    def should_key_name(self):
+        return self.timelineId
+
+    def should_parent(self):
+        return None
 
     def __repr__(self):
         return model_repr("Timeline", self, {
@@ -704,6 +762,19 @@ class FoursquareVenue(db.Model):
     historyId = db.StringProperty(required=True)
     canteenId = db.StringProperty(required=True)
     foursquareId = db.StringProperty(required=True)
+
+    def __dup__(self):
+        return FoursquareVenue(parent=self.should_parent(),
+                key_name=self.should_key_name(),
+                historyId=historyId,
+                canteenId=canteenId,
+                foursquareId=foursquareId)
+
+    def should_key_name(self):
+        return canteenId
+
+    def should_parent(self):
+        return db.Key.from_path("Timeline", self.historyId)
 
     def __repr__(self):
         return model_repr("FoursquareVenue", self, {
@@ -1053,6 +1124,8 @@ class MainPage(webapp2.RequestHandler):
             return ("history:" + p[1], "normal")
         elif len(p) == 3 and p[0] == "t" and p[2] == "takeout":
             return ("history:" + p[1], "takeout")
+        elif len(p) == 3 and p[0] == "t" and p[2] == "transfer":
+            return ("history:" + p[1], "transfer")
         return (None, None)
 
     def _cookie_to_history_id(self, request):
@@ -1069,6 +1142,28 @@ class MainPage(webapp2.RequestHandler):
         expires = datetime.datetime.utcnow() + datetime.timedelta(days=days)
         self.response.set_cookie("historyId", urllib.quote(history_id), path="/", max_age=seconds, expires=expires, domain=None, secure=False, overwrite=True)
         pass
+
+    def transfer(self, history_id):
+        for cls in [HistoryEvent, Hints, FoursquareVenue, TimeslotModel, Timeline]:
+            if cls == Timeline:
+                filter = "timelineId ="
+            else:
+                filter = "historyId ="
+            for obj in db.Query(cls).filter(filter, history_id).run():
+                key = obj.key()
+                if key.name() is None:
+                    if not hasattr(obj, "__dup__"):
+                        raise Exception("obj does not have __dup__")
+                    if not hasattr(obj, "should_parent"):
+                        raise Exception("obj does not have should_parent")
+                    if not hasattr(obj, "should_key_name"):
+                        raise Exception("obj does not have should_key_name")
+                    # new_key = obj.__dup__(obj.should_parent(), obj.should_key_name()).put()
+                    new_key = obj.__dup__(obj.should_parent(), obj.should_key_name()).key()
+                    if new_key:
+                        print >> self.response, "replace %s with %s" % (repr(key.to_path()), repr(new_key.to_path()))
+                        obj.delete()
+        print >> self.response, "DONE"
 
     def takeout(self, history_id):
         for hist_ev in db.Query(HistoryEvent).filter("historyId =", history_id).run():
@@ -1119,6 +1214,11 @@ class MainPage(webapp2.RequestHandler):
                 self.response.set_status(200)
                 response.headers['Content-Type'] = 'text/plain'
                 self.takeout(history_id)
+                return
+            elif action == "transfer":
+                self.response.set_status(200)
+                response.headers['Content-Type'] = 'text/plain'
+                self.transfer(history_id)
                 return
 
             response.headers['Content-Type'] = 'text/html'
