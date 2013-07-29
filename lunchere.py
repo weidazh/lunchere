@@ -475,6 +475,20 @@ class TimeslotModel(db.Model):
         else:
             return tm.mealname
 
+class Timeline(db.Model):
+    timelineId = db.StringProperty()
+    name = db.StringProperty()
+
+    @classmethod
+    def get_name(cls, timeline_id):
+        t = db.Query(Timeline).ancestor(db.Key.from_path("Timeline", timeline_id)).get()
+        if t is not None and t.name:
+            logging.debug("[TIMELINE] get_name (from Timeline) %s" % (repr(t.name),));
+            return t.name
+        else:
+            logging.debug("[TIMELINE] get_name (from Hints) %s" % (repr(Hints.get_hint(timeline_id, "name", None)), ))
+            return Hints.get_hint(timeline_id, "name", "Untitled")
+
 class Timeslot:
     @classmethod
     def guess_local_timeslot_base(cls, history_id):
@@ -724,7 +738,12 @@ class History:
     def gen_new_history_id_from_hints(cls, hints):
         # from Crypto.Hash import MD5
         # return "history:" + MD5.new(repr(hints.get("ll", "")) + repr(hints.get("near", ""))).hexdigest()
-        return cls.gen_new_history_id()
+        history_id = cls.gen_new_history_id()
+        if not hints.has_key("name"):
+            hints["name"] = "Untitled"
+        t = Timeline(key_name=history_id, timelineId=history_id, name=hints["name"])
+        t.put()
+        return history_id
 
     @classmethod
     def gen_new_history_id(cls):
@@ -1037,7 +1056,10 @@ class MainPage(webapp2.RequestHandler):
                 'HISTORY_ID': history_id,
                 'API_VERSION': LUNCHERE_API_VERSION,
                 'LL': Hints.get_hint(history_id, "ll", ""), # FIXME: sometimes the datastore just cannot retrive the data that has been just put in
+                'TIMELINE_NAME': Timeline.get_name(history_id), # already escaped
+                # FIXME: how to disable escape?
             }
+            import cgi
             response.write(template.render(path, params))
         elif request.path == "/new":
             hints = {}
@@ -1055,6 +1077,8 @@ class MainPage(webapp2.RequestHandler):
                     Hints.set_hint(history_id, "ll", hints["ll"])
                 if hints.get("near", None):
                     Hints.set_hint(history_id, "near", hints["near"])
+                if hints.get("name", None):
+                    Hints.set_hint(history_id, "name", hints["name"])
                 self.redirect(str(history_id).replace("history:", "/t/"))
         else:
             if request.path == "/" or request.path == "/logout":

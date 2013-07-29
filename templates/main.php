@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Lunch from Here</title>
+<title>Lunchere for {{TIMELINE_NAME }} </title>
 <!-- Python Endpoints: https://developers.google.com/appengine/docs/python/endpoints/ -->
 <!-- API Explorer: https://developers.google.com/apis-explorer/ -->
 <script>
@@ -11,6 +11,7 @@ function initClientIdHistoryId() {
         "historyId": "{{HISTORY_ID}}",
         "API_VERSION": "{{API_VERSION}}",
         "LL": "{{LL}}",
+	"TIMELINE_NAME": "{{TIMELINE_NAME}}",
     };
 }
 </script>
@@ -199,7 +200,7 @@ function initClientIdHistoryId() {
 		<div id="timeline-button-right" class="timeline-button disabled"><i class="icon-plus"></i></div>
 	    </div>
 	</div>
-	<div id="timeline-title"><span id="timeline-title-text">Untitled</span> Timeline</div>
+	<div id="timeline-title"><span id="timeline-title-text">{{ TIMELINE_NAME }}</span> Timeline</div>
     </div>
     <div id="about">
         <div id="logo">
