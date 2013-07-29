@@ -149,9 +149,6 @@ class Recommendation:
                                 foursquare_id=foursquare_id,
                                 mealname=mealname)
 
-def model_dup(cls, parent, key_name, obj):
-    return obj.__dup__(parent=parent, key_name=key_name)
-
 def model_repr(cls_name, self, d):
     path = self.key().to_path()
     v = "# path = [" + ", ".join([repr(x) for x in path]) + "]\n"
@@ -766,12 +763,12 @@ class FoursquareVenue(db.Model):
     def __dup__(self):
         return FoursquareVenue(parent=self.should_parent(),
                 key_name=self.should_key_name(),
-                historyId=historyId,
-                canteenId=canteenId,
-                foursquareId=foursquareId)
+                historyId=self.historyId,
+                canteenId=self.canteenId,
+                foursquareId=self.foursquareId)
 
     def should_key_name(self):
-        return canteenId
+        return self.canteenId
 
     def should_parent(self):
         return db.Key.from_path("Timeline", self.historyId)
