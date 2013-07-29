@@ -1123,6 +1123,8 @@ class MainPage(webapp2.RequestHandler):
             return ("history:" + p[1], "takeout")
         elif len(p) == 3 and p[0] == "t" and p[2] == "transfer":
             return ("history:" + p[1], "transfer")
+        elif len(p) == 3 and p[0] == "t" and p[2] == "restore":
+            return ("history:" + p[1], "restore")
         return (None, None)
 
     def _cookie_to_history_id(self, request):
@@ -1139,6 +1141,10 @@ class MainPage(webapp2.RequestHandler):
         expires = datetime.datetime.utcnow() + datetime.timedelta(days=days)
         self.response.set_cookie("historyId", urllib.quote(history_id), path="/", max_age=seconds, expires=expires, domain=None, secure=False, overwrite=True)
         pass
+
+    def restore(self):
+        from ThursdayWireless import restore
+        restore()
 
     def transfer(self, history_id):
         for cls in [HistoryEvent, Hints, FoursquareVenue, TimeslotModel, Timeline]:
@@ -1211,6 +1217,11 @@ class MainPage(webapp2.RequestHandler):
                 self.response.set_status(200)
                 response.headers['Content-Type'] = 'text/plain'
                 self.transfer(history_id)
+                return
+            elif action == "restore":
+                self.response.set_status(200)
+                response.headers['Content-Type'] = 'text/plain'
+                self.restore()
                 return
 
             response.headers['Content-Type'] = 'text/html'
