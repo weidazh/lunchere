@@ -154,9 +154,12 @@ def model_repr(cls_name, self, d):
     v = "# path = [" + ", ".join([repr(x) for x in path]) + "]\n"
     v += cls_name
     v += "("
-    v += "parent=db.Key.from_path("
-    v += ", ".join([repr(x) for x in path[:-2]])
-    v += "), \n"
+    if len(path) > 2:
+        v += "parent=db.Key.from_path("
+        v += ", ".join([repr(x) for x in path[:-2]])
+        v += "), \n"
+    else:
+        v += "\n"
     if isinstance(path[-1], str) or isinstance(path[-1], unicode):
         v += "    key_name=" + repr(path[-1]) + ",\n"
     for k in d:
