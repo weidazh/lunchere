@@ -50,9 +50,6 @@ body {
     .normal;
     line-height: @grid_baseline;
 }
-body.initialize {
-    background: @color_bggray;
-}
 
 #above-container {
     background: @color_bggray;
@@ -179,6 +176,10 @@ body.initialize {
 #selected-tag {
     color: @color_fgwhite;
     background: @color_green_light;
+}
+
+#big-left-button, #big-right-button {
+    .clickable(@color_silver, @color_bggray, @color_blue_light, @color_bggray, @color_silver);
 }
 
 #options {

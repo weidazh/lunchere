@@ -103,6 +103,7 @@ function initClientIdHistoryId() {
 	    </div>
 	</div>
     </div>
+    <div class="container">
 	<div id="confirmed-footnote">
 	    <div id="selected-tag" ><i class="icon-ok"></i> SELECTED</div>
 	    You selected this meal.
@@ -111,45 +112,52 @@ function initClientIdHistoryId() {
 	    <div id="magic-tag" ><i class="icon-magic"></i> MAGIC</div>
 	    This meal is recommended by <span id="recommendation-source">Lunchere</span>
 	</div>
-    <div id="options">
-	<div id="options-captions">
-	    <div id="no-confirmed-info-question">Lunch here today?</div>
-	    <div id="no-confirmed-info-date"></div>
-	    <!-- <br/>
-	    or <input id="typehere" value="type here" valuesource="type here" ></input><br/>
-	       <u id="askfriends">ask friends</u>
-	       -->
+    </div>
+</div><!-- main-container -->
+</div><!-- root-container -->
+    <div id="big-buttons-container" class="container">
+        <div><div id="big-left" ><div><i id="big-left-button"  class="disabled" class="icon-arrow-left"></i></div></div></div>
+        <div><div id="big-right"><div><i id="big-right-button" class="disabled" class="icon-plus"></i></div></div></div>
+    </div>
+    <div class="container" id="meal-container">
+	<div id="options">
+	    <div id="options-captions">
+		<div id="no-confirmed-info-question">Lunch here today?</div>
+		<div id="no-confirmed-info-date"></div>
+		<!-- <br/>
+		or <input id="typehere" value="type here" valuesource="type here" ></input><br/>
+		   <u id="askfriends">ask friends</u>
+		   -->
+	    </div>
+	    <div id="options-yes-container">
+		<div id="options-yes" class="disabled"><i class="icon-ok"></i></div>
+	    </div>
+	    <div id="options-no-container">
+		<div id="options-no" class="disabled"><i class="icon-remove"></i></div>
+	    </div>
+	</div><!-- showed only in non-confirmed mode -->
+	<div id="extra-options" class="container">
+	    <div id="typehere-container" class="container">
+		<div id="typehere-autocomplete-container"></div>
+		<div id="typehere-text">type here: </div>
+		<input id="typehere" value="" placeholder="where you wanna go?" valuesource="type here" ></input>
+		<div id="typehere-search"><i class="icon-chevron-right"></i></div>
+	    </div>
+	    <div id="delete-this-meal" class="disabled">
+		<i class="icon-trash"></i> delete this meal
+	    </div>
 	</div>
-	<div id="options-yes-container">
-	    <div id="options-yes" class="disabled"><i class="icon-ok"></i></div>
+	<div id="confirmed-info">
+	    <div id="confirmed-info-name">Today's Lunch</div>
+	    <div id="confirmed-info-date"></div>
 	</div>
-	<div id="options-no-container">
-	    <div id="options-no" class="disabled"><i class="icon-remove"></i></div>
-	</div>
-    </div><!-- showed only in non-confirmed mode -->
-    <div id="extra-options" class="container">
-        <div id="typehere-container" class="container">
-	    <div id="typehere-autocomplete-container"></div>
-	    <div id="typehere-text">type here: </div>
-	    <input id="typehere" value="" placeholder="where you wanna go?" valuesource="type here" ></input>
-	    <div id="typehere-search"><i class="icon-chevron-right"></i></div>
-	</div>
-	<div id="delete-this-meal" class="disabled">
-	    <i class="icon-trash"></i> delete this meal
+	<div id="review-options">
+	    <div id="review-thumbs-up" class="disabled"><div id="review-thumbs-up-floater"><i class="icon-thumbs-up"></i></div></div>
+	    <div id="review-reselect" class="disabled"><i class="icon-rotate-left"></i></div>
+	    <div id="review-delete-meal" class="disabled"><i class="icon-trash"></i></div>
+	    <div id="review-thumbs-down" class="disabled"><div id="review-thumbs-down-floater"><i class="icon-thumbs-down-alt"></i></div></div>
 	</div>
     </div>
-    <div id="confirmed-info">
-        <div id="confirmed-info-name">Today's Lunch</div>
-	<div id="confirmed-info-date"></div>
-    </div>
-    <div id="review-options">
-        <div id="review-thumbs-up" class="disabled"><div id="review-thumbs-up-floater"><i class="icon-thumbs-up"></i></div></div>
-        <div id="review-reselect" class="disabled"><i class="icon-rotate-left"></i></div>
-        <div id="review-delete-meal" class="disabled"><i class="icon-trash"></i></div>
-        <div id="review-thumbs-down" class="disabled"><div id="review-thumbs-down-floater"><i class="icon-thumbs-down-alt"></i></div></div>
-    </div>
-</div>
-</div>
 </div>
 
 <div id="footer-container">

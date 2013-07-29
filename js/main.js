@@ -402,8 +402,11 @@ function MainUI() {
 	register_enabled_only("#review-reselect", current_view.no_clicked);
 	register_enabled_only("#delete-this-meal", current_view.delete_clicked);
 	register_enabled_only("#review-delete-meal", current_view.delete_clicked);
-	register_enabled_only("#timeline-button-left",  current_view.left_clicked);
-	register_enabled_only("#timeline-button-right", current_view.right_clicked);
+	// register_enabled_only("#timeline-button-left",  current_view.left_clicked);
+	// register_enabled_only("#timeline-button-right", current_view.right_clicked);
+
+	register_enabled_only("#big-left-button",  current_view.left_clicked);
+	register_enabled_only("#big-right-button", current_view.right_clicked);
 
 	register_enabled_only("#typehere-search", current_view.typehere_search_clicked);
 
@@ -1576,7 +1579,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	body_class.refresh();
     }
     var set_prev_button = this.set_prev_button = function (has_prevmeal) {
-	var toggler = new ClassToggler({
+	var descriptor =  {
+	    /*
 	    "#timeline-button-left": {
 		"mapping": {
 		    "disabled": ! has_prevmeal,
@@ -1587,8 +1591,18 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		"mapping": {
 		    "icon-arrow-left": has_prevmeal,
 		}
+	    },
+	    */
+	    "#big-left-button": {
+		"mapping": {
+		    "disabled": ! has_prevmeal,
+		    "enabled": has_prevmeal,
+		    "icon-arrow-left": has_prevmeal,
+		}
 	    }
-	});
+	};
+	console.log(descriptor);
+	var toggler = new ClassToggler(descriptor);
 	toggler.apply();
     }
     var set_next_button = this.set_next_button = function (has_nextmeal, has_createmeal, confirmed) {
@@ -1600,7 +1614,8 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	}
 	// FIXME: Currently the server will return has_createmeal = false when a meal is
 	//        newly confirmed, this could be temporarily solved by refreshing the page...
-	var toggler = new ClassToggler({
+	var descriptor =  {
+	    /*
 	    "#timeline-button-right": {
 		"mapping": {
 		    "disabled": ! (has_nextmeal || has_createmeal),
@@ -1612,8 +1627,19 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 		    "icon-arrow-right": has_nextmeal,
 		    "icon-plus": has_createmeal && !has_nextmeal,
 		}
+	    },
+	    */
+	    "#big-right-button": {
+		"mapping": {
+		    "disabled": ! (has_nextmeal || has_createmeal),
+		    "enabled": has_nextmeal || has_createmeal,
+		    "icon-arrow-right": has_nextmeal,
+		    "icon-plus": has_createmeal && !has_nextmeal,
+		}
 	    }
-	});
+	};
+	console.log(descriptor);
+	var toggler = new ClassToggler(descriptor);
 	toggler.apply();
     }
     var clear_typehere = this.clear_typehere = function () {
