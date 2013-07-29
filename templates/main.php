@@ -112,8 +112,8 @@ function initClientIdHistoryId() {
     </div>
     <div id="options">
 	<div id="options-captions">
-	    Lunch here today?
-	    <span id="no-confirmed-info-date"></span>
+	    <div id="no-confirmed-info-question">Lunch here today?</div>
+	    <div id="no-confirmed-info-date"></div>
 	    <!-- <br/>
 	    or <input id="typehere" value="type here" valuesource="type here" ></input><br/>
 	       <u id="askfriends">ask friends</u>

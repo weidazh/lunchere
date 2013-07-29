@@ -1260,7 +1260,7 @@ function GoogleDistance() {
     }
 }
 
-function TimeslotView(timeslot, mealname) {
+function TimeslotView(timeslot, mealname, has_nextmeal) {
     var that = this;
     this.timeslot = timeslot;
     if (typeof mealname === 'undefined') {
@@ -1389,11 +1389,11 @@ function TimeslotView(timeslot, mealname) {
 	// s4: // Only the above does not show the info.
 	//     1st meal on 12 Jul 2013
 	var v1, v2, v3;
-	if (that.days_diff >= 0) {
-	    v1 = present_tense() + " here " + question_date();
+	if (! has_nextmeal) { // that.days_diff >= 0) {
+	    v1 = present_tense() + " here " + question_date() + "?";
 	}
 	else {
-	    v1 = past_tense() + " here " + question_date();
+	    v1 = past_tense() + " here " + question_date() + "?";
 	}
 	v2 = format_ordinal(that.ord) + " on " + always_date();
 	v3 = confirmed_mealname();
@@ -1629,7 +1629,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 
 	// $("#confirmed-info-date").text(resp.timeslotFriendly);
 	// $("#no-confirmed-info-date").text(resp.timeslotFriendly);
-	var timeslotView = new TimeslotView(resp.timeslot, resp.mealname);
+	var timeslotView = new TimeslotView(resp.timeslot, resp.mealname, resp.has_nextmeal);
 	timeslotView.apply(
 	    "#no-confirmed-info-question",
 	    "#no-confirmed-info-date",
