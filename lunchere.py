@@ -149,6 +149,20 @@ class Recommendation:
                                 foursquare_id=foursquare_id,
                                 mealname=mealname)
 
+def model_repr(cls_name, self, d):
+    path = self.key().to_path()
+    v = "# path = [" + ", ".join([repr(x) for x in path]) + "]\n"
+    v += cls_name
+    v += "("
+    v += "parent=db.Key.from_path("
+    v += ", ".join([repr(x) for x in path[:-2]])
+    v += "), \n"
+    if isinstance(path[-1], str) or isinstance(path[-1], unicode):
+        v += "    key_name=" + repr(path[-1]) + ",\n"
+    for k in d:
+        v += "    " + k + "=" + repr(d[k]) + ",\n"
+    v += ")"
+    return v
 
 class HistoryEvent(db.Model):
     """A HistoryEvent is an record in History,
@@ -160,6 +174,16 @@ class HistoryEvent(db.Model):
     confirmed = db.BooleanProperty()
     cancelled = db.BooleanProperty()
     canteenId = db.StringProperty()
+
+    def __repr__(self):
+        return model_repr("HistoryEvent", self, {
+            'historyId': self.historyId,
+            'timeslot': self.timeslot,
+            'event_date': self.event_date,
+            'confirmed': self.confirmed,
+            'cancelled': self.cancelled,
+            'canteenId': self.canteenId,
+        })
 
     @classmethod
     def get_max_timeslot_or_none(cls, history_id):
@@ -344,6 +368,13 @@ class Hints(db.Model):
     hint_key = db.StringProperty(required=True)
     hint_value = db.StringProperty(required=False)
 
+    def __repr__(self):
+        return model_repr("Hints", self, {
+            "historyId": self.historyId,
+            "hint_key": self.hint_key,
+            "hint_value": self.hint_value,
+        })
+
     @classmethod
     def get_hint(cls, history_id, key, def_value):
         hint = db.Query(Hints).ancestor(db.Key.from_path("Timeline", history_id, "Hints", key)).get()
@@ -401,6 +432,14 @@ class TimeslotModel(db.Model):
     timeslot = db.IntegerProperty()
     createdt = db.DateTimeProperty()
     mealname = db.StringProperty()
+
+    def __repr__(self):
+        return model_repr("TimeslotModel", self, {
+            "historyId": self.historyId,
+            "timeslot": self.timeslot,
+            "createdt": self.createdt,
+            "mealname": self.mealname
+        })
 
     @classmethod
     def guess_meal_name(cls, dt):
@@ -478,6 +517,12 @@ class TimeslotModel(db.Model):
 class Timeline(db.Model):
     timelineId = db.StringProperty()
     name = db.StringProperty()
+
+    def __repr__(self):
+        return model_repr("Timeline", self, {
+            "timelineId": self.timelineId,
+            "name": self.name
+        })
 
     @classmethod
     def get_name(cls, timeline_id):
@@ -656,6 +701,13 @@ class FoursquareVenue(db.Model):
     historyId = db.StringProperty(required=True)
     canteenId = db.StringProperty(required=True)
     foursquareId = db.StringProperty(required=True)
+
+    def __repr__(self):
+        return model_repr("FoursquareVenue", self, {
+            "historyId": self.historyId,
+            "canteenId": self.canteenId,
+            "foursquareId": self.foursquareId,
+        })
 
     @classmethod
     def get_4qr_id(cls, historyId, canteenId):
@@ -987,15 +1039,18 @@ class MainPage(webapp2.RequestHandler):
 
     def _path_to_history_id(self, path):
         "generate History ID (XX:YY) from URL (/XX/YY)"
-        if path.startswith("/user"):
+        p = path.split("/")
+        if len(p) and p[0] == "":
+            p = p[1:]
+        if len(p) == 1 and p[0] == "user":
             user = my_get_current_user(False)
             if user != None:
-                return History.from_user(user).history_id
-        elif path.startswith("/t/"):
-            import re
-            return re.compile("^/t/").sub("history:", path)
-        else:
-            return None
+                return (History.from_user(user).history_id, "normal")
+        elif len(p) == 2 and p[0] == "t":
+            return ("history:" + p[1], "normal")
+        elif len(p) == 3 and p[0] == "t" and p[2] == "takeout":
+            return ("history:" + p[1], "takeout")
+        return (None, None)
 
     def _cookie_to_history_id(self, request):
         logging.debug("_cookie_to_history_id")
@@ -1012,6 +1067,19 @@ class MainPage(webapp2.RequestHandler):
         self.response.set_cookie("historyId", urllib.quote(history_id), path="/", max_age=seconds, expires=expires, domain=None, secure=False, overwrite=True)
         pass
 
+    def takeout(self, history_id):
+        for hist_ev in db.Query(HistoryEvent).filter("historyId =", history_id).run():
+            print >> self.response, repr(hist_ev)
+        for hints in db.Query(Hints).filter("historyId =", history_id).run():
+            print >> self.response, repr(hints)
+        for fvenue in db.Query(FoursquareVenue).filter("historyId =", history_id).run():
+            print >> self.response, repr(fvenue)
+        for timeslot in db.Query(TimeslotModel).filter("historyId =", history_id).run():
+            print >> self.response, repr(timeslot)
+        for timeline in db.Query(Timeline).filter("timelineId =", history_id).run():
+            print >> self.response, repr(timeline)
+        pass
+
     def get(self):
         "default behavior"
 
@@ -1025,7 +1093,8 @@ class MainPage(webapp2.RequestHandler):
         # but in the following call, do not use_cookie, so that
         # the history_id is got from the user sent cookie directly rather
         # than in the client side.
-        history_id = self._path_to_history_id(request.path)
+        history_id, action = self._path_to_history_id(request.path)
+        logging.debug("history_id, action = %s, %s" % (repr(history_id), repr(action)))
         history_id_in_cookie = self._cookie_to_history_id(request)
         logging.debug("history_id from URL %s; history_id from cookie %s" % (repr(history_id), repr(history_id_in_cookie)))
         if history_id is not None:
@@ -1042,6 +1111,11 @@ class MainPage(webapp2.RequestHandler):
             if Hints.get_hint(history_id, "ll", None) is None:
                 self.response.set_status(404)
                 self.response.write("404 Not found")
+                return
+            if action == "takeout":
+                self.response.set_status(200)
+                response.headers['Content-Type'] = 'text/plain'
+                self.takeout(history_id)
                 return
 
             response.headers['Content-Type'] = 'text/html'
@@ -1089,7 +1163,6 @@ class MainPage(webapp2.RequestHandler):
                 # self.redirect(str(history_id).replace("history:", "/history/"))
                 self.response.set_status(404)
                 self.response.write("404 Not found")
-
 
 class LandingPage(webapp2.RequestHandler):
     def get(self):
