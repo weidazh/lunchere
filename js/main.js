@@ -1492,6 +1492,10 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	}
     }
     var format_venue = this.format_venue = function (resp, venue) {
+	if (!venue) {
+	    console.log("venue is empty");
+	    return;
+	}
 	if (venue.id != resp.foursquare_id) {
 	    console.log("WARNING venue.id != resp.foursquare_id")
 	    return;
@@ -1700,7 +1704,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	that.confirmed = false;
 
 	body_class.refresh();
-	lunchereCache.fetch(canteen_id, foursquare_id, format_venue);
+	lunchereCache.fetch(canteen_id, foursquare_id, new_backend.receive);
     }
     var loading_title = this.loading_title = function () {
 	if (that.canteen_id == "" || !lunchereCache.has_title(that.canteen_id)) {
