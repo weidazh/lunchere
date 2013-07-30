@@ -53,7 +53,7 @@ function Cookie() {
     var push_timeline = this.push_timeline = function(id, name, town, lastdt) {
 	var obj = { "id": id, "name": name, "town": town, "lastdt": lastdt };
 	var key = id;
-	set_cookie(key, to_str(obj), "/", null);
+	set_cookie(key, to_str(obj), "/");
     }
     var load = this.load = function () {
 	that.cookie = document.cookie;
@@ -82,7 +82,7 @@ function Cookie() {
 	    catch (e) {
 		console.log(e);
 		console.log(value);
-		clear_cookie(key, "/", null);
+		clear_cookie(key, "/");
 	    }
 	});
     }

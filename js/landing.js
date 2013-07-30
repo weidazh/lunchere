@@ -230,12 +230,22 @@ function LandingPage(ck) {
 	else
 	    return "today";
     }
+    function trash_clicked(_event) {
+	var li = $(_event.delegateTarget).parent()[0];
+	var timeline = li.timeline;
+	ck.clear_cookie(timeline.id, "/");
+	delete ck.timelines[timeline.id];
+	$(li).detach();
+    }
     function show_timelines() {
 	$.each(ck.timelines, function (k, timeline) {
 	    try{
-		$("<li>").append($("<a>").attr("href", get_link_from_id(timeline.id)).text(timeline.name))
+		var li = $("<li>")
+		         .append($("<a>").attr("href", get_link_from_id(timeline.id)).text(timeline.name))
+			 .append($("<i>").addClass("icon-trash").addClass("enabled").click(trash_clicked))
 			 .append($("<div>").text(timeline.town + ", " + relative_date(timeline.lastdt)))
-			 .appendTo($("#recent-timelines"))
+			 .appendTo($("#recent-timelines"));
+		li[0].timeline = timeline;
 	    }
 	    catch (e) {
 		console.log(e);
