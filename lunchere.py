@@ -115,6 +115,7 @@ class Recommendation:
            timeslot_friendly is automatically rederred from timeslot;
            in future there could be many other such view that are rendered;
            such as is_last_meal, is_first_meal, etc"""
+        logging.debug("[PROGRESS] Recommendation.to_rpc");
         if self.canteen_id is not None:
             canteen_id = self.canteen_id
         else:
@@ -123,22 +124,23 @@ class Recommendation:
             timeslot_friendly = Timeslot.user_friendly(self.timeslot)
         else:
             timeslot_friendly = None
-        logging.info("COULD_DELETE:")
+        logging.debug("[PROGRESS] Recommendation could_delete?");
         could_delete = Timeslot.delete_and_prevmeal(self.history_id, self.timeslot, dry_run=True, fallback=False, create=False)
-        logging.info("COULD_DELETE: " + repr(could_delete))
         could_delete = not not could_delete
+        logging.debug("[PROGRESS] Recommendation has_prevmeal?");
         has_prevmeal = not not Timeslot.prevmeal(self.history_id, self.timeslot, fallback=False, create=False)
         has_nextmeal = not not Timeslot.nextmeal(self.history_id, self.timeslot, fallback=False, create=False)
-        logging.info("HAS_CREATEMEAL:")
-        has_createmeal = Timeslot.nextmeal(self.history_id, self.timeslot, fallback=False, create=True, create_only=True)
-        logging.info("HAS_CREATEMEAL: " + repr(has_createmeal))
+        logging.debug("[PROGRESS] Recommendation has_createmeal?");
+        has_createmeal = Timeslot.nextmeal(self.history_id, self.timeslot, fallback=False, create=True, create_only=True, dry_run=True)
         has_createmeal = not not has_createmeal
+        logging.debug("[PROGRESS] Recommendation mealname?");
         mealname = TimeslotModel.get_mealname(self.history_id, self.timeslot)
         hints = HintsMessage()
         logging.debug(self.hints)
         for key in self.hints:
             logging.debug("setattr %s %s %s" % (repr(hints), repr(key), repr(self.hints[key])))
             setattr(hints, key, self.hints[key])
+        logging.debug("[PROGRESS] Recommendation foursquare_id?");
         foursquare_id = FoursquareVenue.get_4qr_id(self.history_id, canteen_id)
         return TodayRecommendation(name=canteen_id, historyId=self.history_id,
                                 timeslot=self.timeslot, timeslotFriendly=timeslot_friendly,
@@ -608,7 +610,12 @@ class Timeslot:
             logging.warn("deleting")
             for hist_ev in HistoryEvent.foreach_hist_ev(history_id, timeslot0):
                 if not dry_run:
+                    logging.warn("deleting %s" % (repr(hist_ev),))
                     hist_ev.delete()
+            for timeslot_model in db.Query(TimeslotModel).ancestor(TimeslotModel.key_path(history_id, timeslot0)).run():
+                if not dry_run:
+                    logging.warn("deleting %s" % (repr(timeslot_model),))
+                    timeslot_model.delete()
 
         # Move to prev (or next meal)
         new_timeslot = Timeslot.prevmeal(history_id, timeslot0, fallback=False, create=False)
@@ -647,7 +654,7 @@ class Timeslot:
         return timeslot
 
     @classmethod
-    def nextmeal(cls, history_id, timeslot0, fallback=True, create=True, create_only=False):
+    def nextmeal(cls, history_id, timeslot0, fallback=True, create=True, create_only=False, dry_run=False):
         """find the next timeslot > timeslot0.
            create new timeslot only when current timeslot is confirmed, or,
            the day is changed.
@@ -688,7 +695,8 @@ class Timeslot:
         if create and new_timeslot is not None:
             logging.info("new_timeslot is not None and create")
             """ Now create a new log in the datastore """
-            TimeslotModel.get_or_create(history_id, new_timeslot)
+            if not dry_run:
+                TimeslotModel.get_or_create(history_id, new_timeslot)
             return new_timeslot
         elif create_only:
             logging.info("new_timeslot is None and create_only")
@@ -885,6 +893,8 @@ class History:
            FIXME: call the backend to learn the fact for recommendation"""
         if not isinstance(exclude, tuple):
             raise Exception("Programming error: input exclude is not tuple")
+
+        logging.debug("[PROGRESS] recommend");
         logging.info("EXCLUDE = " + repr(exclude))
         has_other_recommend = True
         hints = {
@@ -892,16 +902,21 @@ class History:
             "near": Hints.get_hint(self.history_id, "near", None)
         }
         if self.next_recommend is None:
+            logging.debug("[PROGRESS] next_recommend is None");
             choices = Choice.get_choices(history_id=self.history_id, timeslot0=self.timeslot, exclude=exclude)
             logging.info("CHOICES = " + repr(choices))
             if len(choices):
+                logging.debug("[PROGRESS] have choices");
                 self.confirmed = False
                 self.next_recommend = Choice.choose_from(choices) # FIXME: backend...
                 self._datastore_append(self.next_recommend, False, False)
             else:
+                logging.debug("[PROGRESS] no choices");
                 self.confirmed = False
                 self.next_recommend = None
                 has_other_recommend = not not (len(choices) + len(exclude))
+        else:
+            logging.debug("[PROGRESS] next_recommend is not None");
         return Recommendation(self.next_recommend, has_other_recommend, history_id=self.history_id, timeslot=self.timeslot, confirmed=self.confirmed, hints=hints)
 
 
@@ -913,20 +928,28 @@ class History:
     @classmethod
     def recommend_from(cls, history_id, timeslot, prevmeal=None, nextmeal=None, deletemeal=None, cancel=None, confirm=None, fetch=None):
         "this is what the user should call directly"
+        logging.debug("[PROGRESS] recommend_from");
         exclude= ()
         if deletemeal:
+            logging.debug("[PROGRESS] deletemeal");
             timeslot = Timeslot.delete_and_prevmeal(history_id, timeslot)
         if prevmeal:
+            logging.debug("[PROGRESS] prevmeal");
             timeslot = Timeslot.prevmeal(history_id, timeslot)
         if nextmeal:
+            logging.debug("[PROGRESS] nextmeal");
             timeslot = Timeslot.nextmeal(history_id, timeslot)
+        logging.debug("[PROGRESS] create History object");
         history = History(history_id, timeslot)
         if cancel:
+            logging.debug("[PROGRESS] cancel");
             history.cancel(cancel)
             exclude += (cancel,)
         if confirm:
+            logging.debug("[PROGRESS] confirm");
             history.confirm(confirm)
         if fetch:
+            logging.debug("[PROGRESS] fetch");
             history.fetch(fetch)
         return history.recommend(exclude=exclude)
 
