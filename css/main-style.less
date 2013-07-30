@@ -1,39 +1,4 @@
 /* **************** STYLING ************** */
-@import url(https://fonts.googleapis.com/css?family=PT+Sans:400);
-@import url(https://fonts.googleapis.com/css?family=PT+Sans:700);
-@import url(https://fonts.googleapis.com/css?family=PT+Sans+Narrow);
-
-.normal {
-    font-family: "PT Sans", Tahoma, Arial, Helvetica, sans-serif;
-}
-
-.narrow {
-    font-family: "PT Sans Narrow", "Helvetica Narrow", "Arial Narrow", "Heiti";
-}
-
-.disabled { display: none; }
-/* TODO: as disabled is display:none now, remove the other unnecessary disabled styles */
-.enabled:hover { cursor: pointer; }
-.disabled:hover { cursor: default; }
-
-.clickable (@color, @bgcolor, @hover_color, @hover_bgcolor, @disabled_color) {
-    &.enabled {
-	color: @color;
-	background-color: @bgcolor;
-    }
-    &.enabled:hover {
-	color: @hover_color;
-	background-color: @hover_bgcolor;
-    }
-    &.disabled {
-	color: @disabled_color;
-	background-color: @bgcolor;
-    }
-    &.disabled:hover {
-	color: @disabled_color;
-	background-color: @bgcolor;
-    }
-}
 .clickable_border_top_down_color(@bordercolor, @hover_color) {
     &.enabled:hover {
 	border-top-color: @hover_color;
@@ -43,16 +8,6 @@
 	border-top-color: @bordercolor;
 	border-bottom-color: @bordercolor;
     }
-}
-body {
-    background: @color_about_bg;
-    font-size: @normal_font_size;
-    .normal;
-    line-height: @grid_baseline;
-}
-
-#above-container {
-    background: @color_bggray;
 }
 
 #main-icon {
@@ -308,16 +263,3 @@ body {
     font-weight: bold;
 }
 
-#about {
-    background: @color_about_bg;
-}
-
-#logo {
-    font-weight: bolder;
-}
-#logo-lunch {
-    color: @color_fgwhite;
-}
-#logo-here {
-    color: @color_logo_here_fg;
-}

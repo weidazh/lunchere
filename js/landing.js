@@ -52,10 +52,16 @@ function LLGeocoder(spinner, submit_callback) {
 
     var p0 = { };
     var selected_ll;
+    function set_selected_ll(ll) {
+	if (ll) {
+	    selected_ll = ll;
+	    $(location_pick).addClass("has-location");
+	}
+    }
     function debug(text) {
 	$("#debug-layer").text(text);
     }
-    function disbale_pick() {
+    function disable_pick() {
 	$(location_pick).css("opacity", 0);
     }
     function disable_submit() {
@@ -63,7 +69,7 @@ function LLGeocoder(spinner, submit_callback) {
     }
     function enable_submit(ll) {
 	if (ll) {
-	    selected_ll = ll;
+	    set_selected_ll(ll);
 	    $(submit_button).attr("disabled", false).removeClass("disabled").addClass("enabled");
 	}
 	else if (selected_ll) {
@@ -80,7 +86,7 @@ function LLGeocoder(spinner, submit_callback) {
         var q0 = request.term;
         var q = encodeURI(q0);
 	var url;
-	$("#find").attr("disabled", true);
+	disable_submit();
         if (q0.length >= 1) {
 	    url = "https://maps.googleapis.com/maps/api/geocode/json?address=" + q + "&sensor=false";
 	}
@@ -134,8 +140,7 @@ function LLGeocoder(spinner, submit_callback) {
         // geocode_ll(ll, ll_geocode_fetched, ll_geocode_failed);
 	p0 = { "lat": position.coords.latitude, "lng": position.coords.longitude };
 	// $(location_input).autocomplete("search", "");
-	selected_ll = ll;
-	$(submit_button).attr("disabled", false).removeClass("disabled").addClass("enabled");
+	enable_submit(ll);
 	enable_input();
     }
     function location_pick_clicked() {

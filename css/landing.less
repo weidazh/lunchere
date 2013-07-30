@@ -1,0 +1,204 @@
+@import "common.less";
+
+/* VARIABLES */
+@page_width: (@input_box_size + @find_margin + @find_button_width);
+@page_height: 64px;
+
+/* sizes should include border, padding, width
+ * but not margins.
+ */
+@input_box_size: @landing_lwidth;
+@input_box_width: (@input_box_size - @input_box_border_widths - @input_box_paddings);
+@input_box_paddings: (@input_box_padding_left + @input_box_padding_right);
+@input_box_padding_left: @location_arrow_size;
+@input_box_padding_right: @status_size;
+@input_box_tbpadding: 1px;
+@input_box_border_widths: @input_box_border_width * 2;
+@input_box_border_width: 2px;
+@input_box_height: 50px;
+
+@location_arrow_size: @location_arrow_width + @location_arrow_padding;
+@location_arrow_width: 24px;
+@location_arrow_padding: 8px;
+@location_arrow_margin_left: -@input_box_size;
+@location_arrow_margin_right: @input_box_size - @location_arrow_size;
+
+@status_size: @status_width + @status_padding;
+@status_width: 28px;
+@status_padding: 8px;
+@status_margin_left: -@status_size;
+@status_margin_right: 0px;
+
+@find_button_width: @landing_rwidth;
+@find_margin: 0px;
+@button_green: #99ff99;
+
+/* COMMON FUNCTIONS */
+#error-warning {
+    display: none;
+}
+
+#spinner {
+    display: block;
+    width: 24px;
+    height: 24px; /* font size */
+    margin-bottom: -0.2em; /* baseline */
+}
+
+#spinner-alternative {
+    display: none;
+}
+
+
+/* STYLING */
+#location {
+    display: block;
+    margin-left: 0px;
+    font-size: 18px;
+    color: @color_wet_asphalt;
+}
+
+@color_placeholder: @color_asbestos;
+#location::-webkit-input-placeholder { /* WebKit browsers */
+    color: @color_placeholder;
+}
+
+#location:-moz-placeholder { /* Mozilla Firefox 4 to 18 */
+    color: @color_placeholder;
+}
+
+#location::-moz-placeholder { /* Mozilla Firefox 19+ */
+    color: @color_placeholder;
+}
+
+#location:-ms-input-placeholder { /* Internet Explorer 10+ */
+    color: @color_placeholder;
+}
+
+#location-container, #find {
+    .tight_float;
+    line-height: @input_box_height;
+}
+
+#find {
+    clear: none;
+    margin: 0px;
+    border: 0px;
+    height: @input_box_height;
+    font-size: @grid_baseline;
+
+    .clickable(@color_fgwhite, @color_blue, @color_fgwhite, @color_blue_light, @color_fgwhite);
+
+    &.disabled {
+	background: @color_concrete;
+	display: block;
+    }
+
+    &.disabled:hover {
+	background: @color_concrete;
+    }
+}
+
+/* POSITIONING */
+@landing_lwidth: 322px;
+@landing_rwidth: 160px;
+@landing_width: @landing_lwidth + @landing_rwidth;
+
+#center-container {
+    margin-left: auto;
+    margin-right: auto;
+    width: @landing_width;
+}
+
+#above-logo, #recent-timlines-container,  #page-container {
+    .tight_float;
+}
+
+#location {
+    padding-left: @input_box_padding_left;
+    padding-right: @input_box_padding_right;
+    width: @input_box_width;
+    border: @input_box_border_width solid black;
+    height: @input_box_height - 2 * @input_box_tbpadding - 2 * @input_box_border_width;
+}
+#location[disabled] {
+    background: @color_bggray;
+}
+
+#arrow-overlay, #status-overlay {
+    display: block;
+    .tight_float;
+    margin-top: -@input_box_height;
+}
+
+#arrow-overlay {
+    width: @location_arrow_width;
+    padding-left: @location_arrow_padding;
+}
+
+#arrow {
+    .clickable(@color_asbestos, @color_bgwhite, @color_blue_light, @color_bgwhite, @color_asbestos);
+}
+
+#arrow.has-location {
+    color: @color_blue;
+}
+
+#location[disabled] + div > #arrow.enabled,
+#location[disabled] + div > #arrow.enabled:hover {
+    background: @color_bggray;
+}
+
+#status-overlay {
+    padding-left: @status_padding;
+    width: @status_width;
+}
+
+#find {
+    margin-left: @find_margin;
+    width: @find_button_width; /* button is border-box */
+}
+
+/* Styles */
+#above-logo {
+    background-image: url(logo.png);
+    width: 288px;
+    height: 57px;
+    background-repeat: no-repeat;
+}
+
+#center-container {
+    font-size: 24px;
+    color: @color_wet_asphalt;
+    line-height: 3 * @grid_baseline;
+}
+
+#recent-timelines {
+    width: @landing_lwidth - @grid_gutter;
+    background: @color_bgwhite;
+    font-size: 18px;
+    color: @color_asbestos;
+    line-height: @grid_baseline;
+
+    list-style: none;
+    padding-left: @grid_half_gutter;
+    padding-right: @grid_half_gutter;
+    padding-top: @grid_baseline;
+    padding-bottom: @grid_baseline;
+
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+#recent-timelines > li {
+    margin-top: @grid_baseline;
+    margin-bottom: @grid_baseline;
+}
+
+#recent-timelines > li > div {
+    font-size: @small_font_size;
+}
+
+#above-container {
+    padding-bottom: 2 * @grid_baseline;
+}
