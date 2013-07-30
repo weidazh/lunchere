@@ -1333,7 +1333,7 @@ function TimeslotView(timeslot, mealname, has_nextmeal) {
     }
     var present_tense = this.present_tense = function () {
 	switch (that.mealname) {
-            case "Night Snack": return "Night snack";
+            case "Snack": return "Snack";
             case "Breakfast": return "Breakfast";
             case "Lunch": return "Lunch";
             case "Tea": return "Tea";
@@ -1344,7 +1344,7 @@ function TimeslotView(timeslot, mealname, has_nextmeal) {
     }
     var past_tense = this.past_tense = function () {
 	switch (that.mealname) {
-            case "Night Snack": return "Night-snacked";
+            case "Snack": return "Snacked";
             case "Breakfast": return "Breakfasted";
             case "Lunch": return "Lunched";
             case "Tea": return "Teaed";

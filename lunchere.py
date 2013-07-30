@@ -449,7 +449,7 @@ class TimeslotModel(db.Model):
     @classmethod
     def guess_meal_name(cls, dt):
         if dt.hour < 4 or dt.hour >= 22:
-            return "Night Snack"
+            return "Snack"
         elif dt.hour <= 10:
             return "Breakfast"
         elif dt.hour <= 13:
