@@ -11,6 +11,8 @@ function initClientIdHistoryId() {
         "historyId": "{{HISTORY_ID}}",
         "API_VERSION": "{{API_VERSION}}",
         "LL": "{{LL}}",
+        "NEAR": "{{NEAR}}",
+	"TIMELINE_ID": "{{TIMELINE_ID}}",
 	"TIMELINE_NAME": "{{TIMELINE_NAME}}",
     };
 }

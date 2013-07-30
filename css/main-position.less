@@ -5,39 +5,6 @@
     padding-bottom: @grid_half_baseline;
 }
 
-/* font-awesome-fix */
-[class^="icon-"], [class*=" icon-"] {
-    line-height: inherit;
-}
-
-/* For modern browsers */
-.container:before,
-.container:after {
-    content:"";
-    display:table;
-}
-.container:after {
-    clear: both;
-}
-/* For IE 6/7 (trigger hasLayout) */
-.container {
-    zoom:1;
-}
-
-.base_float {
-    float: left;
-    clear: left;
-}
-
-.tight_float {
-    .base_float;
-
-    margin-left: 0px;
-    margin-right: 0px;
-    margin-top: 0px;
-    margin-bottom: 0px;
-}
-
 .float {
     .base_float;
 
@@ -45,15 +12,6 @@
     margin-right: @grid_half_gutter;
     margin-top: @grid_half_baseline;
     margin-bottom: @grid_half_baseline;
-}
-
-body {
-    margin: 0px;
-}
-
-#above-container {
-    padding-top: 90px;
-    min-height: 20 * @grid_baseline;
 }
 
 #root-container {
@@ -519,11 +477,6 @@ a[id^="buttons-"].enabled {
     line-height: @review_options_height;
 }
 
-#footer-container {
-    .tight_float;
-    width: 100%;
-}
-
 @timeline_width: 2 * 5 * @timeline_block_width + @timeline_center_block_width;
 @timeline_height: 5.5 * @grid_baseline;
 #timeline-container {
@@ -624,40 +577,3 @@ a[id^="buttons-"].enabled {
     margin-left: 20px;
 }
 
-#about {
-    height: 4 * @grid_baseline;
-}
-
-#logo {
-    margin-right: 20px;
-    float: right;
-    margin-top: @grid_half_baseline;
-    line-height: @grid_baseline * 2;
-}
-
-#logo-lunch {
-    .tight_float;
-    margin-right: -2px;
-    z-index: 2;
-    position: relative;
-    font-size: 26px;
-}
-
-#logo-here  {
-    .tight_float;
-    clear: none;
-    margin-left: -10px;
-    font-size: 27px;
-}
-
-#logo-here:before {
-    content: "h";
-}
-
-#version {
-    margin-right: 20px;
-    float: right;
-    clear: right;
-    color: @color_bggray;
-    font-size: 12px;
-}

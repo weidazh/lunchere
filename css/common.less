@@ -1,0 +1,252 @@
+/* Basic layout metrics */
+@grid_baseline: 18px;
+@grid_column: 60px;
+@grid_num_modules: 12;
+@grid_gutter: 20px;
+@grid_module_height: 4;
+@grid_layout_width: @grid_num_modules * @grid_column + (@grid_num_modules - 1) * @grid_gutter;
+@grid_half_gutter: @grid_gutter / 2;
+@grid_half_baseline: @grid_baseline / 2;
+
+/* Basic font sizes */
+@title_font_size: (8 / 6) * @grid_baseline;
+@normal_font_size: @grid_baseline;
+@small_font_size: (7 / 9) * @grid_baseline;
+@footnote_font_size: 2 * @grid_baseline / 3;
+@font_awesome_size_fix: @grid_baseline;
+
+
+/* the color scheme: http://designmodo.github.io/Flat-UI/ */
+@color_turquoise: #1abc9c;
+@color_green_sea: #16a085;
+@color_emerald: #2ecc71;
+@color_nephritis: #27ae60;
+@color_peter_river: #3498db;
+@color_belize_hole: #2980b9;
+@color_amethyst: #9b59b6;
+@color_wisteria: #8e44ad;
+@color_wet_asphalt: #34495e;
+@color_midnight_blue: #2c3e50;
+@color_sun_flower: #f1c40f;
+@color_orange: #f39c12;
+@color_carrot: #e67e22;
+@color_pumpkin: #d35400;
+@color_alizarin: #e74c3c;
+@color_pomegranate: #c0392b;
+@color_clouds: #ecf0f1;
+@color_silver: #bdc3c7;
+@color_concrete: #95a5a6;
+@color_asbestos: #7f8c8d;
+
+@color_blue: @color_belize_hole;
+@color_blue_light: @color_peter_river;
+@color_green: @color_nephritis;
+@color_green_light: @color_emerald;
+@color_red: @color_pomegranate;
+@color_red_light: @color_alizarin;
+@color_brown: @color_orange;
+@color_brown_light: @color_sun_flower;
+
+@color_gray_f: @color_white;
+@color_gray_e: @color_clouds;
+@color_gray_b: @color_silver;
+@color_gray_9: @color_concrete;
+@color_gray_7: @color_asbestos;
+@color_gray_3: @color_wet_asphalt;
+@color_gray_2: @color_midnight_blue;
+@color_gray_0: @color_black;
+
+@color_white: #ffffff;
+@color_black: #000000;
+
+@color_bgwhite: @color_white;
+@color_bggray: @color_clouds;
+@color_fgwhite: @color_white;
+@color_border_gray: @color_silver;
+
+/* bg/fg colors */
+
+/* white bg */
+@color_main_bg: @color_white;
+@color_footnote_bg: @color_white; /* when bg, use color_bggray */
+
+@color_title_fg: @color_midnight_blue;
+@color_info_fg: @color_asbestos;
+@color_footnote_fg: @color_asbestos;
+
+/* clouds bg */
+@color_page_bg: @color_bggray;
+@color_typehere_inner_bg: @color_bggray;
+@color_typehere_inner_fg: @color_asbestos;
+@color_timeline_label_fg: @color_wet_asphalt;
+/* and also toggle bg */
+
+/* silver bg: none */
+
+/* when bg is darker than concret, use white as fg, only the here/silver is bad */
+/* concret bg:  */
+@color_no_button_bg: @color_concrete;
+@color_typehere_outer_bg: @color_concrete;
+
+/* asbestos bg: */
+@color_timeline_bg: @color_asbestos;
+
+/* wet asphalt bg: */
+@color_timeline_button_bg: @color_wet_asphalt;
+@color_gray_button_bg: @color_wet_asphalt;
+@color_options_bg: @color_wet_asphalt; /* lunch here today? 's background */
+
+/* midnight blue bg: */
+@color_confirmed_bg: @color_midnight_blue;
+@color_about_bg: @color_midnight_blue;
+@color_logo_here_fg: @color_silver;
+
+
+/* COMMON LAYOUT */
+
+/* font-awesome-fix */
+[class^="icon-"], [class*=" icon-"] {
+    line-height: inherit;
+}
+
+/* For modern browsers */
+.container:before,
+.container:after {
+    content:"";
+    display:table;
+}
+.container:after {
+    clear: both;
+}
+/* For IE 6/7 (trigger hasLayout) */
+.container {
+    zoom:1;
+}
+
+.base_float {
+    float: left;
+    clear: left;
+}
+
+.tight_float {
+    .base_float;
+
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+body {
+    margin: 0px;
+}
+
+#above-container {
+    padding-top: 90px;
+    min-height: 20 * @grid_baseline;
+}
+
+#footer-container {
+    .tight_float;
+    width: 100%;
+}
+
+
+#about {
+    height: 4 * @grid_baseline;
+}
+
+#logo {
+    margin-right: 20px;
+    float: right;
+    margin-top: @grid_half_baseline;
+    line-height: @grid_baseline * 2;
+}
+
+#logo-lunch {
+    .tight_float;
+    margin-right: -2px;
+    z-index: 2;
+    position: relative;
+    font-size: 26px;
+}
+
+#logo-here  {
+    .tight_float;
+    clear: none;
+    margin-left: -10px;
+    font-size: 27px;
+}
+
+#logo-here:before {
+    content: "h";
+}
+
+#version {
+    margin-right: 20px;
+    float: right;
+    clear: right;
+    color: @color_bggray;
+    font-size: 12px;
+}
+
+/* COMMON STYLE */
+@import url(https://fonts.googleapis.com/css?family=PT+Sans:400);
+@import url(https://fonts.googleapis.com/css?family=PT+Sans:700);
+@import url(https://fonts.googleapis.com/css?family=PT+Sans+Narrow);
+
+.normal {
+    font-family: "PT Sans", Tahoma, Arial, Helvetica, sans-serif;
+}
+
+.narrow {
+    font-family: "PT Sans Narrow", "Helvetica Narrow", "Arial Narrow", "Heiti";
+}
+body {
+    background: @color_about_bg;
+    font-size: @normal_font_size;
+    .normal;
+    line-height: @grid_baseline;
+}
+
+.disabled { display: none; }
+/* TODO: as disabled is display:none now, remove the other unnecessary disabled styles */
+.enabled:hover { cursor: pointer; }
+.disabled:hover { cursor: default; }
+
+.clickable (@color, @bgcolor, @hover_color, @hover_bgcolor, @disabled_color) {
+    &.enabled {
+	color: @color;
+	background-color: @bgcolor;
+    }
+    &.enabled:hover {
+	color: @hover_color;
+	background-color: @hover_bgcolor;
+    }
+    &.disabled {
+	color: @disabled_color;
+	background-color: @bgcolor;
+    }
+    &.disabled:hover {
+	color: @disabled_color;
+	background-color: @bgcolor;
+    }
+}
+
+#above-container {
+    background: @color_bggray;
+}
+
+#about {
+    background: @color_about_bg;
+}
+
+#logo {
+    font-weight: bolder;
+}
+#logo-lunch {
+    color: @color_fgwhite;
+}
+#logo-here {
+    color: @color_logo_here_fg;
+}
