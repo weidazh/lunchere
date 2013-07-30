@@ -1050,7 +1050,6 @@ from google.appengine.ext.webapp import template
 class MainPage(webapp2.RequestHandler):
     """/ redirect to /t/RANDOM_STRING;
        /t/.* and /user/.* generate a page with some variable set according to current timeline/user;
-       /logout clears cookie and redirect to /
        others redirect to /
 
        (maybe should change to:)
@@ -1059,7 +1058,6 @@ class MainPage(webapp2.RequestHandler):
        /new redirect to /t/RANDOM_STRING;
        /t/.* and /user/.* generate a page with some variable set according to current timeline/user;
        /login requires user?
-       /logout clears cookie and redirect to /
        others redirect to /
     """
 
@@ -1078,20 +1076,20 @@ class MainPage(webapp2.RequestHandler):
             return ("history:" + p[1], "takeout")
         return (None, None)
 
-    def _cookie_to_history_id(self, request):
-        logging.debug("_cookie_to_history_id")
-        history_id = request.cookies.get("historyId", None)
-        logging.debug("history_id = " + repr(history_id) + " (from cookies)")
-        if history_id is not None:
-            history_id = urllib.unquote(history_id)
-            logging.debug("history_id = " + repr(history_id) + " (unquoted)")
-        return history_id
+    # def _cookie_to_history_id(self, request):
+    #     logging.debug("_cookie_to_history_id")
+    #     history_id = request.cookies.get("historyId", None)
+    #     logging.debug("history_id = " + repr(history_id) + " (from cookies)")
+    #     if history_id is not None:
+    #         history_id = urllib.unquote(history_id)
+    #         logging.debug("history_id = " + repr(history_id) + " (unquoted)")
+    #     return history_id
 
-    def set_root_cookie(self, history_id, days=7):
-        seconds = days * 24 * 60 * 60
-        expires = datetime.datetime.utcnow() + datetime.timedelta(days=days)
-        self.response.set_cookie("historyId", urllib.quote(history_id), path="/", max_age=seconds, expires=expires, domain=None, secure=False, overwrite=True)
-        pass
+    # def set_root_cookie(self, history_id, days=7):
+    #     seconds = days * 24 * 60 * 60
+    #     expires = datetime.datetime.utcnow() + datetime.timedelta(days=days)
+    #     self.response.set_cookie("historyId", urllib.quote(history_id), path="/", max_age=seconds, expires=expires, domain=None, secure=False, overwrite=True)
+    #     pass
 
     def takeout(self, history_id):
         for hist_ev in db.Query(HistoryEvent).filter("historyId =", history_id).run():
@@ -1114,15 +1112,15 @@ class MainPage(webapp2.RequestHandler):
         if request.url.startswith("http://") and not request.url.startswith("http://localhost") :
             self.redirect(request.url.replace("http://", "https://")) # FIXME: this is wrong when the url itself contains http://
             return
-        use_cookie = True
-        refresh_cookie = True # refresh the cookie each time it is logged in
-        # but in the following call, do not use_cookie, so that
-        # the history_id is got from the user sent cookie directly rather
-        # than in the client side.
+        # use_cookie = True
+        # refresh_cookie = True # refresh the cookie each time it is logged in
+        # # but in the following call, do not use_cookie, so that
+        # # the history_id is got from the user sent cookie directly rather
+        # # than in the client side.
         history_id, action = self._path_to_history_id(request.path)
         logging.debug("history_id, action = %s, %s" % (repr(history_id), repr(action)))
-        history_id_in_cookie = self._cookie_to_history_id(request)
-        logging.debug("history_id from URL %s; history_id from cookie %s" % (repr(history_id), repr(history_id_in_cookie)))
+        # history_id_in_cookie = self._cookie_to_history_id(request)
+        # logging.debug("history_id from URL %s; history_id from cookie %s" % (repr(history_id), repr(history_id_in_cookie)))
         if history_id is not None:
             if Hints.get_hint(history_id, "blacklisted", None):
                 path = os.path.join(os.path.dirname(__file__),
@@ -1147,8 +1145,8 @@ class MainPage(webapp2.RequestHandler):
             response.headers['Content-Type'] = 'text/html'
             # response.headers['Cache-Control'] = 'no-cache'
 
-            if use_cookie and (history_id != history_id_in_cookie or refresh_cookie):
-                self.set_root_cookie(history_id)
+            # if use_cookie and (history_id != history_id_in_cookie or refresh_cookie):
+            #     self.set_root_cookie(history_id)
             path = os.path.join(os.path.dirname(__file__),
                                           'templates/main.html')
             params = {
@@ -1156,6 +1154,8 @@ class MainPage(webapp2.RequestHandler):
                 'HISTORY_ID': history_id,
                 'API_VERSION': LUNCHERE_API_VERSION,
                 'LL': Hints.get_hint(history_id, "ll", ""), # FIXME: sometimes the datastore just cannot retrive the data that has been just put in
+                'NEAR': Hints.get_hint(history_id, "near", ""),
+                'TIMELINE_ID': history_id, # already escaped
                 'TIMELINE_NAME': Timeline.get_name(history_id), # already escaped
                 # FIXME: how to disable escape?
             }
@@ -1171,8 +1171,8 @@ class MainPage(webapp2.RequestHandler):
                 self.response.write("Hints = " + repr(hints))
             else:
                 history_id = History.gen_new_history_id_from_hints(hints)
-                if use_cookie:
-                    self.set_root_cookie(history_id)
+                # if use_cookie:
+                #     self.set_root_cookie(history_id)
                 if hints.get("ll", None):
                     Hints.set_hint(history_id, "ll", hints["ll"])
                 if hints.get("near", None):
@@ -1182,8 +1182,8 @@ class MainPage(webapp2.RequestHandler):
                 self.redirect(str(history_id).replace("history:", "/t/"))
         else:
             if request.path == "/" or request.path == "/logout":
-                if use_cookie:
-                    self.set_root_cookie("")
+                # if use_cookie:
+                #     self.set_root_cookie("")
                 self.redirect("/create")
             else:
                 # self.redirect(str(history_id).replace("history:", "/history/"))

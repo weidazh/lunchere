@@ -9,6 +9,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
 <script src="/js/private.js"></script>
 <script src="/js/foursquare.js"></script>
+<script src="/js/core.js"></script>
 <script src="/js/modules/spin.min.js"></script>
 <script src="/js/landing.js"></script>
 </head>
@@ -19,10 +20,6 @@
     <div id="recent-timlines-container">
         Your recent timelines:
 	<ul id="recent-timelines">
-	<li> ThursdayWireless Timeline
-	    <div>Sai Wan, Hong Kong, today</div>
-	<li> HKU Timeline
-	    <div>Pokfulam, Hong Kong, 3 days ago</div>
 	</ul>
     </div>
     <div id="page-container" class="container">
