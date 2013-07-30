@@ -1284,7 +1284,10 @@ function TimeslotView(timeslot, mealname, has_nextmeal) {
 	date1.setYear(that.yyyy);
 	date1.setMonth(that.mm);
 	date1.setDate(that.dd);
-	that.days_diff = (date1 - now) / 86400;
+	that.days_diff = (date1 - now) / (86400 * 1000);
+	if (that.days_diff != Math.floor(that.days_diff)) {
+	    throw "days_diff should be integer!";
+	}
     }
     var format_ordinal=  this.format_ordinal = function (ord) {
 	if (ord % 10 == 1 && ord != 11)
