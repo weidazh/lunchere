@@ -14,11 +14,12 @@
 @input_box_padding_right: @status_size;
 @input_box_tbpadding: 1px;
 @input_box_border_widths: @input_box_border_width * 2;
-@input_box_border_width: 2px;
+@input_box_border_width: 1px;
+@input_box_border_color: @color_silver;
 @input_box_height: 50px;
 
-@location_arrow_size: @location_arrow_width + @location_arrow_padding;
-@location_arrow_width: 24px;
+@location_arrow_size: @location_arrow_width + @location_arrow_padding * 2;
+@location_arrow_width: 21px;
 @location_arrow_padding: 8px;
 @location_arrow_margin_left: -@input_box_size;
 @location_arrow_margin_right: @input_box_size - @location_arrow_size;
@@ -122,7 +123,7 @@
     padding-left: @input_box_padding_left;
     padding-right: @input_box_padding_right;
     width: @input_box_width;
-    border: @input_box_border_width solid black;
+    border: @input_box_border_width solid @input_box_border_color;
     height: @input_box_height - 2 * @input_box_tbpadding - 2 * @input_box_border_width;
 }
 #location[disabled] {
@@ -138,6 +139,7 @@
 #arrow-overlay {
     width: @location_arrow_width;
     padding-left: @location_arrow_padding;
+    padding-right: @location_arrow_padding;
 }
 
 #arrow {
@@ -197,6 +199,13 @@
 #recent-timelines > li {
     margin-top: @grid_baseline;
     margin-bottom: @grid_baseline;
+}
+
+#recent-timelines > li > i.icon-remove{
+    display: block;
+    float: right;
+    .clickable(inherit, inherit, @color_red, inherit, inherit);
+    line-height: 2 * @grid_baseline;
 }
 
 #recent-timelines > li > div {

@@ -26,7 +26,7 @@
 	<span id="location-predesc"></span>
 	<div id="location-container" class="container">
 	    <input id="location" placeholder="street, city, state, country" /><div id="arrow-overlay">
-		<i id="arrow" class="icon-location-arrow enabled"></i>
+		<i id="arrow" class="icon-compass enabled"></i>
 	    </div><div id="status-overlay"><!--
 	     --><i id="error-warning" class="icon-warning-sign"></i><!--
 	     --><div id="spinner"></div><!--

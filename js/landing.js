@@ -253,13 +253,16 @@ function LandingPage(ck) {
 	$(li).detach();
 	toggle_recent_timelines();
     }
+    function html_decode(html) {
+	return $("<span>").html(html).text();
+    }
     function show_timelines() {
 	$.each(ck.timelines, function (k, timeline) {
 	    try{
 		var li = $("<li>")
-		         .append($("<a>").attr("href", get_link_from_id(timeline.id)).html(timeline.name))
-			 .append($("<i>").addClass("icon-trash").addClass("enabled").click(trash_clicked))
-			 .append($("<div>").text(timeline.town + ", " + relative_date(timeline.lastdt)))
+			 .append($("<i>").addClass("icon-remove").addClass("enabled").click(trash_clicked))
+		         .append($("<a>").attr("href", get_link_from_id(timeline.id)).text(html_decode(timeline.name)))
+			 .append($("<div>").text(html_decode(timeline.town) + ", " + relative_date(timeline.lastdt)))
 			 .appendTo($("#recent-timelines"));
 		li[0].timeline = timeline;
 	    }
