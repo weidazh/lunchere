@@ -608,7 +608,12 @@ class Timeslot:
             logging.warn("deleting")
             for hist_ev in HistoryEvent.foreach_hist_ev(history_id, timeslot0):
                 if not dry_run:
+                    logging.warn("deleting %s" % (repr(hist_ev),))
                     hist_ev.delete()
+            for timeslot_model in db.Query(TimeslotModel).ancestor(TimeslotModel.key_path(history_id, timeslot0)).run():
+                if not dry_run:
+                    logging.warn("deleting %s" % (repr(timeslot_model),))
+                    timeslot_model.delete()
 
         # Move to prev (or next meal)
         new_timeslot = Timeslot.prevmeal(history_id, timeslot0, fallback=False, create=False)
