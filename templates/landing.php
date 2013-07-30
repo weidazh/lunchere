@@ -17,13 +17,13 @@
 <div id="above-container">
 <div id="center-container" class="container">
     <div id="above-logo"></div>
-    <div id="recent-timlines-container">
+    <div id="recent-timelines-container" class="hidden">
         Your recent timelines:
 	<ul id="recent-timelines">
 	</ul>
     </div>
     <div id="page-container" class="container">
-	or create a new one:
+	<span id="location-predesc"></span>
 	<div id="location-container" class="container">
 	    <input id="location" placeholder="street, city, state, country" /><div id="arrow-overlay">
 		<i id="arrow" class="icon-location-arrow enabled"></i>

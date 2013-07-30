@@ -92,6 +92,40 @@ function Cookie() {
     return this;
 }
 
+function ClassToggler(descriptor) {
+    // I just assume there is only one element selected.
+    var that = this;
+    var apply = this.apply = function() {
+	$.each(descriptor, function (selector, obj) {
+	    var mapping = obj.mapping;
+	    var callbacks = obj.callbacks;
+	    var $elements = $(selector);
+	    var temp = {};
+	    $.each(mapping, function (cssClass, bool_func) {
+		var on;
+		if (typeof bool_func === "function") {
+		    on = bool_func();
+		}
+		else {
+		    on = !! bool_func;
+		}
+		var previous = $elements.hasClass(cssClass);
+		temp[cssClass] = on ? 1 : 0
+		if (on) {
+		    $elements.addClass(cssClass);
+		}
+		else {
+		    $elements.removeClass(cssClass);
+		}
+		if (callbacks && callbacks[cssClass]) {
+		    callbacks[cssClass](on, previous);
+		}
+	    });
+	});
+    }
+    return this;
+}
+
 var ck = new Cookie();
 
 if (typeof initObj !== "undefined") {

@@ -230,18 +230,34 @@ function LandingPage(ck) {
 	else
 	    return "today";
     }
+    function toggle_recent_timelines() {
+	var toggler = new ClassToggler({
+	    "#recent-timelines-container": {
+		"mapping": {
+		    "hidden": ! $("#recent-timelines > li").length,
+		}
+	    },
+	    "#location-predesc": {
+		"mapping": {
+		    "has-timelines": !! $("#recent-timelines > li").length,
+		}
+	    },
+	});
+	toggler.apply();
+    }
     function trash_clicked(_event) {
 	var li = $(_event.delegateTarget).parent()[0];
 	var timeline = li.timeline;
 	ck.clear_cookie(timeline.id, "/");
 	delete ck.timelines[timeline.id];
 	$(li).detach();
+	toggle_recent_timelines();
     }
     function show_timelines() {
 	$.each(ck.timelines, function (k, timeline) {
 	    try{
 		var li = $("<li>")
-		         .append($("<a>").attr("href", get_link_from_id(timeline.id)).text(timeline.name))
+		         .append($("<a>").attr("href", get_link_from_id(timeline.id)).html(timeline.name))
 			 .append($("<i>").addClass("icon-trash").addClass("enabled").click(trash_clicked))
 			 .append($("<div>").text(timeline.town + ", " + relative_date(timeline.lastdt)))
 			 .appendTo($("#recent-timelines"));
@@ -251,6 +267,7 @@ function LandingPage(ck) {
 		console.log(e);
 	    }
 	});
+	toggle_recent_timelines();
     }
     function run() {
         landingSpinner = new LandingSpinner(document.getElementById("spinner"));

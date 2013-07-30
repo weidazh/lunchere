@@ -110,8 +110,12 @@
     width: @landing_width;
 }
 
-#above-logo, #recent-timlines-container,  #page-container {
+#above-logo, #recent-timelines-container,  #page-container {
     .tight_float;
+}
+
+#above-logo {
+    margin-bottom: 2 * @grid_baseline;
 }
 
 #location {
@@ -201,4 +205,16 @@
 
 #above-container {
     padding-bottom: 2 * @grid_baseline;
+}
+
+.hidden {
+    display: none;
+}
+
+#location-predesc:after {
+    content: "just tell us where you are:";
+}
+
+#location-predesc.has-timelines:after {
+    content: "or create a new one:";
 }
