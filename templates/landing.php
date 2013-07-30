@@ -43,7 +43,7 @@
 	    <div id="logo-lunch">Lunch</div>
 	    <div id="logo-here">ere</div>
 	</div>
-	<div id="version"><? ?></div>
+	<div id="version"><? readfile("version.txt"); ?></div>
     </div>
 </div>
 </body>
