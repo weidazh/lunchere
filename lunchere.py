@@ -958,20 +958,20 @@ class LuncHereAPI(remote.Service):
     def __init__(self):
         self.counter = 0
 
-    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="today", http_method="GET")
+    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="today", path="today", http_method="GET")
     @require_login
     def today(self, request):
         recommendation = History.from_user(user=my_get_current_user()).recommend()
         return recommendation.to_rpc()
 
-    @endpoints.method(HistoryIdMsg, TodayChoices, name="choices", http_method="GET")
+    @endpoints.method(HistoryIdMsg, TodayChoices, name="choices", path="choices", http_method="GET")
     def choices_unauth(self, request):
         if Hints.get_hint(request.historyId, "blacklisted", None):
             return None
         choices = History.choices_from(request.historyId, request.timeslot)
         return choices.to_rpc()
 
-    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="prevmealUnauth", http_method="GET")
+    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="prevmealUnauth", path="prevmealUnauth", http_method="GET")
     def prevmeal_unauth(self, request):
         "previous meal"
         if Hints.get_hint(request.historyId, "blacklisted", None):
@@ -980,7 +980,7 @@ class LuncHereAPI(remote.Service):
         recommendation =  History.recommend_from(request.historyId, request.timeslot, prevmeal=True)
         return recommendation.to_rpc()
 
-    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="nextmealUnauth", http_method="GET")
+    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="nextmealUnauth", path="nextmealUnauth", http_method="GET")
     def nextmeal_unauth(self, request):
         "next meal"
         if Hints.get_hint(request.historyId, "blacklisted", None):
@@ -989,7 +989,7 @@ class LuncHereAPI(remote.Service):
         recommendation =  History.recommend_from(request.historyId, request.timeslot, nextmeal=True)
         return recommendation.to_rpc()
 
-    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="deletemealUnauth", http_method="GET")
+    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="deletemealUnauth", path="deletemealUnauth", http_method="GET")
     def deletemeal_unauth(self, request):
         "delete meal, only when all the meals are not confirmed"
         if Hints.get_hint(request.historyId, "blacklisted", None):
@@ -998,7 +998,7 @@ class LuncHereAPI(remote.Service):
         recommendation = History.recommend_from(request.historyId, request.timeslot, deletemeal=True)
         return recommendation.to_rpc()
 
-    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="todayUnauth", http_method="GET")
+    @endpoints.method(HistoryIdMsg, TodayRecommendation, name="todayUnauth", path="todayUnauth", http_method="GET")
     def today_unauth(self, request):
         "default call"
         if Hints.get_hint(request.historyId, "blacklisted", None):
@@ -1007,7 +1007,7 @@ class LuncHereAPI(remote.Service):
         recommendation = History.recommend_from(request.historyId, request.timeslot)
         return recommendation.to_rpc()
 
-    @endpoints.method(TodayRecommendation, TodayRecommendation, name="noUnauth", http_method="GET")
+    @endpoints.method(TodayRecommendation, TodayRecommendation, name="noUnauth", path="noUnauth", http_method="GET")
     def no_unauth(self, request):
         "cancel/reject"
         if Hints.get_hint(request.historyId, "blacklisted", None):
@@ -1018,7 +1018,7 @@ class LuncHereAPI(remote.Service):
         recommendation = History.recommend_from(request.historyId, request.timeslot, cancel=request.name)
         return recommendation.to_rpc()
 
-    @endpoints.method(TodayRecommendation, TodayRecommendation, name="yesUnauth", http_method="GET")
+    @endpoints.method(TodayRecommendation, TodayRecommendation, name="yesUnauth", path="yesUnauth", http_method="GET")
     def yes_unauth(self, request):
         "confirm"
         if Hints.get_hint(request.historyId, "blacklisted", None):
@@ -1028,7 +1028,7 @@ class LuncHereAPI(remote.Service):
         recommendation = History.recommend_from(request.historyId, request.timeslot, confirm=request.name)
         return recommendation.to_rpc()
 
-    @endpoints.method(TodayRecommendation, TodayRecommendation, name="fetchUnauth", http_method="GET")
+    @endpoints.method(TodayRecommendation, TodayRecommendation, name="fetchUnauth", path="fetchUnauth", http_method="GET")
     def fetch_unauth(self, request):
         "fetch"
         if Hints.get_hint(request.historyId, "blacklisted", None):
