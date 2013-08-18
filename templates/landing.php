@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Lunch where</title>
+<link rel="shortcut icon" href="/favicon.png" />
 <link rel="stylesheet" href="/css/landing.css" />
 <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
 <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/smoothness/jquery-ui.min.css">
