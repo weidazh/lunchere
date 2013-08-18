@@ -27,7 +27,7 @@ function initClientIdHistoryId() {
 <script src="/js/foursquare.js"></script>
 <script src="/js/modules/spin.min.js"></script>
 <script src="/js/main.js"></script>
-<script src="https://apis.google.com/js/client.js?onload=gapi_ready"></script>
+<!-- script src="https://apis.google.com/js/client.js?onload=gapi_ready"></script -->
 <!-- script src="/js/client.js?onload=lunchere_api_init"></script -->
 </head>
 <body class="no-confirmed loading initialize no-map no-foursquare no-refreshing">

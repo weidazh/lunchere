@@ -801,6 +801,54 @@ function Autocomplete(lunchere_autocomplete, foursquare_autocomplete) {
     return this;
 }
 
+function fake_gapi() {
+    var url_prefix = "/_rpc.";
+    function create_remote_method(url_suffix, req) {
+	function execute(req, callback) {
+	    var url = url_prefix + url_suffix;
+	    console.log("sending request to " + url);
+	    $.ajax({
+		type: 'POST',
+		contentType: "application/json",
+		processData: false,
+		data: JSON.stringify(req),
+		url: url,
+	    }).done(function(data) {
+		console.log("done " + data);
+		callback(data);
+	    }).fail(function(data) {
+		console.log("fail " + data);
+	    });
+	}
+
+	return function(req) {
+	    return {
+		'execute': function(callback) {
+		    execute(req, callback);
+		}
+	    }
+	}
+    }
+    return {
+	'client': {
+	    'load': function(api_name, api_version, callback, root) {
+		setTimeout(function() {
+		    callback('{ "ok": true }');
+		}, 0);
+	    },
+	    'lunchere': {
+		'todayUnauth': create_remote_method('today_unauth'),
+		'deletemealUnauth': create_remote_method('deletemeal_unauth'),
+		'prevmealUnauth': create_remote_method('prevmeal_unauth'),
+		'nextmealUnauth': create_remote_method('nextmeal_unauth'),
+		'yesUnauth': create_remote_method('yes_unauth'),
+		'noUnauth': create_remote_method('no_unauth'),
+		'fetchUnauth': create_remote_method('fetch_unauth'),
+		'choices': create_remote_method('choices_unauth'),
+	    },
+	},
+    };
+}
 
 function LunchereAPI() {
     var zenzen_noauth = true;
@@ -1926,6 +1974,10 @@ lunchere_api.on_load = function () {
     }
 }
 
+function gapi_ready() {
+    var gapi = fake_gapi();
+    lunchere_api.gapi_ready(gapi);
+}
 $(document).ready(function() {
     console.log("[PROGRESS] document ready");
     console.log("[PROGRESS] autocomplete bind_ui");
@@ -1940,8 +1992,7 @@ $(document).ready(function() {
 	console.log("[PROGRESS] current_view.on_hashchange() delayed because lunchere_api is not ready");
 	main_ui_to_load = true;
     }
+
+    gapi_ready();
 });
 
-function gapi_ready() {
-    lunchere_api.gapi_ready(gapi);
-}

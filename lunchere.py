@@ -1042,7 +1042,10 @@ class LuncHereAPI(remote.Service):
 
 
 # ==============
-ENDPOINTS_APPLICATION = endpoints.api_server([LuncHereAPI], restricted=False)
+# ENDPOINTS_APPLICATION = endpoints.api_server([LuncHereAPI], restricted=False)
+
+from protorpc.wsgi import service
+WSGI_APPLICATION = service.service_mappings([('/_rpc.*', LuncHereAPI)])
 
 # ================
 import webapp2
