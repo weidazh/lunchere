@@ -513,7 +513,7 @@ class TimeslotModel(db.Model):
 
     @classmethod
     def get_mealname(cls, history_id, timeslot):
-        tm = cls.get_or_create(history_id, timeslot, refmode="TIMESLOT")
+        tm = cls.get_or_create(history_id, timeslot, refmode="NOW")
         if tm is None:
             raise Exception("Cannot get or create TimeslotModel for %s %d" % (history_id, timeslot))
         else:

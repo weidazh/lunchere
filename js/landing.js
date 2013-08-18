@@ -58,10 +58,10 @@ function LLGeocoder(spinner, submit_callback) {
 	}
     }
     function debug(text) {
-	$("#debug-layer").text(text);
+	console.log(text);
     }
     function disable_pick() {
-	$(location_pick).css("opacity", 0);
+	$(location_pick).removeClass("enabled").addClass("disabled");;
     }
     function disable_submit() {
 	$(submit_button).attr("disabled", true).removeClass("enabled").addClass("disabled");
@@ -165,12 +165,31 @@ function LLGeocoder(spinner, submit_callback) {
 	// $(location_input).autocomplete("search", "");
 	fill_geocode_with_ll(p0, ll);
     }
+    function location_pick_error(error) {
+	switch(error.code) {
+	    case error.PERMISSION_DENIED:
+		console.log("User denied the request for Geolocation.");
+		break;
+	    case error.POSITION_UNAVAILABLE:
+		console.log("Location information is unavailable.");
+		break;
+	    case error.TIMEOUT:
+		console.log("The request to get user location timed out.");
+		break;
+	    case error.UNKNOWN_ERROR:
+		console.log("An unknown error occurred.");
+		break;
+	}
+	enable_input();
+	enable_submit();
+	disable_pick();
+    }
     function location_pick_clicked() {
 	if (navigator && navigator.geolocation) {
 	    disable_input();
 	    disable_submit();
             debug("fetching location");
-            navigator.geolocation.getCurrentPosition(location_pick_callback);
+            navigator.geolocation.getCurrentPosition(location_pick_callback, location_pick_error);
         }
         else{
 	    enable_input();
@@ -179,16 +198,31 @@ function LLGeocoder(spinner, submit_callback) {
         }
     }
 
-    $(location_pick).click(location_pick_clicked);
+    var enabled_only = this.enabled_only = function(callback) {
+	return function (_event) {
+	    console.log(_event);
+	    if ($(_event.delegateTarget).hasClass("disabled")) {
+		console.log("_event.delegateTarget is disabled");
+		return false;
+	    }
+	    if (! $(_event.delegateTarget).hasClass("enabled")) {
+		console.log("_event.delegateTarget is not enabled");
+		return false;
+	    }
+	    return callback(_event);
+	}
+    }
+
+    $(location_pick).click(enabled_only(location_pick_clicked));
     $(location_input).autocomplete({
         source: dynamic_source,
         minLength: 0,
         select: dynamic_source_select,
     });
-    $(submit_button).click(function (_event, ui){
+    $(submit_button).click(enabled_only(function (_event, ui){
 	debug("submitting");
 	submit_callback(selected_ll, $(location_input).val());
-    });
+    }));
 
     return this;
 }
