@@ -551,7 +551,7 @@ class Timeline(db.Model):
             t.put()
             return name
         else:
-            Hinst.set_hint(timeline_id, "name", name)
+            Hints.set_hint(timeline_id, "name", name)
             return name
 
 class Timeslot:
