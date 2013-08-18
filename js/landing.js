@@ -236,7 +236,7 @@ function LandingPage(ck) {
 	    return '/t/' + id.slice(8);
 	}
 	else {
-	    throw "cannot no link: " + id;
+	    return '/t/' + id;
 	}
     }
     function plural(count, single, plural, suffix) {
