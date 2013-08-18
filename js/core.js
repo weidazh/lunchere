@@ -1,14 +1,20 @@
 var zenzen_noauth = 1;
 if (typeof initClientIdHistoryId !== "undefined") {
+    // from python the initObj are escaped, <> is &lt;&gt;
+    // need to unescape them back to js strings.
+    function safeHtmlToJSstring(html) {
+	// unescape
+	return $("<span>").html(html).text();
+    }
     var initObj = initClientIdHistoryId();
-    var historyId = initObj["historyId"];
-    var CLIENT_ID = initObj["CLIENT_ID"];
-    var API_VERSION = initObj["API_VERSION"];
+    var historyId         = safeHtmlToJSstring(initObj["historyId"]);
+    var CLIENT_ID         = safeHtmlToJSstring(initObj["CLIENT_ID"]);
+    var API_VERSION       = safeHtmlToJSstring(initObj["API_VERSION"]);
     var autocomplete_should_reload = false;
-    var LL = initObj["LL"];
-    var NEAR = initObj["NEAR"];
-    var TIMELINE_ID = initObj["TIMELINE_ID"];
-    var TIMELINE_NAME = initObj["TIMELINE_NAME"];
+    var LL                = safeHtmlToJSstring(initObj["LL"]);
+    var NEAR              = safeHtmlToJSstring(initObj["NEAR"]);
+    var TIMELINE_ID       = safeHtmlToJSstring(initObj["TIMELINE_ID"]);
+    var TIMELINE_NAME     = safeHtmlToJSstring(initObj["TIMELINE_NAME"]);
 }
 
 function Cookie() {

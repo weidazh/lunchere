@@ -22,6 +22,10 @@ LUNCHERE_API_VERSION = "dev"
 # endpoints: https://developers.google.com/appengine/docs/python/endpoints/
 # protorpc:  https://developers.google.com/appengine/docs/python/tools/protorpc/
 
+class RenameTimelineMsg(messages.Message):
+    timeline_id = messages.StringField(1, required=True)
+    new_name = messages.StringField(2, required=True)
+
 class HistoryIdMsg(messages.Message):
     "Used by RPC for cases where historyId or timeslot is unknown"
     historyId = messages.StringField(1, required=False)
@@ -530,6 +534,34 @@ class Timeline(db.Model):
         })
 
     @classmethod
+    def guess_name_from_hints(cls, hints):
+        name = hints.get("name")
+        if name is not None:
+            return name
+        near = hints.get("near")
+        if near is not None:
+            return Timeline.get_defname_near(near)
+        return "Untitled"
+
+    @classmethod
+    def guess_name_from_hints_store(cls, timeline_id):
+        name = Hints.get_hint(timeline_id, "name", None)
+        if name is not None:
+            return name
+        near = Hints.get_hint(timeline_id, "near", None)
+        if near is not None:
+            return Timeline.get_defname_near(near)
+        return "Untitled"
+
+    @classmethod
+    def get_defname_near(cls, near):
+        if near is None:
+            return "Untitled"
+        import re
+        name = re.compile(r"[ \t]*,[ \t]*").split(near)[0]
+        return name
+
+    @classmethod
     def get_name(cls, timeline_id):
         t = db.Query(Timeline).ancestor(db.Key.from_path("Timeline", timeline_id)).get()
         if t is not None and t.name:
@@ -537,7 +569,18 @@ class Timeline(db.Model):
             return t.name
         else:
             logging.debug("[TIMELINE] get_name (from Hints) %s" % (repr(Hints.get_hint(timeline_id, "name", None)), ))
-            return Hints.get_hint(timeline_id, "name", "Untitled")
+            return Timeline.guess_name_from_hints_store(timeline_id)
+
+    @classmethod
+    def set_name(cls, timeline_id, name):
+        t = db.Query(Timeline).ancestor(db.Key.from_path("Timeline", timeline_id)).get()
+        if t is not None:
+            t.name = name
+            t.put()
+            return name
+        else:
+            Hints.set_hint(timeline_id, "name", name)
+            return name
 
 class Timeslot:
     @classmethod
@@ -802,9 +845,7 @@ class History:
         # from Crypto.Hash import MD5
         # return "history:" + MD5.new(repr(hints.get("ll", "")) + repr(hints.get("near", ""))).hexdigest()
         history_id = cls.gen_new_history_id()
-        if not hints.has_key("name"):
-            hints["name"] = "Untitled"
-        t = Timeline(key_name=history_id, timelineId=history_id, name=hints["name"])
+        t = Timeline(key_name=history_id, timelineId=history_id, name=Timeline.guess_name_from_hints(hints))
         t.put()
         return history_id
 
@@ -1038,7 +1079,16 @@ class LuncHereAPI(remote.Service):
         recommendation = History.recommend_from(request.historyId, request.timeslot, fetch=request.name)
         return recommendation.to_rpc()
 
-
+    @endpoints.method(RenameTimelineMsg, RenameTimelineMsg, name="rename_timeline", path="rename_timeline", http_method="GET")
+    def rename_timeline(self, request):
+        "rename timeline"
+        timeline_id = request.timeline_id
+        new_name = request.new_name
+        if Hints.get_hint(timeline_id, "blacklisted", None):
+            return None
+        self.counter += 1
+        new_name = Timeline.set_name(timeline_id, new_name)
+        return RenameTimelineMsg(timeline_id=timeline_id, new_name=new_name)
 
 
 # ==============

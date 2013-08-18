@@ -329,6 +329,49 @@ function HashURL() {
     this.default_flags =  _parse_hash(DEFAULT_HASH);
 }
 
+function TitleEditor() {
+    var title = undefined;
+    var turn_on = this.turn_on = function() {
+	console.log("[TitleEditor] turning on");
+	$("#timeline-title").addClass("editing");
+	if (typeof title === "undefined") {
+	    title = $("#timeline-title-text").text();
+	}
+	$("#timeline-title-input").val(title);
+	$("#timeline-title-input").focus();
+    }
+    var turn_off = this.turn_off = function() {
+	console.log("[TitleEditor] turning off");
+	$("#timeline-title").removeClass("editing");
+	var new_title = $("#timeline-title-input").val();
+	if (title != new_title) {
+	    console.log("[TitleEditor] calling server to rename the title");
+	    var timeline_id = current_view.get_history_id();
+	    lunchere_api.rename_timeline(timeline_id, new_title, function(data) {
+		console.log("[TitleEditor] server side renamed");
+		console.log(data);
+		console.log("[TitleEditor] changing the cookie saved names");
+		ck.push_timeline(timeline_id, new_title, NEAR, new Date());
+	    });
+	    title = new_title;
+	}
+	$("#timeline-title-text").text(title);
+    }
+    var register_events = this.register_events = function() {
+	$("#timeline-title-text").click(turn_on);
+	$("#timeline-title-input").blur(turn_off);
+	$("#timeline-title-input").keypress(function(evt) {
+	    if (evt.charCode == 13) {
+		$("#timeline-title-input").blur();
+		// turn_off();
+		return false;
+	    }
+	    return true;
+	});
+
+    }
+    return this;
+}
 
 function MainUI() {
     var that = this;
@@ -845,6 +888,7 @@ function fake_gapi() {
 		'noUnauth': create_remote_method('no_unauth'),
 		'fetchUnauth': create_remote_method('fetch_unauth'),
 		'choices': create_remote_method('choices_unauth'),
+		'rename_timeline': create_remote_method('rename_timeline'),
 	    },
 	},
     };
@@ -1014,6 +1058,12 @@ function LunchereAPI() {
 	_send_request("choices", that.gapi.client.lunchere.choices, {
 	    "historyId": history_id,
 	    "timeslot": timeslot
+	}, callback);
+    }
+    var rename_timeline = this.rename_timeline = function (history_id, new_name, callback) {
+	_send_request("rename_timeline", that.gapi.client.lunchere.rename_timeline, {
+	    "timeline_id": history_id,
+	    "new_name": new_name,
 	}, callback);
     }
     var pop_should_reset = this.pop_should_reset = function () {
@@ -1916,6 +1966,7 @@ var autocomplete = new Autocomplete(lunchere_autocomplete, foursquare_autocomple
 var body_class = new BodyClass(current_view, hashurl, loading_spinners, autocomplete);
 var new_backend = new NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, lunchere_autocomplete, LL);
 var google_distance = new GoogleDistance();
+var title_editor = new TitleEditor();
 
 current_view.on_status_change = function() {
     body_class.refresh();
@@ -1982,6 +2033,7 @@ $(document).ready(function() {
     console.log("[PROGRESS] document ready");
     console.log("[PROGRESS] autocomplete bind_ui");
     autocomplete.bind_ui();
+    title_editor.register_events();
     console.log("[PROGRESS] mainUI init");
     mainUI.init();
     if (lunchere_api.is_ready()) {
