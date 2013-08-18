@@ -22,6 +22,10 @@ LUNCHERE_API_VERSION = "dev"
 # endpoints: https://developers.google.com/appengine/docs/python/endpoints/
 # protorpc:  https://developers.google.com/appengine/docs/python/tools/protorpc/
 
+class RenameTimelineMsg(messages.Message):
+    timeline_id = messages.StringField(1, required=True)
+    new_name = messages.StringField(2, required=True)
+
 class HistoryIdMsg(messages.Message):
     "Used by RPC for cases where historyId or timeslot is unknown"
     historyId = messages.StringField(1, required=False)
@@ -539,6 +543,17 @@ class Timeline(db.Model):
             logging.debug("[TIMELINE] get_name (from Hints) %s" % (repr(Hints.get_hint(timeline_id, "name", None)), ))
             return Hints.get_hint(timeline_id, "name", "Untitled")
 
+    @classmethod
+    def set_name(cls, timeline_id, name):
+        t = db.Query(Timeline).ancestor(db.Key.from_path("Timeline", timeline_id)).get()
+        if t is not None:
+            t.name = name
+            t.put()
+            return name
+        else:
+            Hinst.set_hint(timeline_id, "name", name)
+            return name
+
 class Timeslot:
     @classmethod
     def guess_local_timeslot_base(cls, history_id):
@@ -1038,7 +1053,16 @@ class LuncHereAPI(remote.Service):
         recommendation = History.recommend_from(request.historyId, request.timeslot, fetch=request.name)
         return recommendation.to_rpc()
 
-
+    @endpoints.method(RenameTimelineMsg, RenameTimelineMsg, name="rename_timeline", path="rename_timeline", http_method="GET")
+    def rename_timeline(self, request):
+        "rename timeline"
+        timeline_id = request.timeline_id
+        new_name = request.new_name
+        if Hints.get_hint(timeline_id, "blacklisted", None):
+            return None
+        self.counter += 1
+        new_name = Timeline.set_name(timeline_id, new_name)
+        return RenameTimelineMsg(timeline_id=timeline_id, new_name=new_name)
 
 
 # ==============

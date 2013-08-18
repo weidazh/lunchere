@@ -346,7 +346,10 @@ function TitleEditor() {
 	var new_title = $("#timeline-title-input").val();
 	if (title != new_title) {
 	    console.log("[TitleEditor] calling server to rename the title");
-	    // FIXME NYI
+	    lunchere_api.rename_timeline(current_view.get_history_id(), new_title, function(data) {
+		console.log("[TitleEditor] server side renamed");
+		console.log(data);
+	    });
 	    title = new_title;
 	}
 	$("#timeline-title-text").text(title);
@@ -882,6 +885,7 @@ function fake_gapi() {
 		'noUnauth': create_remote_method('no_unauth'),
 		'fetchUnauth': create_remote_method('fetch_unauth'),
 		'choices': create_remote_method('choices_unauth'),
+		'rename_timeline': create_remote_method('rename_timeline'),
 	    },
 	},
     };
@@ -1051,6 +1055,12 @@ function LunchereAPI() {
 	_send_request("choices", that.gapi.client.lunchere.choices, {
 	    "historyId": history_id,
 	    "timeslot": timeslot
+	}, callback);
+    }
+    var rename_timeline = this.rename_timeline = function (history_id, new_name, callback) {
+	_send_request("rename_timeline", that.gapi.client.lunchere.rename_timeline, {
+	    "timeline_id": history_id,
+	    "new_name": new_name,
 	}, callback);
     }
     var pop_should_reset = this.pop_should_reset = function () {
