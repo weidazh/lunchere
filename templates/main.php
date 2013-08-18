@@ -210,7 +210,7 @@ function initClientIdHistoryId() {
 		<div id="timeline-button-right" class="timeline-button disabled"><i class="icon-plus"></i></div>
 	    </div>
 	</div>
-	<div id="timeline-title"><span id="timeline-title-text">{{ TIMELINE_NAME }}</span> Timeline</div>
+	<div id="timeline-title"><span id="timeline-title-text">{{ TIMELINE_NAME }}</span><input id="timeline-title-input" value=""/> Timeline</div>
     </div>
     <div id="about">
         <div id="logo">
