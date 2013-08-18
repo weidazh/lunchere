@@ -346,9 +346,12 @@ function TitleEditor() {
 	var new_title = $("#timeline-title-input").val();
 	if (title != new_title) {
 	    console.log("[TitleEditor] calling server to rename the title");
-	    lunchere_api.rename_timeline(current_view.get_history_id(), new_title, function(data) {
+	    var timeline_id = current_view.get_history_id();
+	    lunchere_api.rename_timeline(timeline_id, new_title, function(data) {
 		console.log("[TitleEditor] server side renamed");
 		console.log(data);
+		console.log("[TitleEditor] changing the cookie saved names");
+		ck.push_timeline(timeline_id, new_title, NEAR, new Date());
 	    });
 	    title = new_title;
 	}
