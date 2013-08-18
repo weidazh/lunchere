@@ -40,10 +40,10 @@
 </div>
 <div id="footer-container">
     <div id="about">
-        <div id="logo">
+        <a id="logo" href="/">
 	    <div id="logo-lunch">Lunch</div>
 	    <div id="logo-here">ere</div>
-	</div>
+	</a>
 	<div id="version"><? readfile("version.txt"); ?></div>
     </div>
 </div>

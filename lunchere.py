@@ -22,6 +22,11 @@ LUNCHERE_API_VERSION = "dev"
 # endpoints: https://developers.google.com/appengine/docs/python/endpoints/
 # protorpc:  https://developers.google.com/appengine/docs/python/tools/protorpc/
 
+class HTTPHintException(Exception):
+    def __init__(self, code, msg):
+        Exception.__init__(self, msg)
+        self.code = code
+
 class RenameTimelineMsg(messages.Message):
     timeline_id = messages.StringField(1, required=True)
     new_name = messages.StringField(2, required=True)
@@ -842,23 +847,49 @@ class History:
 
     @classmethod
     def gen_new_history_id_from_hints(cls, hints):
-        # from Crypto.Hash import MD5
-        # return "history:" + MD5.new(repr(hints.get("ll", "")) + repr(hints.get("near", ""))).hexdigest()
-        history_id = cls.gen_new_history_id()
-        t = Timeline(key_name=history_id, timelineId=history_id, name=Timeline.guess_name_from_hints(hints))
-        t.put()
+        name = Timeline.guess_name_from_hints(hints)
+        history_id = cls.gen_new_history_id(name)
         return history_id
 
     @classmethod
-    def gen_new_history_id(cls):
+    def _randstr(cls, K=5):
+        # 32 ** K should > C * N
+        # K >= log_{32} C * N
+        # for C = 100, K = 5 can support 300k users
+        #              K = 6 can support 10m users, but this is update by hardcode
+        return ''.join([random.choice('0123456789abcdefghjkmnpqrstvwxyz') for i in range(K)])
+
+    @classmethod
+    @db.transactional
+    def _claim_id(cls, timeline_id, name):
+        obj = db.Query(Timeline).ancestor(db.Key.from_path("Timeline", timeline_id)).get()
+        if obj == None:
+            t = Timeline(key_name=timeline_id, timelineId=timeline_id, name=name)
+            t.put()
+            return t
+        else:
+            return None
+
+    @classmethod
+    def gen_new_history_id(cls, name):
         """Generate new History ID, usually called by __init__;
            however caller can call this directly to avoid creating new object
 
            FIXME: a more robust random algorithm (and detection) should be used to avoid hash conflicts.
         """
-        from Crypto.Hash import MD5
-        return "history:" + MD5.new(repr(random.randint(0, 100000))).hexdigest()
-        # FIXME: use more robust algorithm
+        K = 5
+        counter = 0
+        while True:
+            timeline_id = cls._randstr(K)
+            t = cls._claim_id(timeline_id, name)
+            if t is not None:
+                logging.debug("new id, K=%d, id=%s" % (K, timeline_id))
+                return timeline_id
+
+            counter += 1
+            if counter % 2 == 0:
+                K += 1
+                logging.warn("id collision, using K = %d" % K)
 
     @classmethod
     def _valid_history_id(cls, history_id):
@@ -869,21 +900,20 @@ class History:
         elif history_id.startswith("user:"):
             return True
         else:
-            return False
+            return True # Now we do not require the id startswith XX:
 
     @classmethod
     def from_user(cls, user):
         "A user inherits a history, but shares no namespace"
         if user == None:
-            return History()
+            return History()    # FIXME, not longer works
         else:
             return History("user:" + user.user_id())
 
     def __init__(self, history_id=None, timeslot=None):
         "History.__init__"
         if not History._valid_history_id(history_id):
-            "FIXME: report error"
-            history_id = History.gen_new_history_id()
+            raise HTTPHintException(404, "history id is not valid")
         self.history_id = history_id
         if timeslot is not None:
             self.timeslot = timeslot
@@ -1124,9 +1154,13 @@ class MainPage(webapp2.RequestHandler):
             if user != None:
                 return (History.from_user(user).history_id, "normal")
         elif len(p) == 2 and p[0] == "t":
-            return ("history:" + p[1], "normal")
+            if p[1] == "ThursdayWireless":
+                return ("history:ThursdayWireless", "normal")
+            return (p[1], "normal")
         elif len(p) == 3 and p[0] == "t" and p[2] == "takeout":
-            return ("history:" + p[1], "takeout")
+            if p[1] == "ThursdayWireless":
+                return ("history:ThursdayWireless", "takeout")
+            return (p[1], "takeout")
         return (None, None)
 
     # def _cookie_to_history_id(self, request):
@@ -1232,7 +1266,7 @@ class MainPage(webapp2.RequestHandler):
                     Hints.set_hint(history_id, "near", hints["near"])
                 if hints.get("name", None):
                     Hints.set_hint(history_id, "name", hints["name"])
-                self.redirect(str(history_id).replace("history:", "/t/"))
+                self.redirect("/t/" + str(history_id))
         else:
             if request.path == "/" or request.path == "/logout":
                 # if use_cookie:

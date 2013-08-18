@@ -232,12 +232,7 @@ function LandingPage(ck) {
     var landingSpinner;
     var llGeocoder;
     function get_link_from_id(id) {
-	if (/^history:/.test(id)) {
-	    return '/t/' + id.slice(8);
-	}
-	else {
-	    throw "cannot no link: " + id;
-	}
+	return '/t/' + id;
     }
     function plural(count, single, plural, suffix) {
 	if (count == 1) {
