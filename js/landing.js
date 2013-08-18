@@ -198,16 +198,31 @@ function LLGeocoder(spinner, submit_callback) {
         }
     }
 
-    $(location_pick).click(location_pick_clicked);
+    var enabled_only = this.enabled_only = function(callback) {
+	return function (_event) {
+	    console.log(_event);
+	    if ($(_event.delegateTarget).hasClass("disabled")) {
+		console.log("_event.delegateTarget is disabled");
+		return false;
+	    }
+	    if (! $(_event.delegateTarget).hasClass("enabled")) {
+		console.log("_event.delegateTarget is not enabled");
+		return false;
+	    }
+	    return callback(_event);
+	}
+    }
+
+    $(location_pick).click(enabled_only(location_pick_clicked));
     $(location_input).autocomplete({
         source: dynamic_source,
         minLength: 0,
         select: dynamic_source_select,
     });
-    $(submit_button).click(function (_event, ui){
+    $(submit_button).click(enabled_only(function (_event, ui){
 	debug("submitting");
 	submit_callback(selected_ll, $(location_input).val());
-    });
+    }));
 
     return this;
 }
