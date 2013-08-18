@@ -58,7 +58,7 @@ function LLGeocoder(spinner, submit_callback) {
 	}
     }
     function debug(text) {
-	$("#debug-layer").text(text);
+	console.log(text);
     }
     function disable_pick() {
 	$(location_pick).css("opacity", 0);
