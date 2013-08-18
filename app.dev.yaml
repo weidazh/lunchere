@@ -20,6 +20,8 @@ handlers:
 #  upload: test\.html
 - url: /_ah/spi/.*
   script: lunchere.ENDPOINTS_APPLICATION
+- url: /_rpc.*
+  script: lunchere.WSGI_APPLICATION
 - url: /.*
   script: lunchere.APPLICATION # Please use the class name
 
