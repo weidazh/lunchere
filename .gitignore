@@ -10,3 +10,5 @@ private.py
 /app.yaml
 /*.lint.txt
 /*.deploy.log
+templates/main.html
+version.txt
