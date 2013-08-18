@@ -6,9 +6,9 @@ threadsafe: false
 
 handlers:
 # the admin is /_ah/spi, while the api is automatially set to /_ah/api/*
-- url: /favicon\.ico
-  static_files: favicon.ico
-  upload: favicon\.ico
+- url: /favicon\.png
+  static_files: favicon.png
+  upload: favicon\.png
 - url: /js
   static_dir: js
 - url: /css
