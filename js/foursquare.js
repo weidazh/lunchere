@@ -124,8 +124,22 @@ function search_ll_from_address(addr, callback, callback_fail) {
 }
 */
 
-var foursquare_recommendation_offset = 1;
-function get_recommendation_from_foursquare(ll, near, callback) {
+var cached_foursquare_recommendations = {};
+function UnexpectedException(message) {
+    this.message = message;
+    this.name = "UnexpectedException";
+}
+function foursquare_recommend_offset_increase(timeline_id) {
+    var timeline = ck.timelines[timeline_id];
+    foursquare_recommend_offset ++;
+    if (timeline) {
+	ck.push_timeline(timeline.id, timeline.name, timeline.town, timeline.lastdt, foursquare_recommend_offset);
+    }
+    else {
+	console.log(timeline + " is not found");
+    }
+}
+function get_recommendation_from_foursquare(ll, near, callback, timeline_id) {
     var AND_FOOD_ID = "&categoryId=" + FOOD_ID; // instead of ""
     var query = "";
     console.log("get_recommendation_from_foursquare " + ll + ", " + near + ", " + callback);
@@ -135,20 +149,48 @@ function get_recommendation_from_foursquare(ll, near, callback) {
         query += "ll=" + ll;
     else if (near)
         query += "near=" + near;
+    var offset0 = foursquare_recommend_offset;
+    if (cached_foursquare_recommendations.hasOwnProperty(offset0)) {
+	var item = cached_foursquare_recommendations[offset0];
+	foursquare_recommend_offset_increase(timeline_id);
+	callback(item.venue.name, item.venue);
+	return;
+    }
     $.ajax({
-	url: "https://api.foursquare.com/v2/venues/explore?" + query + AND_FOOD_ID + "&section=food&intent=explore&radius=1000&limit=1&offset=" + foursquare_recommendation_offset + "&" + NOLOGIN_SUFFIX
+	// radius=1000& "Radius to search within, in meters. If radius is not specified, a suggested radius will be used based on the density of venues in the area"
+	url: "https://api.foursquare.com/v2/venues/explore?" + query + AND_FOOD_ID + "&section=food&intent=explore&limit=10&offset=" + offset0 + "&" + NOLOGIN_SUFFIX
     }).done(function (data) {
         console.log(data);
         $(data.response.groups).each(function(i, group) {
             if (group.name == "recommended") {
+		console.log("");
+		console.log("##############");
                 $(group.items).each(function(j, item) {
-                    foursquare_recommendation_offset++;
-                    callback(item.venue.name, item.venue);
+		    cached_foursquare_recommendations[offset0 + j] = item;
+		    console.log("foursquare recommends " + item.venue.name);
+		    for(var k = 0; k < item.reasons.count; k++) {
+			console.log("  " + k + ": " + item.reasons.items[k].summary);
+		    }
+		    console.log("  reason" + item.venue.name);
                     return;
                 });
             }
         });
-
+	foursquare_recommend_offset_increase(timeline_id);
+	var item = cached_foursquare_recommendations[offset0];
+	if (item)
+	    callback(item.venue.name, item.venue);
+	else {
+	    if (offset0 >= data.response.totalResults) {
+		foursquare_recommend_offset = 0;
+		setTimeout(function() {
+		    get_recommendation_from_foursquare(ll, near, callback, timeline_id);
+		}, 0);
+	    }
+	    else {
+		throw new UnexpectedException("");
+	    }
+	}
     }).fail(function() {
         console.log("ERROR");
     });

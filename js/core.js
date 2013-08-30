@@ -56,9 +56,10 @@ function Cookie() {
         console.log("set cookie: " + cookie_string);
 	document.cookie = cookie_string;
     }
-    var push_timeline = this.push_timeline = function(id, name, town, lastdt) {
-	var obj = { "id": id, "name": name, "town": town, "lastdt": lastdt };
+    var push_timeline = this.push_timeline = function(id, name, town, lastdt, foursquare_recommend_offset) {
+	var obj = { "id": id, "name": name, "town": town, "lastdt": lastdt, "foursquare_recommend_offset": foursquare_recommend_offset };
 	var key = id;
+	that.timelines[key] = obj;	// assume the writing succeeds
 	set_cookie(key, to_str(obj), "/");
     }
     var load = this.load = function () {
@@ -82,10 +83,13 @@ function Cookie() {
 		    that.timelines[key] = value;
 		}
 		else {
-		    throw { "value": value, "msg":"value is not valid" };
+		    console.log("possibly this is not a timeline cookie");
+		    console.log(value);
+		    // throw { "value": value, "msg":"value is not valid" };
 		}
 	    }
 	    catch (e) {
+		console.log("possibly this is not a valid cookie");
 		console.log(e);
 		console.log(value);
 		clear_cookie(key, "/");
@@ -133,7 +137,11 @@ function ClassToggler(descriptor) {
 }
 
 var ck = new Cookie();
+var foursquare_recommend_offset = 0;
 
 if (typeof initObj !== "undefined") {
-    ck.push_timeline(TIMELINE_ID, TIMELINE_NAME, NEAR, new Date());
+    if (ck.timelines.hasOwnProperty(TIMELINE_ID) && ck.timelines[TIMELINE_ID].foursquare_recommend_offset) {
+        foursquare_recommend_offset = ck.timelines[TIMELINE_ID].foursquare_recommend_offset;
+    }
+    ck.push_timeline(TIMELINE_ID, TIMELINE_NAME, NEAR, new Date(), foursquare_recommend_offset);
 }

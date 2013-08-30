@@ -351,7 +351,7 @@ function TitleEditor() {
 		console.log("[TitleEditor] server side renamed");
 		console.log(data);
 		console.log("[TitleEditor] changing the cookie saved names");
-		ck.push_timeline(timeline_id, new_title, NEAR, new Date());
+		ck.push_timeline(timeline_id, new_title, NEAR, new Date(), foursquare_recommend_offset);
 	    });
 	    title = new_title;
 	}
@@ -1104,7 +1104,7 @@ function NewBackend(current_view, lunchereCache, foursquareCache, lunchere_api, 
 			resp.source = "Foursquare";
 			that.receive(resp, venue);
 		    });
-		});
+		}, current_view.history_id);
 	}
 	else {
 	    console.log("[NewBackend] ERROR ll is empty");
@@ -1151,11 +1151,11 @@ function FoursquareCache() {
 	    get_details_from_foursquare(id, callback_wrapper);
 	}
     }
-    var fetch_recommendation = this.fetch_recommendation = function (ll, near, callback) {
+    var fetch_recommendation = this.fetch_recommendation = function (ll, near, callback, timeline_id) {
 	get_recommendation_from_foursquare(ll, near, function(name, venue) {
 	    that.cache[venue.id] = venue;
 	    callback(name, venue);
-	});
+	}, timeline_id);
     }
     var has = this.has = function (id) {
 	if (! that.cache_enabled)
