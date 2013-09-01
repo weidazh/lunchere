@@ -179,6 +179,7 @@
     line-height: 3 * @grid_baseline;
 }
 
+@recent_timelines_border: 1px;
 #recent-timelines {
     width: @landing_lwidth - @grid_gutter;
     background: @color_bgwhite;
@@ -187,10 +188,12 @@
     line-height: @grid_baseline;
 
     list-style: none;
-    padding-left: @grid_half_gutter;
-    padding-right: @grid_half_gutter;
-    padding-top: @grid_baseline;
-    padding-bottom: @grid_baseline;
+    padding-left: @grid_half_gutter - @recent_timelines_border;
+    padding-right: @grid_half_gutter - @recent_timelines_border;
+    padding-top: @grid_baseline - @recent_timelines_border;
+    padding-bottom: @grid_baseline - @recent_timelines_border;
+
+    border: @recent_timelines_border solid @color_silver;
 
     margin-top: 0px;
     margin-bottom: 0px;

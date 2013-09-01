@@ -211,11 +211,7 @@ function initClientIdHistoryId() {
 		<div id="timeline-button-right" class="timeline-button disabled"><i class="icon-plus"></i></div>
 	    </div>
 	</div>
-	<div id="timeline-title"><span id="timeline-title-text">{{ TIMELINE_NAME }}</span><input id="timeline-title-input" value=""/> Timeline</div>
-    </div>
-    <div id="about">
-        <a id="logo" href="/"></a>
-	<div id="version"><? readfile("version.txt"); ?></div>
+	<div id="timeline-title"><div id="timeline-title-text">{{ TIMELINE_NAME }}</div><input id="timeline-title-input" value=""/> Timeline</div>
     </div>
     <? include "footer.inc.php" ?>
 </div>

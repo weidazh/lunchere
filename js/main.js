@@ -331,20 +331,49 @@ function HashURL() {
 
 function TitleEditor() {
     var title = undefined;
-    var turn_on = this.turn_on = function() {
+    var resize = this.resize = function() {
+	var text = $("#timeline-title-input").val();
+	var len = from_text_to_width(text) + 9;
+	if (len < 20)
+	    len = 20;
+	$("#timeline-title-input").width(len);
+    }
+    var from_text_to_width = this.from_x_to_caret = function(text) {
+	var obj = $("<div/>").attr("id", "timeline-title-text")
+		.text(text).prependTo($("#timeline-title"));
+	var w = obj.width();
+	obj.detach();
+	return w;
+    }
+    var from_x_to_caret = this.from_x_to_caret = function(x) {
+	var text = $("#timeline-title-text").text();
+	if (x < 6)
+	    return 0;
+	for(var n = 1; n <= text.length; n++) {
+	    var w  = from_text_to_width(text.slice(0, n));
+	    if (w > x)
+		return n;
+	}
+    }
+    var turn_on = this.turn_on = function(_event) {
 	console.log("[TitleEditor] turning on");
 	$("#timeline-title").addClass("editing");
 	if (typeof title === "undefined") {
 	    title = $("#timeline-title-text").text();
 	}
 	$("#timeline-title-input").val(title);
+	resize();
 	$("#timeline-title-input").focus();
+	$.each($("#timeline-title-input"), function(i, input) {
+	    var x = from_x_to_caret(_event.offsetX);
+	    input.setSelectionRange(x, x);
+	});
     }
     var turn_off = this.turn_off = function() {
 	console.log("[TitleEditor] turning off");
 	$("#timeline-title").removeClass("editing");
 	var new_title = $("#timeline-title-input").val();
-	if (title != new_title) {
+	if (title != new_title && new_title.length > 0) {
 	    console.log("[TitleEditor] calling server to rename the title");
 	    var timeline_id = current_view.get_history_id();
 	    lunchere_api.rename_timeline(timeline_id, new_title, function(data) {
@@ -361,6 +390,7 @@ function TitleEditor() {
 	$("#timeline-title-text").click(turn_on);
 	$("#timeline-title-input").blur(turn_off);
 	$("#timeline-title-input").keypress(function(evt) {
+	    resize();
 	    if (evt.charCode == 13) {
 		$("#timeline-title-input").blur();
 		// turn_off();
