@@ -1718,12 +1718,67 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	$("#typehere")[0].hidden_field = null;
 	$("#typehere-search").addClass("disabled").removeClass("enabled");
     }
+    var set_title_multilang = this.set_title_multilang = function($title_text, name) {
+	var english_start = -1;
+	var other_lang_start = -1;
+	var mixed = false;
+	for (var i = 0; i < name.length; i++) {
+	    if ('A'.charCodeAt(0) <= name.charCodeAt(i) && name.charCodeAt(i) <= 'z'.charCodeAt(0) ||
+		'a'.charCodeAt(0) <= name.charCodeAt(i) && name.charCodeAt(i) <= 'z'.charCodeAt(0)) {
+		if (english_start < 0)
+		    english_start = i;
+		else if (english_start < other_lang_start)
+		    mixed = true;
+	    }
+	    if (name.charCodeAt(i) >= 256) {
+		if (other_lang_start < 0)
+		    other_lang_start = i;
+		else if (other_lang_start < english_start)
+		    mixed = true;
+	    }
+	}
+	if (mixed)
+	    return;
+	var a = "";
+	var b = "";
+	if (english_start >= 0 && english_start < other_lang_start) {
+	    a = name.slice(0, other_lang_start);
+	    a = a.replace(/[ |-]*$/, '');
+	    b = name.slice(other_lang_start);
+	}
+	else if (other_lang_start >= 0 && other_lang_start < english_start) {
+	    a = name.slice(0, english_start);
+	    a = a.replace(/[ |-]*$/, '');
+	    b = name.slice(english_start);
+	}
+	else return $title_text.text(name);
+
+        $title_text.text(a).append($("<br>")).append(document.createTextNode(b));
+	var double_line_height = 72;
+	if ($title_text.height() > double_line_height) {
+	    $title_text.text(name);
+	}
+	return $title_text;
+    }
+    var set_title = this.set_title = function ($title_text, name) {
+	$title_text.removeClass("single-line");
+
+	$title_text = set_title_multilang($title_text, name);
+
+        var height = $title_text.height();
+	var double_line_height = 72;
+	var single_line_height = 36;
+	if (height <= single_line_height) {
+	    $title_text.addClass("single-line");
+	}
+	return $title_text;
+    }
     var set_view = this.set_view = function (resp) {
 	// debug_obj("this.set_view with resp = ", resp);
 	that.resp_cache = resp;
 	// it should contains historyId, timeslot, name, and foursquare_id
 	hashurl.set_hash(resp);
-	$("#title-text").text(resp.name);
+	set_title($("#title-text"), resp.name);
 	$("#title-source").text(get_resp_source(resp));
 	$("#recommendation-source").text(get_resp_source(resp));
 	clear_typehere();
@@ -1762,7 +1817,7 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    "name": canteen_id,
 	    "foursquare_id": foursquare_id,
 	});
-	$("#title-text").text(canteen_id);
+	set_title($("#title-text"), canteen_id);
 	$("#title-source").text("you");
 	clear_typehere();
 	$("#recommendation-source").text("you");
