@@ -154,38 +154,20 @@ body {
 
 #about {
     height: 4 * @grid_baseline;
+    padding-top: @footer_baseline_offset - @footer_nav_height_above_baseline;
 }
 
-#logo {
-    margin-right: 20px;
-    float: right;
-    margin-top: @grid_half_baseline;
-    line-height: @grid_baseline * 2;
-}
-
-#logo-lunch {
-    .tight_float;
-    margin-right: -2px;
-    z-index: 2;
-    position: relative;
-    font-size: 26px;
-}
-
-#logo-here  {
-    .tight_float;
-    clear: none;
-    margin-left: -10px;
-    font-size: 27px;
-}
-
-#logo-here:before {
-    content: "h";
+@footer_baseline_offset: 54px;
+@footer_nav_height_above_baseline: 14px;
+@logo_140px_width: 140px;
+@logo_140px_height: 27px;
+#logo-version {
+    margin-left: 20px;
+    margin-top: @footer_nav_height_above_baseline - @logo_140px_height;
+    float: left;
 }
 
 #version {
-    margin-right: 20px;
-    float: right;
-    clear: right;
     color: @color_bggray;
     font-size: 12px;
 }
@@ -243,14 +225,43 @@ body {
 
 a#logo {
     display:block;
+    background-image: url("logo_reverse_140px.png");
+    width: @logo_140px_width;
+    height: @logo_140px_height;
 }
 
-#logo {
-    font-weight: bolder;
+ul#nav {
+    color: @color_silver;
+    font-size: 14px;
+    float: left;
+    display: block;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding: 0px;
+    padding-left: @grid_gutter;
+    padding-right: @grid_gutter;
 }
-#logo-lunch {
-    color: @color_fgwhite;
+
+ul#nav > li {
+    display: inline;
 }
-#logo-here {
-    color: @color_logo_here_fg;
+
+ul#nav > li + li:before {
+    margin-right: @grid_gutter;
+    margin-left: @grid_gutter;
+    content: "|";
+}
+
+ul#nav a:link, ul#nav a:visited, ul#nav a:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+#powered-by {
+    color: @color_silver;
+    font-size: 14px;
+    float: right;
+    margin-right: 20px;
+    margin-top: 0px;
+    margin-bottom: 0px;
 }
