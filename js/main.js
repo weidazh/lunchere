@@ -333,12 +333,15 @@ function TitleEditor() {
     var title = undefined;
     var resize = this.resize = function() {
 	var text = $("#timeline-title-input").val();
-	var len = from_text_to_width(text) + 9;
-	if (len < 20)
-	    len = 20;
-	$("#timeline-title-input").width(len);
+	text = text.replace(/ /g, 'l');
+	console.log("text = (" + text + ")  " + text.length);
+	var len = from_text_to_width(text) + 4;
+	if (len < 4)
+	    len = 4;
+	console.log("set title-input width " + len);
+	$("#timeline-title-input").width(len + "px");
     }
-    var from_text_to_width = this.from_x_to_caret = function(text) {
+    var from_text_to_width = this.from_text_to_width = function(text) {
 	var obj = $("<div/>").attr("id", "timeline-title-text")
 		.text(text).prependTo($("#timeline-title"));
 	var w = obj.width();
@@ -361,7 +364,7 @@ function TitleEditor() {
 	if (typeof title === "undefined") {
 	    title = $("#timeline-title-text").text();
 	}
-	$("#timeline-title-input").val(title);
+	$("#timeline-title-input").attr("maxlength", "20").val(title);
 	resize();
 	$("#timeline-title-input").focus();
 	$.each($("#timeline-title-input"), function(i, input) {
@@ -372,7 +375,7 @@ function TitleEditor() {
     var turn_off = this.turn_off = function() {
 	console.log("[TitleEditor] turning off");
 	$("#timeline-title").removeClass("editing");
-	var new_title = $("#timeline-title-input").val();
+	var new_title = $("#timeline-title-input").val().trim().replace(/  +/g, " ");
 	if (title != new_title && new_title.length > 0) {
 	    console.log("[TitleEditor] calling server to rename the title");
 	    var timeline_id = current_view.get_history_id();
@@ -389,8 +392,17 @@ function TitleEditor() {
     var register_events = this.register_events = function() {
 	$("#timeline-title-text").click(turn_on);
 	$("#timeline-title-input").blur(turn_off);
-	$("#timeline-title-input").keypress(function(evt) {
+	var timer = null;
+	$("#timeline-title-input").keydown(function(evt) {
+	    if (timer)
+		clearTimeout(timer);
 	    resize();
+	    timer = setTimeout(function () {
+		resize();
+		clearTimeout(timer);
+	    }, 0);
+	});
+	$("#timeline-title-input").keypress(function(evt) {
 	    if (evt.charCode == 13) {
 		$("#timeline-title-input").blur();
 		// turn_off();
