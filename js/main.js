@@ -1738,15 +1738,25 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	    }
 	}
 	if (mixed)
-	    return;
+	    return $title_text;
 	var a = "";
 	var b = "";
 	if (english_start >= 0 && english_start < other_lang_start) {
+	    while(name.charAt(other_lang_start - 1) == '(' ||
+		    name.charAt(other_lang_start - 1) == '[' ||
+		    name.charAt(other_lang_start - 1) == '{') {
+		other_lang_start --;
+	    }
 	    a = name.slice(0, other_lang_start);
 	    a = a.replace(/[ |-]*$/, '');
 	    b = name.slice(other_lang_start);
 	}
 	else if (other_lang_start >= 0 && other_lang_start < english_start) {
+	    while(name.charAt(english_start - 1) == '(' ||
+		    name.charAt(english_start - 1) == '[' ||
+		    name.charAt(english_start - 1) == '{') {
+		english_start --;
+	    }
 	    a = name.slice(0, english_start);
 	    a = a.replace(/[ |-]*$/, '');
 	    b = name.slice(english_start);
@@ -1760,14 +1770,59 @@ function CurrentView(history_id, lunchereCache, foursquareCache) {
 	}
 	return $title_text;
     }
+    var test_set_title = this.test_set_title = function () {
+	var i = 0;
+	var old = $("#title-text").text();
+	var a = [
+	    "Fairwood (商业中心)",
+	    "Fairwood fast food (商业中心)",
+	    "Fairwood fast food restaurant (商业中心)",
+	    "(商业中心) Fairwood ",
+	    "(商业中心) Fairwood fast food ",
+	    "(商业中心) Fairwood fast food restaurant ",
+	    "Zööba | زووبة",
+	    "زينب خاتون",
+	    "Bijas 一念素食",
+	    "Yuen Kee Dessert 源記甜品專家",
+	    "Café Malacca 馬來一菜館",
+	    "Kwan Kee Claypot Rice 坤記煲仔小菜",
+	    "Macau Restaurant 澳門茶餐廳",
+	    "Honeymoon Dessert 滿記甜品",
+	    "Shung Hing Chiu Chow Seafood Restaurant 尚興潮州飯店",
+	    "花马天堂云南餐厅 | Lost Heaven Yunnan Restaurant",
+	    "鼎泰豐 | Din Tai Fung",
+	    "滴水洞 | Di Shui Dong",
+	    "Maya Mexican Restaurant | 玛雅",
+	    "Boxing Cat Brewery | 拳击猫餐厅",
+
+	];
+	var n = a.length;
+	var repeat = function() {
+	    if (i != n) {
+		console.log("set_title(\"" + a[i] + "\")");
+		set_title($("#title-text"), a[i]);
+		i = i + 1;
+		setTimeout(repeat, 2000);
+	    }
+	    else {
+		set_title($("#title-text"), old);
+	    }
+	};
+	repeat();
+    }
     var set_title = this.set_title = function ($title_text, name) {
 	$title_text.removeClass("single-line");
 
-	$title_text = set_title_multilang($title_text, name);
-
+	$title_text.text(name);
         var height = $title_text.height();
 	var double_line_height = 72;
 	var single_line_height = 36;
+
+	if (height > single_line_height) {
+	    $title_text = set_title_multilang($title_text, name);
+	}
+
+	height = $title_text.height();
 	if (height <= single_line_height) {
 	    $title_text.addClass("single-line");
 	}
