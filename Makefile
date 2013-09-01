@@ -7,11 +7,9 @@ css/landing.css: css/landing.less css/common.less
 css/%.css: css/%.less
 	lessc $< $@
 
-templates/main.html: templates/main.php version.txt
+templates/%.html: templates/%.php version.txt templates/footer.inc.php
 	php $< > $@
 
-templates/landing.html: templates/landing.php version.txt
-	php $< > $@
 
 .FORCE:
 

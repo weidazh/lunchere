@@ -39,13 +39,7 @@
 </div>
 </div>
 <div id="footer-container">
-    <div id="about">
-        <a id="logo" href="/">
-	    <div id="logo-lunch">Lunch</div>
-	    <div id="logo-here">ere</div>
-	</a>
-	<div id="version"><? readfile("version.txt"); ?></div>
-    </div>
+    <? include "footer.inc.php" ?>
 </div>
 </body>
 </html>
